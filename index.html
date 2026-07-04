@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ElektroApp v2.0 — Preview</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --blue:#1565c0;--blue-d:#0d47a1;--blue-l:#e3f2fd;
+  --green:#2e7d32;--green-l:#e8f5e9;
+  --orange:#e65100;--orange-l:#fff3e0;
+  --red:#c62828;--red-l:#ffebee;
+  --purple:#6a1b9a;--purple-l:#f3e5f5;
+  --teal:#00695c;--teal-l:#e0f2f1;
+  --bg:#f5f7fa;--white:#fff;--border:#eee;
+  --text:#1a1a1a;--muted:#9e9e9e;--sec:#616161;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;padding:24px 0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.phone-label{color:#888;font-size:12px;text-align:center;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase}
+.phone{width:390px;height:820px;background:var(--bg);border-radius:40px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.08);display:flex;flex-direction:column;position:relative}
+.status-bar{background:var(--blue);height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+.status-bar span{color:#fff;font-size:11px;font-weight:600}
+.screen{flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.hdr{background:var(--blue);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hdr-title{color:#fff;font-size:17px;font-weight:800}
+.hdr-right{display:flex;gap:8px;align-items:center}
+.avatar{width:34px;height:34px;border-radius:17px;background:rgba(255,255,255,.2);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hdr-btn{background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 10px;color:#fff;font-size:15px;cursor:pointer}
+.content{flex:1;overflow-y:auto;padding:14px;background:var(--bg)}
+.content::-webkit-scrollbar{width:3px}
+.content::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:3px}
+/* TABBAR */
+.tabbar{height:70px;background:#fff;border-top:1px solid var(--border);display:flex;flex-shrink:0}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:none;padding:0}
+.tab .ti{font-size:20px;line-height:1}
+.tab .tl{font-size:9px;font-weight:600;color:var(--muted)}
+.tab.active .tl{color:var(--blue)}
+/* CARDS */
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.kpi{background:#fff;border-radius:14px;padding:12px;border-left:4px solid;box-shadow:0 1px 4px rgba(0,0,0,.07);display:flex;align-items:center;gap:10px;cursor:pointer}
+.kpi-icon{width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.kpi-val{font-size:20px;font-weight:800}
+.kpi-lbl{font-size:10px;color:var(--muted);margin-top:1px}
+.kpi-scroll{display:flex;gap:8px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px;scrollbar-width:none}
+.kpi-scroll::-webkit-scrollbar{display:none}
+.kpi-sm{background:#fff;border-radius:10px;border-top:3px solid;padding:8px 12px;min-width:90px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07);flex-shrink:0}
+.kpi-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.kpi-grid2 .kpi-sm{min-width:0}
+.kpi-sm .v{font-size:16px;font-weight:800}
+.kpi-sm .l{font-size:10px;color:var(--muted);margin-top:2px}
+/* BADGE */
+.badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+/* SECTION HEADER */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:4px}
+.sec-hdr h3{font-size:14px;font-weight:700;color:var(--text)}
+.sec-hdr a,.sec-hdr button{font-size:12px;color:var(--blue);font-weight:600;cursor:pointer;background:none;border:none;padding:0}
+.divider{height:1px;background:var(--border);margin:8px 0}
+/* LIST */
+.li{display:flex;align-items:center;gap:10px;padding:10px 0;cursor:pointer}
+.li:not(:last-child){border-bottom:1px solid var(--border)}
+.li-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.li-body{flex:1;min-width:0}
+.li-title{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.li-right{text-align:right;flex-shrink:0}
+/* FILTER */
+.frow{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.frow::-webkit-scrollbar{display:none}
+.ftab{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted)}
+.ftab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+/* SEARCH */
+.search{display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:0 12px;border:1px solid var(--border);margin-bottom:10px;height:40px}
+.search input{flex:1;border:none;outline:none;font-size:13px;color:var(--text);background:transparent}
+/* DETAIL SCREEN */
+.det{position:absolute;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;transform:translateX(100%);transition:.25s cubic-bezier(.4,0,.2,1)}
+.det.open{transform:translateX(0)}
+.det-hdr{background:var(--blue);padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.back-btn{width:32px;height:32px;border-radius:16px;background:rgba(255,255,255,.2);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;flex-shrink:0}
+.det-content{flex:1;overflow-y:auto;padding:14px}
+.det-content::-webkit-scrollbar{width:3px}
+/* DATA ROW */
+.dr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.dr-l{font-size:12px;color:var(--muted)}
+.dr-r{font-size:12px;font-weight:600;color:var(--text)}
+/* MODAL */
+.modal-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end}
+.modal-sh{background:#fff;border-radius:20px 20px 0 0;width:100%;padding:20px 16px 32px;max-height:85%;overflow-y:auto}
+.modal-sh h3{font-size:16px;font-weight:800;margin-bottom:14px;color:var(--text)}
+.modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);margin-top:-4px}
+.fg{margin-bottom:12px}
+.fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;display:block}
+.fi{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit;color:var(--text)}
+.fi:focus{border-color:var(--blue)}
+.fs{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;background:#fff;font-family:inherit;color:var(--text)}
+.btn-p{background:var(--blue);color:#fff;border:none;border-radius:20px;padding:11px 24px;font-size:14px;font-weight:700;width:100%;cursor:pointer;margin-top:8px}
+.btn-s{background:var(--blue-l);color:var(--blue);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-r{background:var(--red-l);color:var(--red);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-g{background:var(--green-l);color:var(--green);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
+/* FAB */
+.fab{position:absolute;bottom:16px;right:16px;width:52px;height:52px;border-radius:26px;background:var(--blue);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(21,101,192,.5);cursor:pointer;border:none;z-index:5}
+/* CONTENT TABS */
+.ctabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:12px;flex-shrink:0}
+.ctab{padding:8px 12px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.ctab.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* CAL */
+.cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px}
+.cal-hdr span{font-size:9px;color:var(--muted);text-align:center;font-weight:600}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cd{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;cursor:pointer;background:#f5f5f5;color:var(--muted)}
+.cd.today{background:var(--blue);color:#fff}
+.cd.we{color:#ddd;background:transparent}
+.cd.empty{background:transparent}
+/* PROGRESS */
+.ms-bar{height:5px;background:#eee;border-radius:3px;margin-top:3px}
+.ms-fill{height:5px;border-radius:3px}
+/* MIGRATION */
+.mig{background:var(--blue);border-radius:14px;padding:14px;margin-top:8px}
+.mig .badge2{background:rgba(255,255,255,.2);color:#fff;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;display:inline-block;margin-bottom:8px}
+.mig h4{color:#fff;font-size:13px;font-weight:700;margin-bottom:6px}
+.pb{height:5px;background:rgba(255,255,255,.3);border-radius:3px;margin-bottom:6px}
+.pbf{height:5px;background:#fff;border-radius:3px}
+.mig p{color:rgba(255,255,255,.8);font-size:11px;margin-bottom:8px}
+.mig .step{color:rgba(255,255,255,.85);font-size:11px;margin-top:3px}
+/* QR */
+.qr-box{display:flex;flex-direction:column;align-items:center;padding:12px 0}
+/* MAP */
+.map-box{background:#e8f4f8;border-radius:12px;height:120px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-bottom:10px}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
+.map-pin{font-size:32px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.map-addr{font-size:10px;font-weight:600;color:var(--blue);position:absolute;bottom:6px;left:0;right:0;text-align:center;z-index:1}
+/* STATUS PILLS */
+.spill{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.spill button{flex:1;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:2px solid;cursor:pointer;min-width:70px}
+/* TOAST */
+.toast{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;opacity:0;transition:.3s;pointer-events:none;z-index:99}
+.toast.show{opacity:1}
+/* SCREEN TABS */
+.sv{display:none;flex-direction:column;flex:1;overflow:hidden;position:relative}
+.sv.active{display:flex}
+/* SCAN */
+.scan-ov{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.scan-frame{width:200px;height:200px;position:relative}
+.sc{position:absolute;width:24px;height:24px;border-color:#fff;border-style:solid;border-width:0}
+.sc-tl{top:0;left:0;border-top-width:4px;border-left-width:4px}
+.sc-tr{top:0;right:0;border-top-width:4px;border-right-width:4px}
+.sc-bl{bottom:0;left:0;border-bottom-width:4px;border-left-width:4px}
+.sc-br{bottom:0;right:0;border-bottom-width:4px;border-right-width:4px}
+</style>
+</head>
+<body>
+<div class="phone-label">ElektroApp v2.0 — React Native Preview</div>
+<div class="phone">
+<div class="status-bar"><span id="clock">9:41</span><span>ElektroSmart</span><span>📶🔋</span></div>
+<div class="screen">
+
+<!-- ═══════ DASHBOARD ═══════ -->
+<div class="sv active" id="sv-dashboard">
+<div class="hdr"><div class="hdr-title">⚡ ElektroApp</div><div class="hdr-right"><button class="hdr-btn" onclick="openDzienModal()">+ Dzień</button><div class="avatar">K</div></div></div>
+<div class="content">
+  <div style="margin-bottom:14px">
+    <div style="font-size:11px;color:var(--muted)" id="dash-date"></div>
+    <div style="font-size:20px;font-weight:800;margin-top:3px">Dzień dobry, Karol 👋</div>
+    <div style="font-size:12px;color:var(--sec);margin-top:2px">ElektroSmart Instalacje</div>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi" style="border-color:var(--blue)" onclick="switchTab('projekty')"><div class="kpi-icon" style="background:var(--blue-l)">📋</div><div><div class="kpi-val" style="color:var(--blue)" id="dash-kpi-projekty">3</div><div class="kpi-lbl">Aktywne projekty</div></div></div>
+    <div class="kpi" style="border-color:var(--green)" onclick="switchTab('pracownicy')"><div class="kpi-icon" style="background:var(--green-l)">👷</div><div><div class="kpi-val" style="color:var(--green)">3</div><div class="kpi-lbl">Pracownicy</div></div></div>
+    <div class="kpi" style="border-color:var(--red)" onclick="switchTab('awarie')"><div class="kpi-icon" style="background:var(--red-l)">🚨</div><div><div class="kpi-val" style="color:var(--red)">2</div><div class="kpi-lbl">Otwarte awarie</div></div></div>
+    <div class="kpi" style="border-color:var(--green)"><div class="kpi-icon" style="background:var(--green-l)">💰</div><div><div class="kpi-val" style="color:var(--green)">50k zł</div><div class="kpi-lbl">Przychody YTD</div></div></div>
+    <div class="kpi" style="border-color:var(--orange)" onclick="switchTab('wydatki')"><div class="kpi-icon" style="background:var(--orange-l)">📊</div><div><div class="kpi-val" style="color:var(--orange)">1 125 zł</div><div class="kpi-lbl">Wydatki mies.</div></div></div>
+    <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:#f5f5f5">✅</div><div><div class="kpi-val" style="color:var(--muted)">1</div><div class="kpi-lbl">Zakończone</div></div></div>
+  </div>
+  <div class="sec-hdr"><h3>Aktywne projekty</h3><a onclick="switchTab('projekty')">Wszystkie →</a></div>
+  <div class="card" style="padding:10px 14px" id="dash-projekty-list"></div>
+  <div class="sec-hdr"><h3>Otwarte awarie</h3><a onclick="switchTab('awarie')">Wszystkie →</a></div>
+  <div class="card" style="padding:10px 14px">
+    <div class="li" onclick="openAwaria('a3')"><div class="li-icon" style="background:var(--red-l)">⚠️</div><div class="li-body"><div class="li-title">Przepalony obwód — piwnica</div><div class="li-sub">Lipowa · 10.04.2024</div></div><span class="badge" style="background:var(--red-l);color:var(--red)">Wysoki</span></div>
+    <div class="li" onclick="openAwaria('a2')"><div class="li-icon" style="background:var(--orange-l)">⚠️</div><div class="li-body"><div class="li-title">Migające światło w garażu</div><div class="li-sub">Różana · 02.04.2024</div></div><span class="badge" style="background:var(--orange-l);color:var(--orange)">Średni</span></div>
+  </div>
+  <div class="mig"><div class="badge2">v2.0</div><h4>React Native Migration</h4><div class="pb"><div class="pbf" style="width:45%"></div></div><p>45% — wszystkie ekrany gotowe</p><div class="step">✅ PWA prototyp</div><div class="step">✅ Google Sheets API</div><div class="step">✅ RN scaffold + ekrany + QR</div><div class="step">⬜ OAuth 2.0 (zapis)</div><div class="step">⬜ Produkcyjny APK</div></div>
+</div>
+<!-- Modal Dodaj Dzień -->
+<div class="modal-ov" id="modal-dzien" style="display:none" onclick="if(event.target===this)closeModal('modal-dzien')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-dzien')">✕</button><h3>⏱️ Dodaj dzień pracy</h3>
+    <div class="fg"><label>Data</label><input class="fi" id="nd-data" type="date" value="2024-04-10"></div>
+    <div class="fg"><label>Projekt</label><select class="fs" id="nd-projekt"></select></div>
+    <div style="margin-bottom:6px;font-weight:700;font-size:13px">Pracownicy</div>
+    <div id="nd-pracownicy" style="margin-bottom:10px"></div>
+    <div class="fg"><label>Opis (opcja)</label><input class="fi" id="nd-opis" placeholder="np. Układanie kabli"></div>
+    <div style="display:flex;gap:8px;margin-bottom:4px">
+      <div class="fg" style="flex:1"><label>Razem godzin</label><div class="fi" id="nd-total-h" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
+      <div class="fg" style="flex:1"><label>Koszt razem</label><div class="fi" id="nd-total-koszt" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
+    </div>
+    <button class="btn-p" onclick="saveDzien()">Zapisz dzień pracy</button>
+  </div>
+</div>
+</div>
+<!-- ═══════ PROJEKTY ═══════ -->
+<div class="sv" id="sv-projekty">
+<div class="hdr"><div class="hdr-title">📋 Projekty</div><div class="hdr-right"><button class="hdr-btn" onclick="openNewProjekt()">＋</button><div class="avatar">K</div></div></div>
+<div class="content">
+  <div class="kpi-scroll">
+    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">5</div><div class="l">Łącznie</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">3</div><div class="l">Aktywne</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--muted)"><div class="v" style="color:var(--muted)">1</div><div class="l">Zakończone</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">1</div><div class="l">Wstrzymane</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--purple)"><div class="v" style="color:var(--purple)">50k zł</div><div class="l">Wartość</div></div>
+  </div>
+  <div class="search"><span>🔍</span><input id="search-projekty" oninput="applyFilter('projekty')" placeholder="Szukaj projektu..."></div>
+  <div class="frow" id="frow-projekty">
+    <div class="ftab active" onclick="setFtab(this,'projekty')">Wszystkie</div>
+    <div class="ftab" onclick="setFtab(this,'projekty')">W realizacji</div>
+    <div class="ftab" onclick="setFtab(this,'projekty')">Planowany</div>
+    <div class="ftab" onclick="setFtab(this,'projekty')">Zakończony</div>
+    <div class="ftab" onclick="setFtab(this,'projekty')">Wstrzymany</div>
+  </div>
+  <div class="card" style="padding:0 14px" id="list-projekty">
+    <div class="li-empty" id="empty-projekty" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
+  </div>
+</div>
+<!-- Detail projekt -->
+<div class="det" id="det-proj">
+  <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700;flex:1" id="dproj-title">Projekt</div></div>
+  <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div class="det-content" id="dproj-content"></div>
+  </div>
+</div>
+<!-- Modal nowy projekt -->
+<div class="modal-ov" id="modal-projekt" style="display:none" onclick="if(event.target===this)closeModal('modal-projekt')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-projekt')">✕</button><h3 id="npr-heading">📋 Nowy projekt</h3>
+    <input type="hidden" id="npr-edit-id" value="">
+    <div class="fg"><label>Nazwa projektu</label><input class="fi" id="npr-nazwa" placeholder="np. Instalacja elektryczna"></div>
+    <div class="fg"><label>Klient</label><input class="fi" id="npr-klient" placeholder="Imię i nazwisko lub firma"></div>
+    <div class="fg"><label>Adres</label><input class="fi" id="npr-adres" placeholder="ul. ..."></div>
+    <div style="display:flex;gap:8px">
+      <div class="fg" style="flex:1"><label>Status</label><select class="fs" id="npr-status"><option>W realizacji</option><option>Planowany</option><option>Zakończony</option><option>Wstrzymany</option></select></div>
+      <div class="fg" style="flex:1"><label>Postęp (%)</label><input class="fi" id="npr-postep" type="number" min="0" max="100" placeholder="0"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <div class="fg" style="flex:1"><label>Data start</label><input class="fi" id="npr-start" type="date"></div>
+      <div class="fg" style="flex:1"><label>Wartość (zł)</label><input class="fi" id="npr-wartosc" type="number" placeholder="0"></div>
+    </div>
+    <button class="btn-p" id="npr-submit-btn" onclick="saveProjekt()">Utwórz projekt</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════ PRACOWNICY + CZAS PRACY (połączone) ═══════ -->
+<div class="sv" id="sv-pracownicy">
+<div class="hdr"><div class="hdr-title">👷 Ludzie</div><div class="hdr-right"><button class="hdr-btn" onclick="openModal('modal-pracownik')" title="Nowy pracownik">＋</button><button class="hdr-btn" onclick="openDzienModal()" title="Dodaj dzień pracy">⏱️＋</button><div class="avatar">K</div></div></div>
+<div class="content">
+  <div class="ctabs">
+    <div class="ctab active" id="prac-view-tab-lista" onclick="setPracView('lista')">👷 Pracownicy</div>
+    <div class="ctab" id="prac-view-tab-kalendarz" onclick="setPracView('kalendarz')">📅 Kalendarz zespołu</div>
+  </div>
+
+  <div id="prac-lista-section">
+    <div class="kpi-grid2">
+      <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">4</div><div class="l">Łącznie</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">3</div><div class="l">Aktywni</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">1</div><div class="l">L4</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">147 zł/h</div><div class="l">Stawki</div></div>
+    </div>
+    <div class="card" style="padding:0 14px">
+      <div class="li" onclick="openPrac('w1')"><div class="li-icon" style="background:var(--blue-l);font-size:16px;font-weight:800;color:var(--blue)">MK</div><div class="li-body"><div class="li-title">Mariusz Kowalczyk</div><div class="li-sub">Elektryk · 45 zł/h</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Aktywny</span><div style="font-size:10px;color:var(--muted);margin-top:4px">2 projekty</div></div></div>
+      <div class="li" onclick="openPrac('w2')"><div class="li-icon" style="background:var(--green-l);font-size:16px;font-weight:800;color:var(--green)">TW</div><div class="li-body"><div class="li-title">Tomasz Wiśniewski</div><div class="li-sub">Elektryk · 42 zł/h</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Aktywny</span><div style="font-size:10px;color:var(--muted);margin-top:4px">2 projekty</div></div></div>
+      <div class="li" onclick="openPrac('w3')"><div class="li-icon" style="background:var(--red-l);font-size:16px;font-weight:800;color:var(--red)">MD</div><div class="li-body"><div class="li-title">Marcin Dąbrowski</div><div class="li-sub">Monter · 35 zł/h</div></div><div class="li-right"><span class="badge" style="background:var(--red-l);color:var(--red)">L4</span></div></div>
+      <div class="li" onclick="openPrac('w4')"><div class="li-icon" style="background:var(--orange-l);font-size:16px;font-weight:800;color:var(--orange)">KZ</div><div class="li-body"><div class="li-title">Kamil Zając</div><div class="li-sub">Pomocnik · 25 zł/h</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Aktywny</span></div></div>
+    </div>
+  </div>
+
+  <div id="prac-kalendarz-section" style="display:none">
+    <div class="kpi-scroll">
+      <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">312h</div><div class="l">Kwiecień</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">14 040 zł</div><div class="l">Wynagrodzenia</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">45 zł/h</div><div class="l">Śr. stawka</div></div>
+    </div>
+    <div class="card" style="padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <button onclick="czasPrevMonth()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--blue)">‹</button>
+        <div style="font-size:14px;font-weight:700;color:var(--text)" id="czas-month-label">Kwiecień 2024</div>
+        <button onclick="czasNextMonth()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--blue)">›</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">
+        <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px 0">Pn</div>
+        <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px 0">Wt</div>
+        <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px 0">Śr</div>
+        <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px 0">Cz</div>
+        <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px 0">Pt</div>
+        <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px 0">Sb</div>
+        <div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px 0">Nd</div>
+      </div>
+      <div id="czas-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px" id="czas-legend"></div>
+    </div>
+    <div class="card" style="padding:0 14px" id="czas-list"></div>
+  </div>
+</div>
+<!-- Detail pracownik -->
+<div class="det" id="det-prac">
+  <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700" id="dprac-title">Pracownik</div></div>
+  <div class="det-content" id="dprac-content"></div>
+</div>
+<div class="modal-ov" id="modal-pracownik" style="display:none" onclick="if(event.target===this)closeModal('modal-pracownik')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-pracownik')">✕</button><h3>👷 Nowy pracownik</h3>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Imię</label><input class="fi" placeholder="Jan"></div><div class="fg" style="flex:1"><label>Nazwisko</label><input class="fi" placeholder="Kowalski"></div></div>
+    <div class="fg"><label>Telefon</label><input class="fi" type="tel" placeholder="501 234 567"></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Rola</label><select class="fs"><option>Elektryk</option><option>Monter</option><option>Pomocnik</option><option>Kierownik</option></select></div><div class="fg" style="flex:1"><label>Stawka zł/h</label><input class="fi" type="number" placeholder="35"></div></div>
+    <button class="btn-p" onclick="showToast('✅ Pracownik dodany!');closeModal('modal-pracownik')">Dodaj pracownika</button>
+  </div>
+</div>
+<!-- Modal: dodaj godziny dla pojedynczego pracownika (z detalu pracownika) -->
+<div class="modal-ov" id="modal-godziny" style="display:none" onclick="if(event.target===this)closeModal('modal-godziny')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-godziny')">✕</button><h3 id="ng-heading">⏱️ Dodaj godziny</h3>
+    <div class="fg"><label>Data</label><input class="fi" id="ng-data" type="date" value="2024-04-10"></div>
+    <div class="fg"><label>Projekt</label><select class="fs" id="ng-projekt"></select></div>
+    <div id="ng-pracownicy" style="margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:4px">
+      <div class="fg" style="flex:1"><label>Godzin</label><div class="fi" id="ng-total-h" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
+      <div class="fg" style="flex:1"><label>Koszt</label><div class="fi" id="ng-total-koszt" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
+    </div>
+    <button class="btn-p" onclick="saveGodziny()">Zapisz</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════ AWARIE ═══════ -->
+<div class="sv" id="sv-awarie">
+<div class="hdr"><div class="hdr-title">🚨 Awarie</div><div class="hdr-right"><div class="avatar">K</div></div></div>
+<div class="content" style="position:relative">
+  <div class="kpi-scroll">
+    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">4</div><div class="l">Łącznie</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">1</div><div class="l">Zgłoszone</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">1</div><div class="l">W realizacji</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">2</div><div class="l">Zakończone</div></div>
+  </div>
+  <div class="frow" id="frow-awarie">
+    <div class="ftab active" onclick="setFtab(this,'awarie')">Wszystkie</div>
+    <div class="ftab" onclick="setFtab(this,'awarie')">Otwarte</div>
+    <div class="ftab" onclick="setFtab(this,'awarie')">W realizacji</div>
+    <div class="ftab" onclick="setFtab(this,'awarie')">Zakończone</div>
+  </div>
+  <div class="card" style="padding:0 14px" id="list-awarie">
+    <div class="li" data-status="Zgłoszona" onclick="openAwaria('a3')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--red)"></div><div class="li-icon" style="background:var(--red-l)">⚡</div></div><div class="li-body"><div class="li-title">Przepalony obwód — piwnica</div><div class="li-sub">Lipowa · 10.04.2024</div></div><div class="li-right"><span class="badge" style="background:var(--red-l);color:var(--red)">Zgłoszona</span><div style="font-size:10px;color:var(--red);font-weight:700;margin-top:2px">🔴 Wysoki</div></div></div>
+    <div class="li" data-status="W realizacji" onclick="openAwaria('a2')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--orange)"></div><div class="li-icon" style="background:var(--orange-l)">💡</div></div><div class="li-body"><div class="li-title">Migające światło w garażu</div><div class="li-sub">Różana · 02.04.2024</div></div><div class="li-right"><span class="badge" style="background:var(--orange-l);color:var(--orange)">W realizacji</span><div style="font-size:10px;color:var(--orange);font-weight:700;margin-top:2px">🟠 Średni</div></div></div>
+    <div class="li" data-status="Zakończona" onclick="openAwaria('a1')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></div><div class="li-icon" style="background:#f5f5f5">⚡</div></div><div class="li-body"><div class="li-title">Brak prądu — klatka schodowa</div><div class="li-sub">Lipowa · 15.03.2024</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Zakończona</span><div style="font-size:10px;color:var(--muted);margin-top:2px">280 zł</div></div></div>
+    <div class="li" data-status="Zakończona" onclick="openAwaria('a4')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></div><div class="li-icon" style="background:#f5f5f5">🔔</div></div><div class="li-body"><div class="li-title">Domofon nie działa — klatka B</div><div class="li-sub">Bema · 20.03.2024</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Zakończona</span><div style="font-size:10px;color:var(--muted);margin-top:2px">90 zł</div></div></div>
+    <div class="li-empty" id="empty-awarie" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
+  </div>
+  <button class="fab" onclick="openModal('modal-awaria')">＋</button>
+</div>
+<!-- Detail awaria (edytowalna) -->
+<div class="det" id="det-awaria">
+  <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700;flex:1" id="dawaria-title">Awaria</div><button class="hdr-btn" onclick="showToast('✅ Zapisano zmiany')">Zapisz</button></div>
+  <div class="det-content" id="dawaria-content"></div>
+</div>
+<!-- Modal dodaj awarię -->
+<div class="modal-ov" id="modal-awaria" style="display:none" onclick="if(event.target===this)closeModal('modal-awaria')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-awaria')">✕</button><h3>🚨 Nowa awaria</h3>
+    <div class="fg"><label>Blok / lokalizacja</label><select class="fs"><option>Wspólnota Lipowa 12–18</option><option>Spółdzielnia Różana</option><option>Wspólnota Bema 10–16</option></select></div>
+    <div class="fg"><label>Opis awarii</label><textarea class="fi" rows="3" placeholder="Opisz problem..." style="resize:none"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <div class="fg" style="flex:1"><label>Priorytet</label><select class="fs"><option>Niski</option><option selected>Średni</option><option>Wysoki</option><option>Krytyczny</option></select></div>
+      <div class="fg" style="flex:1"><label>Przydziel do</label><select class="fs"><option>— brak —</option><option>Mariusz K.</option><option>Tomasz W.</option><option>Kamil Z.</option></select></div>
+    </div>
+    <button class="btn-p" onclick="showToast('✅ Awaria zgłoszona!');closeModal('modal-awaria')">Zgłoś awarię</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════ NARZĘDZIA ═══════ -->
+<div class="sv" id="sv-narzedzia">
+<div class="hdr"><div class="hdr-title">🔧 Narzędzia</div><div class="hdr-right"><button class="hdr-btn" onclick="openScanner()">📷</button><button class="hdr-btn" onclick="openModal('modal-narzedzie')">＋</button><div class="avatar">K</div></div></div>
+<div class="content" style="position:relative">
+  <div class="kpi-scroll">
+    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">6</div><div class="l">Łącznie</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">4</div><div class="l">Dostępne</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">1</div><div class="l">Pożyczone</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--purple)"><div class="v" style="color:var(--purple)">4,8k zł</div><div class="l">Wartość</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">590 zł</div><div class="l">Naprawy</div></div>
+  </div>
+  <div class="search"><span>🔍</span><input id="search-narz" oninput="applyFilter('narz')" placeholder="Szukaj narzędzia..."></div>
+  <div class="frow" id="frow-narz">
+    <div class="ftab active" onclick="setFtab(this,'narz')">Wszystkie</div>
+    <div class="ftab" onclick="setFtab(this,'narz')">Dostępne</div>
+    <div class="ftab" onclick="setFtab(this,'narz')">Pożyczone</div>
+    <div class="ftab" onclick="setFtab(this,'narz')">W użyciu</div>
+  </div>
+  <div class="card" style="padding:0 14px" id="list-narz">
+    <div class="li" data-status="Dostępne" data-text="makita dhp484z" onclick="openNarz('t1')"><div class="li-icon" style="background:var(--blue-l)">🔧</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Makita</div><div class="li-title">DHP484Z</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">650 zł</div></div></div>
+    <div class="li" data-status="Pożyczone" data-text="bosch gbh 2-28 f" onclick="openNarz('t2')"><div class="li-icon" style="background:var(--orange-l)">🔨</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Bosch</div><div class="li-title">GBH 2-28 F</div><div class="li-sub">👤 Arek · 🔨 2 naprawy</div></div><div class="li-right"><span class="badge" style="background:var(--orange-l);color:var(--orange)">Pożyczone</span><div style="font-size:12px;font-weight:700;margin-top:2px">890 zł</div></div></div>
+    <div class="li" data-status="Dostępne" data-text="fluke 117 multimeter" onclick="openNarz('t3')"><div class="li-icon" style="background:var(--blue-l)">📏</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Fluke</div><div class="li-title">117 Multimeter</div><div class="li-sub">🔨 1 naprawa</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">1 200 zł</div></div></div>
+    <div class="li" data-status="W użyciu" data-text="knipex zestaw szczypiec" onclick="openNarz('t4')"><div class="li-icon" style="background:var(--blue-l)">🪛</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Knipex</div><div class="li-title">Zestaw szczypiec</div><div class="li-sub">👤 Maciek Sosna</div></div><div class="li-right"><span class="badge" style="background:var(--blue-l);color:var(--blue)">W użyciu</span><div style="font-size:12px;font-weight:700;margin-top:2px">450 zł</div></div></div>
+    <div class="li" data-status="Dostępne" data-text="stanley poziomnica 60cm" onclick="openNarz('t5')"><div class="li-icon" style="background:var(--green-l)">📐</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Stanley</div><div class="li-title">Poziomnica 60cm</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">120 zł</div></div></div>
+    <div class="li" data-status="Dostępne" data-text="milwaukee m18 fuel" onclick="openNarz('t6')"><div class="li-icon" style="background:var(--red-l)">🔋</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Milwaukee</div><div class="li-title">M18 FUEL</div><div class="li-sub">🔨 1 naprawa</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">1 450 zł</div></div></div>
+    <div class="li-empty" id="empty-narz" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
+  </div>
+  <!-- Scanner overlay -->
+  <div class="scan-ov" id="scan-ov" style="display:none">
+    <div style="color:#fff;font-size:15px;font-weight:700">📷 Skanuj QR narzędzia</div>
+    <div class="scan-frame"><div class="sc sc-tl"></div><div class="sc sc-tr"></div><div class="sc sc-bl"></div><div class="sc sc-br"></div></div>
+    <div style="color:rgba(255,255,255,.8);font-size:12px;text-align:center">Skanuje nr seryjny producenta<br>lub kod wygenerowany przez ElektroApp</div>
+    <button style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-size:13px;cursor:pointer" onclick="closeDet('scan-ov');document.getElementById('scan-ov').style.display='none'">✕ Zamknij</button>
+    <button style="background:var(--green);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-size:13px;cursor:pointer" onclick="document.getElementById('scan-ov').style.display='none';openNarz('t2')">✅ Symuluj skan (Bosch)</button>
+  </div>
+</div>
+<!-- Detail narzędzie -->
+<div class="det" id="det-narz">
+  <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700" id="dnarz-title">Narzędzie</div></div>
+  <div class="det-content" id="dnarz-content"></div>
+</div>
+<!-- Modal nowe narzędzie -->
+<div class="modal-ov" id="modal-narzedzie" style="display:none" onclick="if(event.target===this)closeModal('modal-narzedzie')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-narzedzie')">✕</button><h3>🔧 Nowe narzędzie</h3>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Marka</label><input class="fi" placeholder="Bosch"></div><div class="fg" style="flex:1"><label>Model</label><input class="fi" placeholder="GBH 2-28"></div></div>
+    <div class="fg"><label>Nr seryjny (opcjonalnie)</label><input class="fi" placeholder="BS-2024-001"></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Wartość (zł)</label><input class="fi" type="number" placeholder="0"></div><div class="fg" style="flex:1"><label>Data zakupu</label><input class="fi" id="nn-data-zakupu" type="date" oninput="ustawGwarancje(null)"></div></div>
+    <div class="fg">
+      <label>Gwarancja do</label>
+      <input class="fi" id="nn-gwarancja" type="date">
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button type="button" onclick="ustawGwarancje(12)" class="btn-s" style="flex:1">12 mies.</button>
+        <button type="button" onclick="ustawGwarancje(24)" class="btn-s" style="flex:1">24 mies.</button>
+        <button type="button" onclick="ustawGwarancje(36)" class="btn-s" style="flex:1">36 mies.</button>
+      </div>
+    </div>
+    <button class="btn-p" onclick="showToast('✅ Narzędzie dodane!');closeModal('modal-narzedzie')">Dodaj narzędzie</button>
+  </div>
+</div>
+<!-- Modal zgłoś naprawę -->
+<div class="modal-ov" id="modal-naprawa" style="display:none" onclick="if(event.target===this)closeModal('modal-naprawa')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-naprawa')">✕</button><h3>🔨 Zgłoś naprawę</h3>
+    <div class="fg"><label>Data</label><input class="fi" type="date"></div>
+    <div class="fg"><label>Opis naprawy</label><textarea class="fi" rows="2" placeholder="Co naprawiono?" style="resize:none"></textarea></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Serwis</label><input class="fi" placeholder="Bosch Service"></div><div class="fg" style="flex:1"><label>Koszt (zł)</label><input class="fi" type="number" placeholder="0"></div></div>
+    <button class="btn-p" onclick="showToast('✅ Naprawa zapisana!');closeModal('modal-naprawa')">Zapisz naprawę</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════ CZAS PRACY ═══════ -->
+<!-- Modal dzień detail (kliknięcie w dzień kalendarza zespołu) — zakładka Czas została połączona z Ludzie -->
+<div class="modal-ov" id="modal-dzien-detail" style="display:none" onclick="if(event.target===this)closeModal('modal-dzien-detail')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-dzien-detail')">✕</button><div id="modal-dzien-title" style="font-size:16px;font-weight:800;margin-bottom:12px"></div><div id="modal-dzien-body"></div></div>
+</div>
+
+<!-- ═══════ WYDATKI ═══════ -->
+<div class="sv" id="sv-wydatki">
+<div class="hdr"><div class="hdr-title">💰 Wydatki</div><div class="hdr-right"><button class="hdr-btn" onclick="openNewWydatek()">＋</button><div class="avatar">K</div></div></div>
+<div class="content" style="position:relative">
+  <div class="kpi-scroll">
+    <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)" id="wyd-kpi-miesiac">0 zł</div><div class="l">Kwiecień</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)" id="wyd-kpi-materialy">0 zł</div><div class="l">Materiały</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">8 250 zł</div><div class="l">Robocizna</div></div>
+  </div>
+  <div class="frow" id="frow-wyd">
+    <div class="ftab active" onclick="setFtab(this,'wyd')">Wszystkie</div>
+    <div class="ftab" onclick="setFtab(this,'wyd')">Materiały</div>
+    <div class="ftab" onclick="setFtab(this,'wyd')">Paliwo</div>
+    <div class="ftab" onclick="setFtab(this,'wyd')">Narzędzia</div>
+    <div class="ftab" onclick="setFtab(this,'wyd')">Przychód</div>
+    <div class="ftab" onclick="setFtab(this,'wyd')">Inne</div>
+  </div>
+  <div class="card" style="padding:0 14px" id="list-wyd">
+    <div class="li-empty" id="empty-wyd" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
+  </div>
+  <button class="fab" onclick="openNewWydatek()">＋</button>
+</div>
+<div class="modal-ov" id="modal-wydatek" style="display:none" onclick="if(event.target===this)closeModal('modal-wydatek')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-wydatek')">✕</button><h3 id="nw-heading">💰 Nowy wydatek</h3>
+    <input type="hidden" id="nw-edit-id" value="">
+    <div class="fg"><label>Opis</label><input class="fi" id="nw-opis" placeholder="Materiały, paliwo..."></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Kwota (zł)</label><input class="fi" id="nw-kwota" type="number" placeholder="0.00"></div><div class="fg" style="flex:1"><label>Typ</label><select class="fs" id="nw-typ"><option>Materiały</option><option>Paliwo</option><option>Narzędzia</option><option>Przychód</option><option>Inne</option></select></div></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Data</label><input class="fi" id="nw-data" type="date"></div><div class="fg" style="flex:1"><label>Projekt</label><select class="fs" id="nw-projekt"><option value="">— ogólny —</option></select></div></div>
+    <button class="btn-p" id="nw-submit-btn" onclick="saveWydatek()">Zapisz wydatek</button>
+    <button class="btn-r" id="nw-delete-btn" style="display:none;margin-top:8px" onclick="deleteWydatek()">Usuń wydatek</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════ KODY ═══════ -->
+<div class="sv" id="sv-kody">
+<div class="hdr"><div class="hdr-title">🔑 Kody dostępu</div><div class="hdr-right"><button class="hdr-btn" onclick="openModal('modal-kod')">＋</button><div class="avatar">K</div></div></div>
+<div class="content">
+  <div class="kpi-scroll">
+    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">3</div><div class="l">Obiekty</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">12</div><div class="l">Kody łącznie</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">2</div><div class="l">Wizyty w tygodniu</div></div>
+  </div>
+  <div class="card" style="padding:0 14px">
+    <div class="li" onclick="openBlok('b1')"><div class="li-icon" style="background:var(--blue-l);font-size:18px">🏢</div><div class="li-body"><div class="li-title">Wspólnota Lipowa 12–18</div><div class="li-sub">ul. Lipowa 12–18 · 5 kodów</div></div><div class="li-right"><span class="badge" style="background:var(--blue-l);color:var(--blue)">3 awarie</span></div></div>
+    <div class="li" onclick="openBlok('b2')"><div class="li-icon" style="background:var(--green-l);font-size:18px">🏠</div><div class="li-body"><div class="li-title">Spółdzielnia Różana</div><div class="li-sub">os. Różana 1–8 · 4 kody</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">OK</span></div></div>
+    <div class="li" onclick="openBlok('b3')"><div class="li-icon" style="background:var(--purple-l);font-size:18px">🏗️</div><div class="li-body"><div class="li-title">Wspólnota Bema 10–16</div><div class="li-sub">ul. Bema 10–16 · 3 kody</div></div><div class="li-right"><span class="badge" style="background:var(--orange-l);color:var(--orange)">1 awaria</span></div></div>
+  </div>
+</div>
+<!-- Detail bloku -->
+<div class="det" id="det-blok">
+  <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700" id="dblok-title">Blok</div></div>
+  <div class="det-content" id="dblok-content"></div>
+</div>
+<div class="modal-ov" id="modal-kod" style="display:none" onclick="if(event.target===this)closeModal('modal-kod')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-kod')">✕</button><h3>🔑 Nowy kod dostępu</h3>
+    <div class="fg"><label>Blok / obiekt</label><select class="fs"><option>Wspólnota Lipowa 12–18</option><option>Spółdzielnia Różana</option><option>Wspólnota Bema 10–16</option></select></div>
+    <div class="fg"><label>Typ dostępu</label><select class="fs"><option>Furtka główna</option><option>Piwnica</option><option>Klatka A</option><option>Klatka B</option><option>Rozdzielnia</option></select></div>
+    <div class="fg"><label>Kod</label><input class="fi" type="password" placeholder="••••••"></div>
+    <div class="fg"><label>Notatka</label><input class="fi" placeholder="np. tylko w dni robocze"></div>
+    <button class="btn-p" onclick="showToast('✅ Kod zapisany!');closeModal('modal-kod')">Zapisz kod</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════ SAMOCHODY ═══════ -->
+<div class="sv" id="sv-samochody">
+<div class="hdr"><div class="hdr-title">🚐 Samochody</div><div class="hdr-right"><button class="hdr-btn" onclick="openModal('modal-auto')">＋</button><div class="avatar">K</div></div></div>
+<div class="content" style="position:relative">
+  <div class="kpi-scroll">
+    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">2</div><div class="l">Pojazdy</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">1 240 km</div><div class="l">Ten miesiąc</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">560 zł</div><div class="l">Paliwo</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">15.06</div><div class="l">Przegląd OC</div></div>
+  </div>
+  <div class="card" style="padding:14px">
+    <div onclick="openAuto('v1')" style="cursor:pointer;background:linear-gradient(135deg,#1565c0,#0d47a1);border-radius:12px;padding:16px;color:#fff;margin-bottom:12px">
+      <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700">Volkswagen Transporter T6</div>
+      <div style="font-size:20px;font-weight:800;margin:4px 0;letter-spacing:2px">WR 12345</div>
+      <div style="display:flex;gap:16px;margin-top:10px">
+        <div><div style="font-size:10px;opacity:.7">Przebieg</div><div style="font-size:14px;font-weight:700">124 500 km</div></div>
+        <div><div style="font-size:10px;opacity:.7">Przegląd</div><div style="font-size:14px;font-weight:700">15.09.2024</div></div>
+        <div><div style="font-size:10px;opacity:.7">OC</div><div style="font-size:14px;font-weight:700;color:#ffd54f">15.06.2024</div></div>
+      </div>
+    </div>
+    <div onclick="openAuto('v2')" style="cursor:pointer;background:linear-gradient(135deg,#2e7d32,#1b5e20);border-radius:12px;padding:16px;color:#fff">
+      <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700">Ford Transit Custom</div>
+      <div style="font-size:20px;font-weight:800;margin:4px 0;letter-spacing:2px">WR 54321</div>
+      <div style="display:flex;gap:16px;margin-top:10px">
+        <div><div style="font-size:10px;opacity:.7">Przebieg</div><div style="font-size:14px;font-weight:700">87 200 km</div></div>
+        <div><div style="font-size:10px;opacity:.7">Przegląd</div><div style="font-size:14px;font-weight:700">20.12.2024</div></div>
+        <div><div style="font-size:10px;opacity:.7">OC</div><div style="font-size:14px;font-weight:700">20.03.2025</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="padding:0 14px">
+    <div class="li"><div class="li-icon" style="background:var(--blue-l)">⛽</div><div class="li-body"><div class="li-title">Tankowanie — WR 12345</div><div class="li-sub">08.04.2024 · 60L · 280 zł</div></div><div class="li-right"><span style="font-weight:700;color:var(--red)">-280 zł</span></div></div>
+    <div class="li"><div class="li-icon" style="background:var(--orange-l)">🔧</div><div class="li-body"><div class="li-title">Serwis olejowy — WR 54321</div><div class="li-sub">02.04.2024 · Auto Serwis Kowalski</div></div><div class="li-right"><span style="font-weight:700;color:var(--red)">-450 zł</span></div></div>
+    <div class="li"><div class="li-icon" style="background:var(--blue-l)">⛽</div><div class="li-body"><div class="li-title">Tankowanie — WR 54321</div><div class="li-sub">01.04.2024 · 55L · 258 zł</div></div><div class="li-right"><span style="font-weight:700;color:var(--red)">-258 zł</span></div></div>
+  </div>
+  <button class="fab" onclick="openModal('modal-auto')">＋</button>
+</div>
+<div class="modal-ov" id="modal-auto" style="display:none" onclick="if(event.target===this)closeModal('modal-auto')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-auto')">✕</button><h3>🚐 Dodaj pojazd</h3>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Marka</label><input class="fi" placeholder="Volkswagen"></div><div class="fg" style="flex:1"><label>Model</label><input class="fi" placeholder="Transporter"></div></div>
+    <div class="fg"><label>Nr rejestracyjny</label><input class="fi" placeholder="WR 12345" style="text-transform:uppercase;font-weight:700;letter-spacing:2px"></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Rok produkcji</label><input class="fi" type="number" placeholder="2020" min="1990" max="2030"></div><div class="fg" style="flex:1"><label>Przebieg (km)</label><input class="fi" type="number" placeholder="0"></div></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Przegląd do</label><input class="fi" type="date"></div><div class="fg" style="flex:1"><label>OC do</label><input class="fi" type="date"></div></div>
+    <button class="btn-p" onclick="showToast('✅ Pojazd dodany!');closeModal('modal-auto')">Dodaj pojazd</button>
+  </div>
+</div>
+<!-- Detail pojazdu (historia jazd, tankowań, serwisów) -->
+<div class="det" id="det-auto">
+  <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700" id="dauto-title">Pojazd</div></div>
+  <div class="det-content" id="dauto-content"></div>
+</div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="tabbar">
+  <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="ti">⚡</span><span class="tl">Pulpit</span></button>
+  <button class="tab" data-tab="projekty" onclick="switchTab('projekty')"><span class="ti">📋</span><span class="tl">Projekty</span></button>
+  <button class="tab" data-tab="pracownicy" onclick="switchTab('pracownicy')"><span class="ti">👷</span><span class="tl">Ludzie</span></button>
+  <button class="tab" data-tab="awarie" onclick="switchTab('awarie')"><span class="ti">🚨</span><span class="tl">Awarie</span></button>
+  <button class="tab" data-tab="narzedzia" onclick="switchTab('narzedzia')"><span class="ti">🔧</span><span class="tl">Narzędzia</span></button>
+  <button class="tab" data-tab="wydatki" onclick="switchTab('wydatki')"><span class="ti">💰</span><span class="tl">Wydatki</span></button>
+  <button class="tab" data-tab="kody" onclick="switchTab('kody')"><span class="ti">🔑</span><span class="tl">Kody</span></button>
+  <button class="tab" data-tab="samochody" onclick="switchTab('samochody')"><span class="ti">🚐</span><span class="tl">Auta</span></button>
+</nav>
+</div><!-- .screen -->
+<script>
+// ═══════ DANE ═══════
+const DATA = {
+  projekty: {
+    p1: { id:'p1', nazwa:'Instalacja elektryczna — Lipowa 12–18', klient:'Wspólnota Lipowa', adres:'ul. Lipowa 12–18, Wrocław', status:'W realizacji', wartosc:28500, postep:65, start:'01.03.2024', koniec:'30.05.2024', kolor:'#1565c0', kolorL:'#e3f2fd', pracownicy:['w1','w2'], kosztyRobocizna:11200, kosztyMaterialy:4200, opis:'Kompleksowa wymiana instalacji elektrycznej w 3 klatkach schodowych.' },
+    p2: { id:'p2', nazwa:'Modernizacja rozdzielni — Różana 1–8', klient:'Spółdzielnia Różana', adres:'os. Różana 1–8, Wrocław', status:'W realizacji', wartosc:15200, postep:40, start:'10.03.2024', koniec:'20.06.2024', kolor:'#2e7d32', kolorL:'#e8f5e9', pracownicy:['w2','w4'], kosztyRobocizna:5800, kosztyMaterialy:2100, opis:'Wymiana rozdzielnic głównych i licznikowych.' },
+    p3: { id:'p3', nazwa:'Nowe przyłącze — ul. Wrocławska 8', klient:'Deweloper ABC', adres:'ul. Wrocławska 8, Wrocław', status:'Planowany', wartosc:8900, postep:0, start:'15.05.2024', koniec:'30.06.2024', kolor:'#e65100', kolorL:'#fff3e0', pracownicy:['w1'], kosztyRobocizna:0, kosztyMaterialy:0, opis:'Wykonanie przyłącza energetycznego dla nowego budynku.' },
+    p4: { id:'p4', nazwa:'Wymiana oświetlenia — Bema 10–16', klient:'Wspólnota Bema', adres:'ul. Bema 10–16, Wrocław', status:'Zakończony', wartosc:6400, postep:100, start:'01.01.2024', koniec:'28.02.2024', kolor:'#6a1b9a', kolorL:'#f3e5f5', pracownicy:['w1','w3'], kosztyRobocizna:2800, kosztyMaterialy:1200, opis:'Montaż oświetlenia LED w częściach wspólnych.' },
+    p5: { id:'p5', nazwa:'Przegląd instalacji — Centrum Handlowe', klient:'CH Arkady', adres:'Centrum Handlowe Arkady, Wrocław', status:'Zakończony', wartosc:4200, postep:100, start:'05.02.2024', koniec:'10.02.2024', kolor:'#00838f', kolorL:'#e0f7fa', pracownicy:['w2'], kosztyRobocizna:1600, kosztyMaterialy:200, opis:'Roczny przegląd i protokół bezpieczeństwa.' },
+  },
+  pracownicy: {
+    w1: { id:'w1', imie:'Mariusz', nazwisko:'Kowalczyk', rola:'Elektryk', stawka:45, tel:'501 234 567', status:'Aktywny', inicjaly:'MK', kolor:'#1565c0', projekty:['p1','p3','p4'], grafik:{ '01':null,'02':null,'03':'p1','04':'p1','05':'p1','06':null,'07':null,'08':'p1','09':'p1','10':'p1','11':'p3','12':'p3','13':null,'14':null,'15':'p3' } },
+    w2: { id:'w2', imie:'Tomasz', nazwisko:'Wiśniewski', rola:'Elektryk', stawka:42, tel:'502 345 678', status:'Aktywny', inicjaly:'TW', kolor:'#2e7d32', projekty:['p1','p2','p5'], grafik:{ '01':null,'02':null,'03':'p2','04':'p2','05':'p2','06':null,'07':null,'08':'p1','09':'p1','10':'p1','11':'p2','12':'p2','13':null,'14':null,'15':'p5' } },
+    w3: { id:'w3', imie:'Marcin', nazwisko:'Dąbrowski', rola:'Monter', stawka:35, tel:'503 456 789', status:'L4', inicjaly:'MD', kolor:'#c62828', projekty:['p4'], grafik:{} },
+    w4: { id:'w4', imie:'Kamil', nazwisko:'Zając', rola:'Pomocnik', stawka:25, tel:'504 567 890', status:'Aktywny', inicjaly:'KZ', kolor:'#e65100', projekty:['p2'], grafik:{ '01':null,'02':null,'03':'p2','04':'p2','05':null,'06':null,'07':null,'08':'p2','09':'p2','10':'p2','11':null,'12':null } },
+  },
+  awarie: {
+    a1: { id:'a1', opis:'Brak prądu — klatka schodowa', blok:'Wspólnota Lipowa 12–18', data:'15.03.2024', status:'Zakończona', priorytet:'Wysoki', pracownik:'w1', koszt:280, notatka:'Wymieniono bezpieczniki w rozdzielnicy głównej.', ikona:'⚡' },
+    a2: { id:'a2', opis:'Migające światło w garażu', blok:'Spółdzielnia Różana', data:'02.04.2024', status:'W realizacji', priorytet:'Średni', pracownik:'w2', koszt:0, notatka:'Sprawdzić balasty świetlówek.', ikona:'💡' },
+    a3: { id:'a3', opis:'Przepalony obwód — piwnica', blok:'Wspólnota Lipowa 12–18', data:'10.04.2024', status:'Zgłoszona', priorytet:'Wysoki', pracownik:null, koszt:0, notatka:'', ikona:'⚡' },
+    a4: { id:'a4', opis:'Domofon nie działa — klatka B', blok:'Wspólnota Bema 10–16', data:'20.03.2024', status:'Zakończona', priorytet:'Niski', pracownik:'w4', koszt:90, notatka:'Wymieniono panel wewnętrzny.', ikona:'🔔' },
+  },
+  narzedzia: {
+    t1: { id:'t1', marka:'Makita', model:'DHP484Z', nr_ser:'MAK-2022-4841', status:'Dostępne', wartosc:650, data_zakupu:'15.03.2022', gwarancja_do:'15.03.2024', komu:null, ikona:'🔧' },
+    t2: { id:'t2', marka:'Bosch', model:'GBH 2-28 F', nr_ser:null, status:'Pożyczone', wartosc:890, data_zakupu:'20.06.2021', gwarancja_do:'20.06.2023', komu:'Arek Nowak', ikona:'🔨', naprawy:[{data:'10.01.2023',opis:'Wymiana szczotek',serwis:'Bosch Service',koszt:120},{data:'05.08.2022',opis:'Naprawa mechanizmu udarowego',serwis:'Serwis Narzędzi Wrocław',koszt:280}] },
+    t3: { id:'t3', marka:'Fluke', model:'117 Multimeter', nr_ser:'FLK-2023-117', status:'Dostępne', wartosc:1200, data_zakupu:'01.09.2023', gwarancja_do:'01.09.2026', komu:null, ikona:'📏', naprawy:[{data:'15.11.2023',opis:'Kalibracja',serwis:'Fluke Authorized Service',koszt:190}] },
+    t4: { id:'t4', marka:'Knipex', model:'Zestaw szczypiec', nr_ser:'KNP-SET-01', status:'W użyciu', wartosc:450, data_zakupu:'10.12.2020', gwarancja_do:null, komu:'Maciek Sosna', ikona:'🪛' },
+    t5: { id:'t5', marka:'Stanley', model:'Poziomnica 60cm', nr_ser:null, status:'Dostępne', wartosc:120, data_zakupu:'01.06.2023', gwarancja_do:'01.06.2024', komu:null, ikona:'📐' },
+    t6: { id:'t6', marka:'Milwaukee', model:'M18 FUEL', nr_ser:'MIL-M18-2024', status:'Dostępne', wartosc:1450, data_zakupu:'05.01.2024', gwarancja_do:'05.01.2027', komu:null, ikona:'🔋', naprawy:[{data:'20.03.2024',opis:'Wymiana akumulatora',serwis:'Milwaukee Service',koszt:190}] },
+  },
+  bloki: {
+    b1: { id:'b1', nazwa:'Wspólnota Lipowa 12–18', adres:'ul. Lipowa 12–18, Wrocław', lat:51.1079, lng:17.0385, kody:[{typ:'Furtka główna',kod:'1234'},{typ:'Piwnica',kod:'5678'},{typ:'Klatka A',kod:'4321'},{typ:'Klatka B',kod:'8765'},{typ:'Rozdzielnia',kod:'9999'}], awarie:['a1','a3'], ikona:'🏢' },
+    b2: { id:'b2', nazwa:'Spółdzielnia Różana', adres:'os. Różana 1–8, Wrocław', lat:51.0892, lng:16.9988, kody:[{typ:'Wejście główne',kod:'2468'},{typ:'Piwnica',kod:'1357'},{typ:'Siłownia',kod:'7531'},{typ:'Rozdzielnia',kod:'9876'}], awarie:['a2'], ikona:'🏠' },
+    b3: { id:'b3', nazwa:'Wspólnota Bema 10–16', adres:'ul. Bema 10–16, Wrocław', lat:51.1200, lng:16.9800, kody:[{typ:'Furtka',kod:'3690'},{typ:'Piwnica',kod:'0369'},{typ:'Rozdzielnia',kod:'1111'}], awarie:['a4'], ikona:'🏗️' },
+  },
+  czasPracy: {
+    '10': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p1'},{prac:'w4',godz:8,proj:'p2'}],
+    '09': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p2'}],
+    '08': [{prac:'w1',godz:8,proj:'p3'},{prac:'w2',godz:8,proj:'p1'},{prac:'w4',godz:8,proj:'p2'},{prac:'w3',godz:8,proj:'p4'}],
+    '05': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p2'}],
+    '04': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p2'},{prac:'w4',godz:8,proj:'p2'}],
+    '03': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p2'}],
+  },
+  wydatki: {
+    e1: { id:'e1', opis:'Przewody YKY 5×6mm²', kwota:1240, typ:'Materiały', data:'08.04.2024', proj:'p1' },
+    e2: { id:'e2', opis:'Paliwo — tank', kwota:280, typ:'Paliwo', data:'07.04.2024', proj:null },
+    e3: { id:'e3', opis:'Rozdzielnica 3-fazowa', kwota:890, typ:'Materiały', data:'05.04.2024', proj:'p2' },
+    e4: { id:'e4', opis:'Faktura Lipowa — zaliczka', kwota:5000, typ:'Przychód', data:'03.04.2024', proj:'p1' },
+    e5: { id:'e5', opis:'LED panelowe ×20', kwota:440, typ:'Materiały', data:'01.04.2024', proj:'p4' },
+  },
+  samochody: {
+    v1: { id:'v1', marka:'Volkswagen', model:'Transporter T6', rej:'WR 12345', przebieg:124500, przeglad:'15.09.2024', oc:'15.06.2024', kolorA:'#1565c0', kolorB:'#0d47a1', historia:[
+      { typ:'tankowanie', data:'08.04.2024', opis:'60L', koszt:280 },
+    ] },
+    v2: { id:'v2', marka:'Ford', model:'Transit Custom', rej:'WR 54321', przebieg:87200, przeglad:'20.12.2024', oc:'20.03.2025', kolorA:'#2e7d32', kolorB:'#1b5e20', historia:[
+      { typ:'serwis', data:'02.04.2024', opis:'Serwis olejowy', serwis:'Auto Serwis Kowalski', koszt:450 },
+      { typ:'tankowanie', data:'01.04.2024', opis:'55L', koszt:258 },
+    ] },
+  },
+};
+
+// ═══════ NAWIGACJA (z historią powrotu) ═══════
+let currentTab = 'dashboard';
+let currentOpenDet = null;   // id aktualnie otwartego .det, lub null
+let navStack = [];           // stos { tab, det } do przywracania przy "←"
+const lastReopen = {};       // detId -> funkcja ponownie otwierająca dokładnie ten sam widok
+
+function switchTab(tab, opts = {}) {
+  if (!opts.keepStack) { navStack = []; currentOpenDet = null; }
+  document.querySelectorAll('.sv').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(n => n.classList.remove('active'));
+  const sv = document.getElementById('sv-' + tab);
+  if (sv) sv.classList.add('active');
+  document.querySelectorAll('.tab').forEach(n => {
+    if (n.dataset.tab === tab) n.classList.add('active');
+  });
+  // Zamknij detale przy zmianie zakładki
+  document.querySelectorAll('.det').forEach(d => d.classList.remove('open'));
+  const scanOv = document.getElementById('scan-ov');
+  if (scanOv) scanOv.style.display = 'none';
+  currentTab = tab;
+}
+
+// Wywołaj PRZED przejściem do nowego detalu/zakładki, żeby zapamiętać skąd wracać
+function pushNav() {
+  navStack.push({ tab: currentTab, det: currentOpenDet });
+}
+
+// Przycisk "←" w detalach — wraca dokładnie tam, skąd użytkownik przyszedł
+function goBack() {
+  const prev = navStack.pop();
+  if (!prev) {
+    // brak historii — zwykłe zamknięcie do bieżącej zakładki
+    document.querySelectorAll('.det').forEach(d => d.classList.remove('open'));
+    currentOpenDet = null;
+    return;
+  }
+  document.querySelectorAll('.sv').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(n => n.classList.remove('active'));
+  const sv = document.getElementById('sv-' + prev.tab);
+  if (sv) sv.classList.add('active');
+  document.querySelectorAll('.tab').forEach(n => { if (n.dataset.tab === prev.tab) n.classList.add('active'); });
+  currentTab = prev.tab;
+  document.querySelectorAll('.det').forEach(d => d.classList.remove('open'));
+
+  if (prev.det && lastReopen[prev.det]) {
+    currentOpenDet = prev.det;
+    lastReopen[prev.det]();
+  } else {
+    currentOpenDet = null;
+  }
+}
+
+// ═══════ NARZĘDZIA: szybki wybór gwarancji ═══════
+let lastGwarancjaMonths = null;
+function ustawGwarancje(months) {
+  if (months !== null) lastGwarancjaMonths = months;
+  const m = months !== null ? months : lastGwarancjaMonths;
+  if (!m) return;
+  const zakupEl = document.getElementById('nn-data-zakupu');
+  const base = zakupEl && zakupEl.value ? new Date(zakupEl.value) : new Date();
+  base.setMonth(base.getMonth() + m);
+  document.getElementById('nn-gwarancja').value = base.toISOString().slice(0, 10);
+}
+
+// ═══════ MODALS ═══════
+function openModal(id) {
+  document.getElementById(id).style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ═══════ DETAIL PANELS ═══════
+function openDet(id) {
+  document.querySelectorAll('.det').forEach(d => d.classList.remove('open'));
+  document.getElementById(id).classList.add('open');
+  currentOpenDet = id;
+}
+function closeDet(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
+  if (currentOpenDet === id) currentOpenDet = null;
+  document.getElementById('scan-ov') && (document.getElementById('scan-ov').style.display = 'none');
+}
+
+// ═══════ FILTER TABS + SEARCH ═══════
+function setFtab(el, group) {
+  el.closest('.frow').querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  applyFilter(group);
+}
+
+function matchesFtab(group, activeLabel, status) {
+  if (!activeLabel || activeLabel === 'Wszystkie') return true;
+  if (group === 'awarie' && activeLabel === 'Otwarte') return status !== 'Zakończona';
+  return status === activeLabel;
+}
+
+function applyFilter(group) {
+  const listEl = document.getElementById('list-' + group);
+  const frow = document.getElementById('frow-' + group);
+  const emptyEl = document.getElementById('empty-' + group);
+  if (!listEl) return;
+  const activeTab = frow ? frow.querySelector('.ftab.active') : null;
+  const activeLabel = activeTab ? activeTab.textContent.trim() : 'Wszystkie';
+  const searchInput = document.getElementById('search-' + group);
+  const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  let visibleCount = 0;
+  listEl.querySelectorAll(':scope > .li').forEach(li => {
+    const status = li.dataset.status || '';
+    const text = (li.dataset.text || li.textContent).toLowerCase();
+    const show = matchesFtab(group, activeLabel, status) && (!q || text.includes(q));
+    li.style.display = show ? '' : 'none';
+    if (show) visibleCount++;
+  });
+  if (emptyEl) emptyEl.style.display = visibleCount === 0 ? 'block' : 'none';
+}
+
+// ═══════ TOAST ═══════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 400); }, 2500);
+}
+
+// ═══════ PROJEKTY ═══════
+let currentProjTab = 'ogolne';
+
+function openProjekt(id, opts = {}) {
+  if (!opts.skipPush) pushNav();
+  switchTab('projekty', { keepStack: true });
+  setTimeout(() => {
+    const p = DATA.projekty[id];
+    if (!p) return;
+    document.getElementById('dproj-title').textContent = p.nazwa.split(' — ')[0];
+    buildProjDetail(id, 'ogolne');
+    openDet('det-proj');
+    lastReopen['det-proj'] = () => openProjekt(id, { skipPush: true });
+  }, 50);
+}
+
+function buildProjDetail(id, tab) {
+  const p = DATA.projekty[id];
+  currentProjTab = tab;
+  const koszty = p.kosztyRobocizna + p.kosztyMaterialy;
+  const margin = p.wartosc > 0 ? Math.round(((p.wartosc - koszty) / p.wartosc) * 100) : 0;
+  const zysk = p.wartosc - koszty;
+
+  const statusColors = { 'W realizacji':'var(--orange)', 'Zakończony':'var(--green)', 'Planowany':'var(--blue)', 'Wstrzymany':'var(--red)' };
+  const statusBg = { 'W realizacji':'var(--orange-l)', 'Zakończony':'var(--green-l)', 'Planowany':'var(--blue-l)', 'Wstrzymany':'var(--red-l)' };
+
+  let html = `
+    <div style="background:${p.kolorL};padding:14px;border-left:4px solid ${p.kolor};display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:${p.kolor}">${p.nazwa}</div>
+        <div style="font-size:11px;color:${p.kolor};opacity:.8;margin-top:2px">${p.klient}</div>
+        ${p.adres ? `<div style="font-size:11px;color:${p.kolor};opacity:.7;margin-top:2px">📍 ${p.adres}</div>` : ''}
+      </div>
+      <button onclick="openEditProjekt('${id}')" style="flex-shrink:0;background:rgba(255,255,255,.6);border:none;border-radius:14px;padding:6px 10px;font-size:11px;font-weight:700;color:${p.kolor};cursor:pointer">✏️ Edytuj</button>
+    </div>
+    <div style="display:flex;gap:2px;padding:12px 14px 0;border-bottom:1px solid #e0e0e0;margin:0 0 14px 0">
+      ${['ogolne','pracownicy','wydatki','rentownosc'].map(t => `
+        <div onclick="buildProjDetail('${id}','${t}')" style="padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;border-bottom:3px solid ${currentProjTab===t?p.kolor:'transparent'};color:${currentProjTab===t?p.kolor:'#888'};transition:.2s">
+          ${{'ogolne':'Ogólne','pracownicy':'Pracownicy','wydatki':'Wydatki','rentownosc':'Rentowność'}[t]}
+        </div>`).join('')}
+    </div>`;
+
+  if (tab === 'ogolne') {
+    html += `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 14px">
+        <div style="background:#fff;border-radius:8px;padding:10px;border-top:3px solid ${p.kolor};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+          <div style="font-size:16px;font-weight:800;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div>
+          <div style="font-size:9px;color:#888;margin-top:2px">Wartość</div>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:10px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+          <div style="font-size:16px;font-weight:800;color:var(--blue)">${p.postep}%</div>
+          <div style="font-size:9px;color:#888;margin-top:2px">Postęp</div>
+        </div>
+      </div>
+      <div style="padding:0 14px">
+        <div style="background:#f8f9fa;border-radius:8px;overflow:hidden;margin-bottom:12px">
+          <div style="background:${p.kolor};height:6px;width:${p.postep}%;transition:.6s ease"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:14px">
+          <div><span style="color:#888">Start:</span> <strong>${p.start}</strong></div>
+          <div><span style="color:#888">Koniec:</span> <strong>${p.koniec}</strong></div>
+          <div><span style="color:#888">Status:</span> <span style="background:${statusBg[p.status]||'#f0f0f0'};color:${statusColors[p.status]||'#444'};padding:2px 8px;border-radius:20px;font-weight:700;font-size:11px">${p.status}</span></div>
+        </div>
+        <div style="font-size:13px;color:#555;line-height:1.5;margin-bottom:14px">${p.opis}</div>
+      </div>`;
+  } else if (tab === 'pracownicy') {
+    html += `<div style="padding:0 14px">
+      <button onclick="openDzienModalForProject('${id}')" class="btn-s" style="width:100%;margin-bottom:10px">⏱️ Dodaj czas pracy dla tego projektu</button>`;
+    p.pracownicy.forEach(wid => {
+      const w = DATA.pracownicy[wid];
+      if (!w) return;
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0" onclick="openPrac('${wid}')">
+        <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor}22;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:${w.kolor}">${w.inicjaly}</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:13px">${w.imie} ${w.nazwisko}</div><div style="font-size:11px;color:#888">${w.rola} · ${w.stawka} zł/h</div></div>
+        <div style="font-size:12px;color:var(--blue)">›</div>
+      </div>`;
+    });
+    html += `</div>`;
+  } else if (tab === 'wydatki') {
+    html += `<div style="padding:0 14px">
+      <button onclick="openNewWydatek('${id}')" class="btn-s" style="width:100%;margin-bottom:10px">＋ Dodaj wydatek dla tego projektu</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="background:#fff;border-radius:8px;padding:10px;border-top:3px solid var(--orange);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+          <div style="font-size:15px;font-weight:800;color:var(--orange)">${p.kosztyRobocizna.toLocaleString('pl-PL')} zł</div>
+          <div style="font-size:9px;color:#888;margin-top:2px">Robocizna</div>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:10px;border-top:3px solid var(--red);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+          <div style="font-size:15px;font-weight:800;color:var(--red)">${p.kosztyMaterialy.toLocaleString('pl-PL')} zł</div>
+          <div style="font-size:9px;color:#888;margin-top:2px">Materiały</div>
+        </div>
+      </div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#888">Robocizna</span><span style="font-weight:700">${p.kosztyRobocizna.toLocaleString('pl-PL')} zł</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#888">Materiały</span><span style="font-weight:700">${p.kosztyMaterialy.toLocaleString('pl-PL')} zł</span></div>
+        <div style="height:1px;background:#ddd;margin:8px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:700">Razem koszty</span><span style="font-weight:800;color:var(--red)">${koszty.toLocaleString('pl-PL')} zł</span></div>
+      </div>
+    </div>`;
+  } else if (tab === 'rentownosc') {
+    const marginColor = margin >= 30 ? 'var(--green)' : margin >= 10 ? 'var(--orange)' : 'var(--red)';
+    html += `<div style="padding:0 14px">
+      <div style="background:${marginColor}22;border-radius:10px;padding:16px;text-align:center;margin-bottom:14px;border:2px solid ${marginColor}">
+        <div style="font-size:32px;font-weight:900;color:${marginColor}">${margin}%</div>
+        <div style="font-size:12px;color:${marginColor};font-weight:700">Marża projektu</div>
+      </div>
+      <div style="background:#f8f9fa;border-radius:8px;padding:12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Wartość projektu</span><span style="font-weight:700;color:var(--green)">+${p.wartosc.toLocaleString('pl-PL')} zł</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Koszty łącznie</span><span style="font-weight:700;color:var(--red)">-${koszty.toLocaleString('pl-PL')} zł</span></div>
+        <div style="height:1px;background:#ddd;margin:8px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:15px"><span style="font-weight:800">Zysk</span><span style="font-weight:900;color:${marginColor}">${zysk >= 0 ? '+' : ''}${zysk.toLocaleString('pl-PL')} zł</span></div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:#fff;border-radius:8px;font-size:12px;color:#666">
+        ${margin >= 30 ? '✅ Projekt bardzo rentowny' : margin >= 15 ? '🟡 Rentowność akceptowalna' : '⚠️ Niska rentowność — sprawdź koszty'}
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('dproj-content').innerHTML = html;
+
+  // Fake re-render tabs with correct active state
+  setTimeout(() => {
+    const tabEls = document.querySelectorAll('#det-proj [onclick*="buildProjDetail"]');
+    tabEls.forEach(el => {
+      const t = el.getAttribute('onclick').match(/'([^']+)'\)$/)[1];
+      el.style.borderBottomColor = t === tab ? p.kolor : 'transparent';
+      el.style.color = t === tab ? p.kolor : '#888';
+    });
+  }, 10);
+}
+
+// Pula kontrastujących kolorów projektów — kolor jest "zarezerwowany" dopóki projekt nie ma statusu Zakończony
+const PROJECT_COLOR_POOL   = ['#1565c0','#2e7d32','#e65100','#6a1b9a','#00838f','#c62828','#37474f','#ad1457','#4527a0','#9e9d24'];
+const PROJECT_COLOR_POOL_L = ['#e3f2fd','#e8f5e9','#fff3e0','#f3e5f5','#e0f7fa','#ffebee','#eceff1','#fce4ec','#ede7f6','#f9fbe7'];
+
+function assignProjectColor(excludeId) {
+  const used = new Set(Object.values(DATA.projekty)
+    .filter(p => p.status !== 'Zakończony' && p.id !== excludeId)
+    .map(p => p.kolor));
+  for (let i = 0; i < PROJECT_COLOR_POOL.length; i++) {
+    if (!used.has(PROJECT_COLOR_POOL[i])) return { kolor: PROJECT_COLOR_POOL[i], kolorL: PROJECT_COLOR_POOL_L[i] };
+  }
+  const idx = Object.keys(DATA.projekty).length % PROJECT_COLOR_POOL.length;
+  return { kolor: PROJECT_COLOR_POOL[idx], kolorL: PROJECT_COLOR_POOL_L[idx] };
+}
+
+const PROJ_STATUS_BADGE = {
+  'W realizacji': { bg:'var(--green-l)', fg:'var(--green)' },
+  'Planowany':    { bg:'var(--blue-l)',  fg:'var(--blue)' },
+  'Zakończony':   { bg:'#f5f5f5',        fg:'var(--muted)' },
+  'Wstrzymany':   { bg:'var(--orange-l)',fg:'var(--orange)' },
+};
+
+function renderProjektyList() {
+  const all = Object.values(DATA.projekty);
+  const listEl = document.getElementById('list-projekty');
+  const emptyEl = document.getElementById('empty-projekty');
+  if (listEl) {
+    listEl.querySelectorAll(':scope > .li').forEach(li => li.remove());
+    all.forEach(p => {
+      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#f5f5f5', fg:'var(--muted)' };
+      const li = document.createElement('div');
+      li.className = 'li';
+      li.dataset.status = p.status;
+      li.dataset.text = `${p.nazwa} ${p.klient} ${p.adres || ''}`.toLowerCase();
+      li.onclick = () => openProjekt(p.id);
+      li.innerHTML = `<div class="li-icon" style="background:${p.kolorL}">📋</div><div class="li-body"><div class="li-title">${p.nazwa}</div><div class="li-sub">📍 ${p.adres || p.klient}</div></div><div class="li-right"><div style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg};margin-top:4px;display:block">${p.status}</span></div>`;
+      listEl.insertBefore(li, emptyEl);
+    });
+    applyFilter('projekty');
+  }
+
+  const dashEl = document.getElementById('dash-projekty-list');
+  if (dashEl) {
+    const aktywne = all.filter(p => p.status === 'W realizacji').slice(0, 3);
+    dashEl.innerHTML = aktywne.map(p => {
+      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#f5f5f5', fg:'var(--muted)' };
+      return `<div class="li" onclick="openProjekt('${p.id}')"><div style="width:10px;height:10px;border-radius:5px;background:${p.kolor};flex-shrink:0"></div><div class="li-body"><div class="li-title">${p.nazwa}</div><div class="li-sub">${p.klient}</div></div><div class="li-right"><div style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg}">${p.status}</span></div></div>`;
+    }).join('') || `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak aktywnych projektów</div>`;
+  }
+
+  const kpiEl = document.getElementById('dash-kpi-projekty');
+  if (kpiEl) kpiEl.textContent = all.filter(p => p.status === 'W realizacji').length;
+}
+
+function openNewProjekt() {
+  document.getElementById('npr-edit-id').value = '';
+  document.getElementById('npr-heading').textContent = '📋 Nowy projekt';
+  document.getElementById('npr-nazwa').value = '';
+  document.getElementById('npr-klient').value = '';
+  document.getElementById('npr-adres').value = '';
+  document.getElementById('npr-status').value = 'W realizacji';
+  document.getElementById('npr-postep').value = '';
+  document.getElementById('npr-start').value = '';
+  document.getElementById('npr-wartosc').value = '';
+  document.getElementById('npr-submit-btn').textContent = 'Utwórz projekt';
+  openModal('modal-projekt');
+}
+
+function openEditProjekt(id) {
+  const p = DATA.projekty[id];
+  if (!p) return;
+  document.getElementById('npr-edit-id').value = id;
+  document.getElementById('npr-heading').textContent = '✏️ Edytuj projekt';
+  document.getElementById('npr-nazwa').value = p.nazwa;
+  document.getElementById('npr-klient').value = p.klient;
+  document.getElementById('npr-adres').value = p.adres || '';
+  document.getElementById('npr-status').value = p.status;
+  document.getElementById('npr-postep').value = p.postep;
+  document.getElementById('npr-wartosc').value = p.wartosc;
+  document.getElementById('npr-submit-btn').textContent = 'Zapisz zmiany';
+  openModal('modal-projekt');
+}
+
+function saveProjekt() {
+  const editId = document.getElementById('npr-edit-id').value;
+  const nazwa = document.getElementById('npr-nazwa').value.trim();
+  if (!nazwa) { showToast('⚠️ Podaj nazwę projektu'); return; }
+  const klient = document.getElementById('npr-klient').value.trim();
+  const adres = document.getElementById('npr-adres').value.trim();
+  const status = document.getElementById('npr-status').value;
+  const postep = Number(document.getElementById('npr-postep').value) || 0;
+  const wartosc = Number(document.getElementById('npr-wartosc').value) || 0;
+
+  if (editId && DATA.projekty[editId]) {
+    const p = DATA.projekty[editId];
+    Object.assign(p, { nazwa, klient, adres, status, postep, wartosc });
+    if (status !== 'Zakończony') {
+      const used = new Set(Object.values(DATA.projekty).filter(x => x.id !== p.id && x.status !== 'Zakończony').map(x => x.kolor));
+      if (used.has(p.kolor)) {
+        const c = assignProjectColor(p.id);
+        p.kolor = c.kolor; p.kolorL = c.kolorL;
+      }
+    }
+    showToast('✅ Zapisano zmiany');
+    renderProjektyList();
+    if (document.getElementById('det-proj').classList.contains('open')) {
+      document.getElementById('dproj-title').textContent = p.nazwa.split(' — ')[0];
+      buildProjDetail(editId, currentProjTab);
+    }
+  } else {
+    const id = 'p_' + Date.now().toString(36);
+    const c = assignProjectColor();
+    DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, postep, start:document.getElementById('npr-start').value || '', koniec:'', kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, opis:'' };
+    showToast('✅ Projekt dodany!');
+    renderProjektyList();
+  }
+  closeModal('modal-projekt');
+}
+
+// ═══════ WYDATKI ═══════
+const WYD_TYP_META = {
+  'Materiały': { ikona:'🔌', bg:'var(--orange-l)' },
+  'Paliwo':    { ikona:'⛽', bg:'var(--blue-l)' },
+  'Narzędzia': { ikona:'🔧', bg:'var(--purple-l)' },
+  'Przychód':  { ikona:'💵', bg:'var(--green-l)' },
+  'Inne':      { ikona:'📄', bg:'#f5f5f5' },
+};
+
+function renderWydatkiList() {
+  const all = Object.values(DATA.wydatki);
+  const listEl = document.getElementById('list-wyd');
+  const emptyEl = document.getElementById('empty-wyd');
+  if (listEl) {
+    listEl.querySelectorAll(':scope > .li').forEach(li => li.remove());
+    all.forEach(e => {
+      const meta = WYD_TYP_META[e.typ] || WYD_TYP_META['Inne'];
+      const proj = e.proj ? DATA.projekty[e.proj] : null;
+      const isIncome = e.typ === 'Przychód';
+      const li = document.createElement('div');
+      li.className = 'li';
+      li.dataset.status = e.typ;
+      li.dataset.text = `${e.opis} ${e.typ} ${proj ? proj.nazwa : ''}`.toLowerCase();
+      li.onclick = () => openEditWydatek(e.id);
+      li.innerHTML = `<div class="li-icon" style="background:${meta.bg}">${meta.ikona}</div><div class="li-body"><div class="li-title">${e.opis}</div><div class="li-sub">${e.typ} · ${e.data}${proj ? ' · ' + proj.nazwa.split(' — ')[0] : ''}</div></div><div class="li-right"><span style="font-weight:800;color:${isIncome ? 'var(--green)' : 'var(--red)'}">${isIncome ? '+' : '-'}${e.kwota.toLocaleString('pl-PL')} zł</span></div>`;
+      listEl.insertBefore(li, emptyEl);
+    });
+    applyFilter('wyd');
+  }
+
+  const miesiac = all.filter(e => e.typ !== 'Przychód').reduce((s, e) => s + e.kwota, 0);
+  const materialy = all.filter(e => e.typ === 'Materiały').reduce((s, e) => s + e.kwota, 0);
+  const miesiacEl = document.getElementById('wyd-kpi-miesiac');
+  const materialyEl = document.getElementById('wyd-kpi-materialy');
+  if (miesiacEl) miesiacEl.textContent = miesiac.toLocaleString('pl-PL') + ' zł';
+  if (materialyEl) materialyEl.textContent = materialy.toLocaleString('pl-PL') + ' zł';
+}
+
+function fillWydatekProjektSelect(selectedProj) {
+  const sel = document.getElementById('nw-projekt');
+  sel.innerHTML = '<option value="">— ogólny —</option>' + Object.values(DATA.projekty).map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
+  sel.value = selectedProj || '';
+}
+
+function openNewWydatek(presetProj) {
+  document.getElementById('nw-edit-id').value = '';
+  document.getElementById('nw-heading').textContent = '💰 Nowy wydatek';
+  document.getElementById('nw-opis').value = '';
+  document.getElementById('nw-kwota').value = '';
+  document.getElementById('nw-typ').value = 'Materiały';
+  document.getElementById('nw-data').value = '';
+  fillWydatekProjektSelect(presetProj || '');
+  document.getElementById('nw-submit-btn').textContent = 'Zapisz wydatek';
+  document.getElementById('nw-delete-btn').style.display = 'none';
+  openModal('modal-wydatek');
+}
+
+function openEditWydatek(id) {
+  const e = DATA.wydatki[id];
+  if (!e) return;
+  document.getElementById('nw-edit-id').value = id;
+  document.getElementById('nw-heading').textContent = '✏️ Edytuj wydatek';
+  document.getElementById('nw-opis').value = e.opis;
+  document.getElementById('nw-kwota').value = e.kwota;
+  document.getElementById('nw-typ').value = e.typ;
+  document.getElementById('nw-data').value = '';
+  fillWydatekProjektSelect(e.proj || '');
+  document.getElementById('nw-submit-btn').textContent = 'Zapisz zmiany';
+  document.getElementById('nw-delete-btn').style.display = 'block';
+  openModal('modal-wydatek');
+}
+
+function saveWydatek() {
+  const editId = document.getElementById('nw-edit-id').value;
+  const opis = document.getElementById('nw-opis').value.trim();
+  if (!opis) { showToast('⚠️ Podaj opis wydatku'); return; }
+  const kwota = Number(document.getElementById('nw-kwota').value) || 0;
+  const typ = document.getElementById('nw-typ').value;
+  const dataVal = document.getElementById('nw-data').value;
+  const dataLabel = dataVal ? dataVal.split('-').reverse().join('.') : (editId && DATA.wydatki[editId] ? DATA.wydatki[editId].data : '10.04.2024');
+  const proj = document.getElementById('nw-projekt').value || null;
+
+  if (editId && DATA.wydatki[editId]) {
+    Object.assign(DATA.wydatki[editId], { opis, kwota, typ, data: dataLabel, proj });
+    showToast('✅ Zapisano zmiany');
+  } else {
+    const id = 'e_' + Date.now().toString(36);
+    DATA.wydatki[id] = { id, opis, kwota, typ, data: dataLabel, proj };
+    showToast('✅ Wydatek zapisany!');
+  }
+  renderWydatkiList();
+  closeModal('modal-wydatek');
+}
+
+function deleteWydatek() {
+  const editId = document.getElementById('nw-edit-id').value;
+  if (!editId || !DATA.wydatki[editId]) return;
+  delete DATA.wydatki[editId];
+  showToast('🗑️ Wydatek usunięty');
+  renderWydatkiList();
+  closeModal('modal-wydatek');
+}
+
+// ═══════ PRACOWNICY ═══════ (zakładka Ludzie łączy listę pracowników i kalendarz zespołu)
+function setPracView(view) {
+  document.getElementById('prac-lista-section').style.display = view === 'lista' ? 'block' : 'none';
+  document.getElementById('prac-kalendarz-section').style.display = view === 'kalendarz' ? 'block' : 'none';
+  document.getElementById('prac-view-tab-lista').classList.toggle('active', view === 'lista');
+  document.getElementById('prac-view-tab-kalendarz').classList.toggle('active', view === 'kalendarz');
+  if (view === 'kalendarz') buildCzasCalendar();
+}
+
+function openPrac(id, opts = {}) {
+  if (!opts.skipPush) pushNav();
+  switchTab('pracownicy', { keepStack: true });
+  setTimeout(() => {
+    const w = DATA.pracownicy[id];
+    if (!w) return;
+    document.getElementById('dprac-title').textContent = w.imie + ' ' + w.nazwisko;
+    buildPracDetail(id);
+    openDet('det-prac');
+    lastReopen['det-prac'] = () => openPrac(id, { skipPush: true });
+  }, 50);
+}
+
+function buildPracDetail(id) {
+  const w = DATA.pracownicy[id];
+  const statusColor = w.status === 'Aktywny' ? 'var(--green)' : w.status === 'L4' ? 'var(--red)' : 'var(--orange)';
+  const statusBg = w.status === 'Aktywny' ? 'var(--green-l)' : w.status === 'L4' ? 'var(--red-l)' : 'var(--orange-l)';
+
+  // Kalendarz budowany z prawdziwych wpisów DATA.czasPracy (a nie osobnego, martwego pola grafik)
+  const days = [];
+  for (let i = 1; i <= 30; i++) {
+    const key = String(i).padStart(2,'0');
+    const dow = (i + 0) % 7; // 1=Pn,...,0=Nd (kwiecień 2024 zaczyna się w poniedziałek)
+    const isWeekend = dow === 6 || dow === 0;
+    const wpisyDnia = DATA.czasPracy[key] || [];
+    const wpis = wpisyDnia.find(x => x.prac === id);
+    const proj = wpis && !wpis.nieobecny ? DATA.projekty[wpis.proj] : null;
+    days.push({ day: i, key, isWeekend, proj, nieobecny: !!(wpis && wpis.nieobecny) });
+  }
+
+  let calHtml = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">`;
+  ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'].forEach(d => {
+    calHtml += `<div style="text-align:center;font-size:8px;font-weight:700;color:#999;padding:2px 0">${d}</div>`;
+  });
+  calHtml += `</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
+  days.forEach(d => {
+    if (d.nieobecny) {
+      calHtml += `<div onclick="openCzasDayModal('${d.key}')" title="Nieobecny" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,#eee,#eee 3px,#e0e0e0 3px,#e0e0e0 6px);border:2px dashed #bbb;color:#c62828">🚫</div>`;
+      return;
+    }
+    let bg = d.isWeekend ? '#f5f5f5' : (d.proj ? d.proj.kolor + '33' : '#eef2f7');
+    let border = d.proj ? `2px solid ${d.proj.kolor}` : (d.isWeekend ? '1px solid #e0e0e0' : '1px solid #dde3ea');
+    let color = d.proj ? d.proj.kolor : (d.isWeekend ? '#ccc' : '#aaa');
+    let clickAttr = d.proj ? `onclick="openCzasDayModal('${d.key}')" title="${d.proj.nazwa}" style="cursor:pointer"` : '';
+    calHtml += `<div ${clickAttr} style="border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:${bg};border:${border};color:${color}">${d.day}</div>`;
+  });
+  calHtml += `</div>`;
+
+  // Legenda projektów (tylko te faktycznie przepracowane w tym miesiącu przez tego pracownika)
+  const activeProjIds = [...new Set(days.filter(d => d.proj).map(d => d.proj.id))];
+  let legendHtml = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;border:2px dashed #bbb;background:#eee"></div><span style="color:#555">🚫 Nieobecny</span></div>`;
+  activeProjIds.forEach(pid => {
+    const p = DATA.projekty[pid];
+    if (p) legendHtml += `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:#555">${p.nazwa.split(' — ')[0].substring(0,15)}</span></div>`;
+  });
+  legendHtml += `</div>`;
+
+  // Projekty lista
+  let projListHtml = w.projekty.map(pid => {
+    const p = DATA.projekty[pid];
+    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer">
+      <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--text)">${p.nazwa.split(' — ')[0]}</div><div style="font-size:10px;color:#888">${p.klient}</div></div>
+      <span style="font-size:9px;font-weight:700;background:${p.kolorL};color:${p.kolor};padding:2px 8px;border-radius:20px">${p.postep}%</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('dprac-content').innerHTML = `
+    <div style="background:${w.kolor}22;padding:14px;display:flex;align-items:center;gap:12px">
+      <div style="width:50px;height:50px;border-radius:25px;background:${w.kolor};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff">${w.inicjaly}</div>
+      <div><div style="font-size:15px;font-weight:800;color:var(--text)">${w.imie} ${w.nazwisko}</div><div style="font-size:12px;color:#555;margin-top:2px">${w.rola} · ${w.stawka} zł/h</div><div style="font-size:11px;color:#888">📞 ${w.tel}</div></div>
+      <span style="margin-left:auto;background:${statusBg};color:${statusColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${w.status}</span>
+    </div>
+    <div style="padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:800;color:var(--text)">📅 Kwiecień 2024 — Grafik</div>
+        <button onclick="openGodzinyModal('${id}')" class="btn-s">＋ Godziny</button>
+      </div>
+      ${calHtml}${legendHtml}
+    </div>
+    <div style="padding:0 14px 14px">
+      <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">📋 Projekty (kliknij → szczegóły)</div>
+      ${projListHtml || '<div style="color:#aaa;font-size:12px">Brak projektów</div>'}
+    </div>`;
+}
+
+// ═══════ AWARIE ═══════
+function openAwaria(id, opts = {}) {
+  if (!opts.skipPush) pushNav();
+  switchTab('awarie', { keepStack: true });
+  setTimeout(() => {
+    const a = DATA.awarie[id];
+    if (!a) return;
+    document.getElementById('dawaria-title').textContent = a.ikona + ' ' + a.opis.substring(0,20) + '…';
+    buildAwariaDetail(id);
+    openDet('det-awaria');
+    lastReopen['det-awaria'] = () => openAwaria(id, { skipPush: true });
+  }, 50);
+}
+
+function buildAwariaDetail(id) {
+  const a = DATA.awarie[id];
+  const prac = a.pracownik ? DATA.pracownicy[a.pracownik] : null;
+  const statusColors = { 'Zgłoszona':'var(--red)', 'W realizacji':'var(--orange)', 'Zakończona':'var(--green)' };
+  const statusBg = { 'Zgłoszona':'var(--red-l)', 'W realizacji':'var(--orange-l)', 'Zakończona':'var(--green-l)' };
+  const priColors = { 'Wysoki':'var(--red)', 'Średni':'var(--orange)', 'Niski':'var(--green)', 'Krytyczny':'var(--purple)' };
+
+  document.getElementById('dawaria-content').innerHTML = `
+    <div style="background:${statusBg[a.status]||'#f5f5f5'};padding:14px;border-left:4px solid ${statusColors[a.status]||'#888'}">
+      <div style="font-size:20px;margin-bottom:4px">${a.ikona}</div>
+      <div style="font-size:14px;font-weight:800;color:var(--text)">${a.opis}</div>
+      <div style="font-size:12px;color:#555;margin-top:2px">📍 ${a.blok} · 📅 ${a.data}</div>
+    </div>
+
+    <div style="padding:14px">
+      <div style="font-size:12px;font-weight:800;margin-bottom:8px;color:var(--text)">Status awarii</div>
+      <div style="display:flex;gap:6px;margin-bottom:16px">
+        ${['Zgłoszona','W realizacji','Zakończona'].map(s => `
+          <button onclick="updateAwariaStatus('${id}','${s}',this)" style="flex:1;padding:8px 4px;border-radius:8px;border:2px solid ${s===a.status?statusColors[s]:'#e0e0e0'};background:${s===a.status?statusBg[s]:'#fff'};color:${s===a.status?statusColors[s]:'#888'};font-size:10px;font-weight:700;cursor:pointer;transition:.2s">${s}</button>
+        `).join('')}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <div class="fg" style="margin-bottom:0"><label>Priorytet</label>
+          <select class="fs" style="border-color:${priColors[a.priorytet]||'#ddd'}">
+            ${['Niski','Średni','Wysoki','Krytyczny'].map(p => `<option${p===a.priorytet?' selected':''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:0"><label>Przydziel do</label>
+          <select class="fs">
+            <option value="">— brak —</option>
+            ${Object.values(DATA.pracownicy).map(w => `<option value="${w.id}"${w.id===a.pracownik?' selected':''}>${w.imie} ${w.nazwisko.charAt(0)}.</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="fg"><label>Koszt naprawy (zł)</label><input class="fi" type="number" value="${a.koszt||0}" placeholder="0"></div>
+      <div class="fg"><label>Notatka / opis prac</label><textarea class="fi" rows="3" style="resize:none" placeholder="Co zrobiono, jakie części...">${a.notatka||''}</textarea></div>
+
+      ${a.status === 'Zakończona' ? `
+      <div style="background:var(--green-l);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;margin-top:4px">
+        <span style="font-size:18px">✅</span>
+        <div><div style="font-size:12px;font-weight:700;color:var(--green)">Awaria zakończona</div><div style="font-size:11px;color:#555">Koszt: ${a.koszt} zł${prac ? ' · '+prac.imie+' '+prac.nazwisko : ''}</div></div>
+      </div>` : ''}
+    </div>`;
+}
+
+function updateAwariaStatus(id, newStatus, btn) {
+  DATA.awarie[id].status = newStatus;
+  buildAwariaDetail(id);
+  showToast('Status zmieniony: ' + newStatus);
+}
+
+// ═══════ NARZĘDZIA ═══════
+function openScanner() {
+  document.getElementById('scan-ov').style.display = 'flex';
+}
+
+function openNarz(id, opts = {}) {
+  const n = DATA.narzedzia[id];
+  if (!n) return;
+  if (!opts.skipPush) pushNav();
+  switchTab('narzedzia', { keepStack: true });
+  document.getElementById('dnarz-title').textContent = n.ikona + ' ' + n.marka + ' ' + n.model;
+
+  function daysFrom(dateStr) {
+    const [d,m,y] = dateStr.split('.').map(Number);
+    return Math.floor((Date.now() - new Date(y,m-1,d).getTime()) / 86400000);
+  }
+  function daysTo(dateStr) {
+    const [d,m,y] = dateStr.split('.').map(Number);
+    return Math.ceil((new Date(y,m-1,d).getTime() - Date.now()) / 86400000);
+  }
+
+  const naprawy = n.naprawy || [];
+  const naprawyCost = naprawy.reduce((s,r) => s+r.koszt, 0);
+  const tco = n.wartosc + naprawyCost;
+  const wiekDni = daysFrom(n.data_zakupu);
+  const wiekLat = (wiekDni / 365).toFixed(1);
+  const gwarDni = n.gwarancja_do ? daysTo(n.gwarancja_do) : null;
+  const gwarOk = gwarDni !== null && gwarDni > 0;
+
+  const statusColor = { 'Dostępne':'var(--green)', 'Pożyczone':'var(--orange)', 'W użyciu':'var(--blue)', 'Serwis':'var(--red)' };
+  const statusBg = { 'Dostępne':'var(--green-l)', 'Pożyczone':'var(--orange-l)', 'W użyciu':'var(--blue-l)', 'Serwis':'var(--red-l)' };
+
+  const qrValue = n.nr_ser ? n.nr_ser.trim() : `elektroapp://narzedzie/${id}`;
+  const qrIsExisting = !!n.nr_ser;
+
+  document.getElementById('dnarz-content').innerHTML = `
+    <div style="background:#f8f9fa;padding:14px;display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase">${n.marka}</div>
+      <div style="font-size:18px;font-weight:800;color:var(--text)">${n.model}</div>
+      ${n.nr_ser ? `<div style="font-size:11px;color:#888;margin-top:2px;font-family:monospace">S/N: ${n.nr_ser}</div>` : ''}
+      ${n.komu ? `<div style="font-size:11px;color:var(--orange);margin-top:2px">👤 ${n.komu}</div>` : ''}
+      </div>
+      <span style="background:${statusBg[n.status]};color:${statusColor[n.status]};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700">${n.status}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 14px">
+      <div style="background:#fff;border-radius:8px;padding:8px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <div style="font-size:11px;font-weight:800;color:var(--blue)">${n.wartosc.toLocaleString('pl-PL')}</div>
+        <div style="font-size:8px;color:#888;margin-top:1px">Wartość zł</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:8px;border-top:3px solid var(--red);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <div style="font-size:11px;font-weight:800;color:var(--red)">${tco.toLocaleString('pl-PL')}</div>
+        <div style="font-size:8px;color:#888;margin-top:1px">TCO zł</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:8px;border-top:3px solid ${gwarOk?'var(--green)':'var(--red)'};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <div style="font-size:11px;font-weight:800;color:${gwarOk?'var(--green)':'var(--red)'}">${gwarDni !== null ? (gwarOk ? gwarDni+'d' : 'Wygasła') : '—'}</div>
+        <div style="font-size:8px;color:#888;margin-top:1px">Gwarancja</div>
+      </div>
+      <div style="background:#fff;border-radius:8px;padding:8px;border-top:3px solid var(--purple);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <div style="font-size:11px;font-weight:800;color:var(--purple)">${wiekLat}l</div>
+        <div style="font-size:8px;color:#888;margin-top:1px">Wiek</div>
+      </div>
+    </div>
+    <div style="padding:0 14px 14px">
+      <div style="background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:12px">
+        <div style="font-size:12px;font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+          📱 Kod QR
+          <span style="font-size:10px;background:${qrIsExisting?'var(--green-l)':'var(--blue-l)'};color:${qrIsExisting?'var(--green)':'var(--blue)'};padding:2px 8px;border-radius:20px;font-weight:700">${qrIsExisting?'✅ Z nr ser.':'🆕 Wygenerowany'}</span>
+        </div>
+        <div style="text-align:center;padding:10px;background:#f8f9fa;border-radius:8px">
+          <div id="qr-${id}" style="display:inline-block;margin-bottom:6px"></div>
+          <div style="font-size:9px;color:#888;font-family:monospace;word-break:break-all">${qrValue}</div>
+          <div style="font-size:10px;color:#aaa;margin-top:4px">${qrIsExisting ? 'Skanuj naklejkę producenta' : 'Wydrukuj i nakleij na narzędziu'}</div>
+        </div>
+      </div>
+      <button onclick="openModal('modal-naprawa')" style="width:100%;padding:10px;background:var(--orange-l);color:var(--orange);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">🔨 Zgłoś naprawę</button>
+      <div style="font-size:12px;font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between">
+        🔨 Historia napraw
+        <span style="color:#888;font-weight:500">${naprawy.length} serwis${naprawy.length===1?'':'ów'} · ${naprawyCost} zł</span>
+      </div>
+      ${naprawy.length === 0 ? '<div style="color:#aaa;font-size:12px;text-align:center;padding:16px">Brak historii napraw ✅</div>' :
+        naprawy.map(r => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;align-items:flex-start">
+          <div style="background:var(--blue-l);border-radius:6px;padding:4px 8px;min-width:70px;text-align:center">
+            <div style="font-size:10px;font-weight:700;color:var(--blue)">${r.data}</div>
+          </div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600">${r.opis}</div><div style="font-size:10px;color:#888">🏪 ${r.serwis}</div></div>
+          <div style="font-size:12px;font-weight:800;color:var(--red)">${r.koszt} zł</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Generuj QR (prymitywny z CSS)
+  setTimeout(() => {
+    const qrEl = document.getElementById('qr-' + id);
+    if (qrEl) {
+      qrEl.innerHTML = buildMiniQR(qrValue);
+    }
+  }, 50);
+
+  openDet('det-narz');
+  lastReopen['det-narz'] = () => openNarz(id, { skipPush: true });
+}
+
+// Prosty QR placeholder (real QR by wymagał biblioteki)
+function buildMiniQR(text) {
+  const size = 80;
+  const cells = 21;
+  const cell = size / cells;
+  // hash do seed
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) & 0xFFFFFFFF;
+  let svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="display:block">`;
+  svg += `<rect width="${size}" height="${size}" fill="white"/>`;
+  for (let r = 0; r < cells; r++) {
+    for (let c = 0; c < cells; c++) {
+      // Finder patterns
+      const inFinder = (r < 8 && c < 8) || (r < 8 && c > cells-9) || (r > cells-9 && c < 8);
+      const onFinderBorder = (r===0||r===6||c===0||c===6) && r<7 && c<7;
+      const inFinderInner = r>=2&&r<=4&&c>=2&&c<=4;
+      let dark = false;
+      if (r < 7 && c < 7) dark = onFinderBorder || inFinderInner;
+      else if (r < 7 && c > cells-8) {
+        const lc = c-(cells-7); const lr = r;
+        dark = (lr===0||lr===6||lc===0||lc===6) || (lr>=2&&lr<=4&&lc>=2&&lc<=4);
+      }
+      else if (r > cells-8 && c < 7) {
+        const lr = r-(cells-7); const lc = c;
+        dark = (lr===0||lr===6||lc===0||lc===6) || (lr>=2&&lr<=4&&lc>=2&&lc<=4);
+      }
+      else if (!inFinder) {
+        const seed = ((hash ^ (r * 17)) ^ (c * 31)) & 1;
+        dark = seed === 1;
+      }
+      if (dark) svg += `<rect x="${c*cell}" y="${r*cell}" width="${cell}" height="${cell}" fill="#212121"/>`;
+    }
+  }
+  svg += `</svg>`;
+  return svg;
+}
+
+// ═══════ KODY / BLOKI ═══════
+function openBlok(id, opts = {}) {
+  const b = DATA.bloki[id];
+  if (!b) return;
+  if (!opts.skipPush) pushNav();
+  switchTab('kody', { keepStack: true });
+  document.getElementById('dblok-title').textContent = b.ikona + ' ' + b.nazwa.split(' ')[1];
+
+  const awarieHtml = b.awarie.map(aid => {
+    const a = DATA.awarie[aid];
+    const scol = { 'Zgłoszona':'var(--red)', 'W realizacji':'var(--orange)', 'Zakończona':'var(--green)' };
+    return `<div onclick="openAwaria('${aid}')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer">
+      <span>${a.ikona}</span>
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${a.opis}</div><div style="font-size:10px;color:#888">${a.data}</div></div>
+      <span style="font-size:10px;font-weight:700;color:${scol[a.status]}">${a.status}</span>
+    </div>`;
+  }).join('');
+
+  const kodyHtml = b.kody.map(k => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px">
+      <span style="font-size:16px">🔑</span>
+      <div style="flex:1"><div style="font-size:11px;color:#888">${k.typ}</div><div style="font-size:15px;font-weight:800;letter-spacing:3px;color:var(--text)">${k.kod}</div></div>
+      <button onclick="showToast('📋 Skopiowano: ${k.kod}')" style="background:var(--blue-l);color:var(--blue);border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer">Kopiuj</button>
+    </div>`).join('');
+
+  document.getElementById('dblok-content').innerHTML = `
+    <div style="background:#1565c020;padding:14px;border-left:4px solid var(--blue)">
+      <div style="font-size:14px;font-weight:800;color:var(--text)">${b.nazwa}</div>
+      <div style="font-size:12px;color:#555;margin-top:2px">📍 ${b.adres}</div>
+    </div>
+    <!-- Mapa placeholder -->
+    <div style="margin:14px 14px 0;background:#e8f0fe;border-radius:10px;overflow:hidden;border:2px solid var(--blue-l)">
+      <div style="height:140px;position:relative;background:linear-gradient(135deg,#c8d8f0 0%,#dde8f8 50%,#c8d8f0 100%)">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <!-- Siatka ulic -->
+          <line x1="0" y1="50" x2="100%" y2="50" stroke="#b0c4de" stroke-width="1.5"/>
+          <line x1="0" y1="90" x2="100%" y2="90" stroke="#b0c4de" stroke-width="1.5"/>
+          <line x1="60" y1="0" x2="60" y2="100%" stroke="#b0c4de" stroke-width="1.5"/>
+          <line x1="160" y1="0" x2="160" y2="100%" stroke="#b0c4de" stroke-width="1.5"/>
+          <line x1="260" y1="0" x2="260" y2="100%" stroke="#b0c4de" stroke-width="1.5"/>
+          <!-- Bloki -->
+          <rect x="70" y="20" width="40" height="25" rx="3" fill="#a0b4d0"/>
+          <rect x="120" y="20" width="30" height="25" rx="3" fill="#a0b4d0"/>
+          <rect x="170" y="20" width="50" height="25" rx="3" fill="#a0b4d0"/>
+          <rect x="70" y="60" width="35" height="25" rx="3" fill="#a0b4d0"/>
+          <rect x="115" y="60" width="40" height="25" rx="3" fill="#a0b4d0"/>
+          <rect x="170" y="60" width="45" height="25" rx="3" fill="#a0b4d0"/>
+          <!-- Pin lokalizacji -->
+          <circle cx="145" cy="70" r="14" fill="#1565c0" opacity="0.9"/>
+          <circle cx="145" cy="70" r="8" fill="white"/>
+          <circle cx="145" cy="70" r="4" fill="#1565c0"/>
+          <polygon points="145,84 138,70 152,70" fill="#1565c0" opacity="0.9"/>
+          <!-- Pulsowanie -->
+          <circle cx="145" cy="70" r="20" fill="none" stroke="#1565c0" stroke-width="2" opacity="0.3"/>
+        </svg>
+        <div style="position:absolute;bottom:6px;right:8px;background:white;border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:#555;box-shadow:0 1px 3px rgba(0,0,0,.15)">📍 ${b.adres}</div>
+      </div>
+      <div style="display:flex;gap:8px;padding:8px 10px;background:white">
+        <button onclick="showToast('🗺️ Otwieranie nawigacji...')" style="flex:1;padding:7px;background:var(--blue);color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🧭 Nawiguj</button>
+        <button onclick="showToast('📋 Kopiowanie adresu...')" style="flex:1;padding:7px;background:var(--blue-l);color:var(--blue);border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">📋 Kopiuj adres</button>
+      </div>
+    </div>
+    <div style="padding:14px">
+      <div style="font-size:12px;font-weight:800;margin-bottom:8px;color:var(--text)">🔑 Kody dostępu (${b.kody.length})</div>
+      ${kodyHtml}
+      <div style="font-size:12px;font-weight:800;margin:14px 0 8px;color:var(--text)">🚨 Awarie (${b.awarie.length})</div>
+      ${awarieHtml || '<div style="color:#aaa;font-size:12px;padding:10px 0">Brak awarii ✅</div>'}
+    </div>`;
+
+  openDet('det-blok');
+  lastReopen['det-blok'] = () => openBlok(id, { skipPush: true });
+}
+
+// ═══════ CZAS PRACY — Kalendarz ═══════
+let czasMonth = 3; // 0-indexed: 3 = kwiecień
+let czasYear = 2024;
+
+function buildCzasCalendar() {
+  const months = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+  document.getElementById('czas-month-label').textContent = months[czasMonth] + ' ' + czasYear;
+
+  const firstDay = new Date(czasYear, czasMonth, 1).getDay();
+  const daysInMonth = new Date(czasYear, czasMonth + 1, 0).getDate();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Pn=0
+
+  let grid = document.getElementById('czas-cal-grid');
+  grid.innerHTML = '';
+
+  for (let i = 0; i < startOffset; i++) {
+    grid.insertAdjacentHTML('beforeend', '<div></div>');
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = String(d).padStart(2,'0');
+    const wpisy = DATA.czasPracy[key];
+    const dow = new Date(czasYear, czasMonth, d).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const hasData = !!wpisy;
+    const totalH = hasData ? wpisy.reduce((s,w) => s+w.godz, 0) : 0;
+
+    const bg = hasData ? 'var(--blue)' : (isWeekend ? '#f0f0f0' : '#f8f9fa');
+    const col = hasData ? '#fff' : (isWeekend ? '#ccc' : '#aaa');
+    const cursor = hasData ? 'cursor:pointer' : '';
+
+    grid.insertAdjacentHTML('beforeend', `
+      <div onclick="${hasData ? `openCzasDayModal('${key}')` : ''}" 
+           style="border-radius:6px;padding:4px 2px;text-align:center;background:${bg};color:${col};${cursor};position:relative">
+        <div style="font-size:10px;font-weight:700">${d}</div>
+        ${hasData ? `<div style="font-size:7px;font-weight:700;opacity:.9">${totalH}h</div>` : ''}
+      </div>`);
+  }
+
+  renderCzasList();
+}
+
+// Lista dni pod kalendarzem — budowana z prawdziwych wpisów DATA.czasPracy (posortowane od najnowszych)
+function renderCzasList() {
+  const listEl = document.getElementById('czas-list');
+  if (!listEl) return;
+  const dayNames = ['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+  const keys = Object.keys(DATA.czasPracy)
+    .filter(k => (DATA.czasPracy[k] || []).length > 0)
+    .sort((a, b) => Number(b) - Number(a));
+
+  if (keys.length === 0) {
+    listEl.innerHTML = `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px">Brak wpisów w tym miesiącu</div>`;
+    return;
+  }
+
+  listEl.innerHTML = keys.map(key => {
+    const wpisy = DATA.czasPracy[key];
+    const obecni = wpisy.filter(w => !w.nieobecny);
+    const nieobecni = wpisy.filter(w => w.nieobecny);
+    const totalH = obecni.reduce((s, w) => s + w.godz, 0);
+    const totalKoszt = obecni.reduce((s, w) => {
+      const prac = DATA.pracownicy[w.prac];
+      return s + (prac ? prac.stawka * w.godz : 0);
+    }, 0);
+    const dow = new Date(czasYear, czasMonth, Number(key)).getDay();
+    const sub = [`${obecni.length} obecnych`, nieobecni.length ? `${nieobecni.length} nieobecnych` : null, `${totalH}h łącznie`].filter(Boolean).join(' · ');
+    return `<div class="li" onclick="openCzasDayModal('${key}')"><div class="li-icon" style="background:var(--blue-l);font-size:14px">👷</div><div class="li-body"><div class="li-title">${key}.${String(czasMonth+1).padStart(2,'0')} – ${dayNames[dow]}</div><div class="li-sub">${sub}</div></div><div class="li-right"><span style="font-weight:700;color:var(--blue)">${Math.round(totalKoszt)} zł</span></div></div>`;
+  }).join('');
+}
+
+function czasPrevMonth() { if (czasMonth > 0) czasMonth--; else { czasMonth = 11; czasYear--; } buildCzasCalendar(); }
+function czasNextMonth() { if (czasMonth < 11) czasMonth++; else { czasMonth = 0; czasYear++; } buildCzasCalendar(); }
+
+function openCzasDayModal(dayKey) {
+  const wpisy = DATA.czasPracy[dayKey];
+  if (!wpisy) return;
+
+  const dateLabel = dayKey + '.04.2024';
+  document.getElementById('modal-dzien-title').textContent = '📅 ' + dateLabel;
+
+  const totalH = wpisy.reduce((s,w) => s+w.godz, 0);
+  const totalKoszt = wpisy.reduce((s,w) => {
+    const prac = DATA.pracownicy[w.prac];
+    return s + (prac ? prac.stawka * w.godz : 0);
+  }, 0);
+
+  let html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div style="background:var(--blue-l);border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--blue)">${totalH}h</div><div style="font-size:10px;color:#888">Łącznie</div></div>
+    <div style="background:var(--green-l);border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--green)">${totalKoszt} zł</div><div style="font-size:10px;color:#888">Wynagrodzenia</div></div>
+  </div>`;
+
+  wpisy.forEach(w => {
+    const prac = DATA.pracownicy[w.prac];
+    if (w.nieobecny) {
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;opacity:.75">
+        <div style="width:32px;height:32px;border-radius:16px;background:#ccc;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700">${prac?prac.imie+' '+prac.nazwisko.charAt(0)+'.':'?'}</div>
+          <div style="font-size:10px;color:var(--red)">🚫 Nieobecny${w.powod ? ' — ' + w.powod : ''}</div>
+        </div>
+      </div>`;
+      return;
+    }
+    const proj = DATA.projekty[w.proj];
+    const koszt = prac ? prac.stawka * w.godz : 0;
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px">
+      <div style="width:32px;height:32px;border-radius:16px;background:${prac?prac.kolor:'#ccc'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700">${prac?prac.imie+' '+prac.nazwisko.charAt(0)+'.':'?'}</div>
+        <div style="font-size:10px;color:#888">${proj?proj.nazwa.split(' — ')[0]:''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:800;color:var(--blue)">${w.godz}h</div>
+        <div style="font-size:10px;color:var(--green);font-weight:700">${koszt} zł</div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('modal-dzien-body').innerHTML = html;
+  openModal('modal-dzien-detail');
+}
+
+// ═══════ WSPÓLNY KOMPONENT: wiersz pracownika (Obecny z godz./autem, Nieobecny z powodem, lub nic) ═══════
+function buildPracownikRow(w, prefix) {
+  return `
+    <div style="background:#f8f9fa;border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700;flex:1">${w.imie} ${w.nazwisko}</span>
+        <span style="font-size:11px;color:var(--muted)">${w.stawka} zł/h</span>
+      </div>
+      <select class="fs" id="${prefix}-mode-${w.id}" onchange="dzienModeChange('${prefix}','${w.id}')" style="margin-bottom:8px">
+        <option value="brak">— nie dotyczy —</option>
+        <option value="obecny">✅ Obecny</option>
+        <option value="nieobecny">🚫 Nieobecny</option>
+      </select>
+      <div id="${prefix}-obecny-${w.id}" style="display:none">
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="time" class="fi" id="${prefix}-od-${w.id}" value="07:00" oninput="recalcDzien('${prefix}')" style="flex:1;padding:6px 8px;font-size:12px">
+          <span style="font-size:11px;color:var(--muted)">–</span>
+          <input type="time" class="fi" id="${prefix}-do-${w.id}" value="15:00" oninput="recalcDzien('${prefix}')" style="flex:1;padding:6px 8px;font-size:12px">
+          <select class="fs" id="${prefix}-auto-${w.id}" onchange="recalcDzien('${prefix}')" style="flex:1.2;padding:6px 8px;font-size:12px">
+            <option value="">— bez auta —</option>
+            ${Object.values(DATA.samochody).map(a => `<option value="${a.id}">${a.marka} ${a.model} (${a.rej})</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div id="${prefix}-nieobecny-${w.id}" style="display:none">
+        <select class="fs" id="${prefix}-powod-${w.id}">
+          <option>Urlop</option>
+          <option>L4</option>
+          <option>Inne</option>
+        </select>
+      </div>
+      <div id="${prefix}-h-${w.id}" style="font-size:10px;color:var(--muted);margin-top:4px"></div>
+    </div>`;
+}
+
+function dzienModeChange(prefix, wid) {
+  const mode = document.getElementById(`${prefix}-mode-${wid}`).value;
+  const obecnyEl = document.getElementById(`${prefix}-obecny-${wid}`);
+  const nieobecnyEl = document.getElementById(`${prefix}-nieobecny-${wid}`);
+  if (obecnyEl) obecnyEl.style.display = mode === 'obecny' ? 'block' : 'none';
+  if (nieobecnyEl) nieobecnyEl.style.display = mode === 'nieobecny' ? 'block' : 'none';
+  recalcDzien(prefix);
+}
+
+function dzienGodziny(prefix, wid) {
+  const od = document.getElementById(`${prefix}-od-${wid}`).value;
+  const doo = document.getElementById(`${prefix}-do-${wid}`).value;
+  if (!od || !doo) return 0;
+  const [oh, om] = od.split(':').map(Number);
+  const [dh, dm] = doo.split(':').map(Number);
+  let mins = (dh * 60 + dm) - (oh * 60 + om);
+  if (mins < 0) mins += 24 * 60;
+  return Math.round((mins / 60) * 100) / 100;
+}
+
+function recalcDzien(prefix) {
+  let totalH = 0, totalKoszt = 0;
+  Object.values(DATA.pracownicy).forEach(w => {
+    const modeEl = document.getElementById(`${prefix}-mode-${w.id}`);
+    if (!modeEl) return;
+    const hint = document.getElementById(`${prefix}-h-${w.id}`);
+    const mode = modeEl.value;
+    if (mode === 'obecny') {
+      const godz = dzienGodziny(prefix, w.id);
+      hint.textContent = godz > 0 ? `= ${godz}h × ${w.stawka} zł = ${Math.round(godz * w.stawka)} zł` : '⚠️ nieprawidłowy zakres godzin';
+      totalH += godz;
+      totalKoszt += godz * w.stawka;
+    } else if (mode === 'nieobecny') {
+      hint.textContent = '🚫 nie liczy się do godzin/wynagrodzeń';
+    } else {
+      hint.textContent = '';
+    }
+  });
+  const totalHEl = document.getElementById(`${prefix}-total-h`);
+  const totalKosztEl = document.getElementById(`${prefix}-total-koszt`);
+  if (totalHEl) totalHEl.textContent = (Math.round(totalH * 100) / 100) + 'h';
+  if (totalKosztEl) totalKosztEl.textContent = Math.round(totalKoszt) + ' zł';
+}
+
+// Zbiera wpisy (obecny/nieobecny) ze wszystkich wierszy danego formularza
+function collectDzienWpisy(prefix, dayKey, dateLabel, projId) {
+  const wpisy = [];
+  Object.values(DATA.pracownicy).forEach(w => {
+    const modeEl = document.getElementById(`${prefix}-mode-${w.id}`);
+    if (!modeEl) return;
+    const mode = modeEl.value;
+    if (mode === 'obecny') {
+      const godz = dzienGodziny(prefix, w.id);
+      if (godz <= 0) return;
+      wpisy.push({ prac: w.id, godz, proj: projId });
+      const autoId = document.getElementById(`${prefix}-auto-${w.id}`).value;
+      if (autoId && DATA.samochody[autoId]) {
+        DATA.samochody[autoId].historia.unshift({
+          typ: 'jazda', data: dateLabel,
+          prac: w.imie + ' ' + w.nazwisko,
+          od: document.getElementById(`${prefix}-od-${w.id}`).value,
+          do: document.getElementById(`${prefix}-do-${w.id}`).value,
+          proj: DATA.projekty[projId] ? DATA.projekty[projId].nazwa : '',
+        });
+      }
+    } else if (mode === 'nieobecny') {
+      const powod = document.getElementById(`${prefix}-powod-${w.id}`).value;
+      wpisy.push({ prac: w.id, godz: 0, proj: null, nieobecny: true, powod });
+    }
+  });
+  return wpisy;
+}
+
+// ═══════ DASHBOARD: DODAJ DZIEŃ (wielu pracowników + auto + nieobecności) ═══════
+function openDzienModal() {
+  const projSel = document.getElementById('nd-projekt');
+  projSel.innerHTML = Object.values(DATA.projekty).map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
+
+  const rowsEl = document.getElementById('nd-pracownicy');
+  rowsEl.innerHTML = Object.values(DATA.pracownicy).map(w => buildPracownikRow(w, 'nd')).join('');
+
+  recalcDzien('nd');
+  openModal('modal-dzien');
+}
+
+function openDzienModalForProject(projId) {
+  openDzienModal();
+  const sel = document.getElementById('nd-projekt');
+  if (sel) sel.value = projId;
+}
+
+function saveDzien() {
+  const dataVal = document.getElementById('nd-data').value;
+  if (!dataVal) { showToast('⚠️ Podaj datę'); return; }
+  const dayKey = dataVal.split('-')[2];
+  const dateLabel = dataVal.split('-').reverse().join('.');
+  const projId = document.getElementById('nd-projekt').value;
+
+  const wpisy = collectDzienWpisy('nd', dayKey, dateLabel, projId);
+  if (wpisy.length === 0) { showToast('⚠️ Zaznacz co najmniej jednego pracownika'); return; }
+
+  if (!DATA.czasPracy[dayKey]) DATA.czasPracy[dayKey] = [];
+  DATA.czasPracy[dayKey].push(...wpisy);
+
+  const obecni = wpisy.filter(w => !w.nieobecny).length;
+  const nieobecni = wpisy.filter(w => w.nieobecny).length;
+  const parts = [];
+  if (obecni) parts.push(`${obecni} obecnych`);
+  if (nieobecni) parts.push(`${nieobecni} nieobecnych`);
+  showToast(`✅ Zapisano dzień pracy (${parts.join(', ')})`);
+  closeModal('modal-dzien');
+  buildCzasCalendar();
+}
+
+// ═══════ PRACOWNIK: DODAJ GODZINY (pojedynczy pracownik, z jego detalu) ═══════
+function openGodzinyModal(pracId) {
+  const w = DATA.pracownicy[pracId];
+  if (!w) return;
+  document.getElementById('ng-heading').textContent = `⏱️ Dodaj godziny — ${w.imie} ${w.nazwisko}`;
+
+  const projSel = document.getElementById('ng-projekt');
+  projSel.innerHTML = Object.values(DATA.projekty).map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
+
+  document.getElementById('ng-pracownicy').innerHTML = buildPracownikRow(w, 'ng');
+  document.getElementById(`ng-mode-${pracId}`).value = 'obecny';
+  dzienModeChange('ng', pracId);
+  openModal('modal-godziny');
+}
+
+function saveGodziny() {
+  const dataVal = document.getElementById('ng-data').value;
+  if (!dataVal) { showToast('⚠️ Podaj datę'); return; }
+  const dayKey = dataVal.split('-')[2];
+  const dateLabel = dataVal.split('-').reverse().join('.');
+  const projId = document.getElementById('ng-projekt').value;
+
+  const wpisy = collectDzienWpisy('ng', dayKey, dateLabel, projId);
+  if (wpisy.length === 0) { showToast('⚠️ Wybierz Obecny lub Nieobecny'); return; }
+
+  if (!DATA.czasPracy[dayKey]) DATA.czasPracy[dayKey] = [];
+  // usuń ewentualny wcześniejszy wpis tego pracownika na ten dzień, żeby nie dublować
+  const pracId = wpisy[0].prac;
+  DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x => x.prac !== pracId);
+  DATA.czasPracy[dayKey].push(...wpisy);
+
+  showToast('✅ Zapisano godziny');
+  closeModal('modal-godziny');
+  buildCzasCalendar();
+  if (document.getElementById('det-prac').classList.contains('open')) buildPracDetail(pracId);
+}
+
+// ═══════ SAMOCHODY: DETAL + HISTORIA (przyda się przy mandacie) ═══════
+function openAuto(id, opts = {}) {
+  const a = DATA.samochody[id];
+  if (!a) return;
+  if (!opts.skipPush) pushNav();
+  switchTab('samochody', { keepStack: true });
+  document.getElementById('dauto-title').textContent = a.marka + ' ' + a.model;
+  buildAutoDetail(id);
+  openDet('det-auto');
+  lastReopen['det-auto'] = () => openAuto(id, { skipPush: true });
+}
+
+const AUTO_TYP_META = {
+  jazda:      { ikona:'🚗', label:'Jazda' },
+  tankowanie: { ikona:'⛽', label:'Tankowanie' },
+  serwis:     { ikona:'🔧', label:'Serwis' },
+};
+
+function buildAutoDetail(id) {
+  const a = DATA.samochody[id];
+  let html = `
+    <div style="background:linear-gradient(135deg,${a.kolorA},${a.kolorB});border-radius:12px;padding:16px;color:#fff;margin-bottom:14px">
+      <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700">${a.marka} ${a.model}</div>
+      <div style="font-size:20px;font-weight:800;margin:4px 0;letter-spacing:2px">${a.rej}</div>
+      <div style="display:flex;gap:16px;margin-top:10px">
+        <div><div style="font-size:10px;opacity:.7">Przebieg</div><div style="font-size:14px;font-weight:700">${a.przebieg.toLocaleString('pl-PL')} km</div></div>
+        <div><div style="font-size:10px;opacity:.7">Przegląd</div><div style="font-size:14px;font-weight:700">${a.przeglad}</div></div>
+        <div><div style="font-size:10px;opacity:.7">OC</div><div style="font-size:14px;font-weight:700">${a.oc}</div></div>
+      </div>
+    </div>
+    <div class="sec-hdr"><h3>Historia użytkowania</h3></div>
+    <div class="card" style="padding:0 14px">`;
+
+  if (a.historia.length === 0) {
+    html += `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px">Brak wpisów</div>`;
+  } else {
+    a.historia.forEach(h => {
+      const meta = AUTO_TYP_META[h.typ] || { ikona:'📄', label:h.typ };
+      const sub = h.typ === 'jazda'
+        ? `👤 ${h.prac} · ${h.od}–${h.do}${h.proj ? ' · ' + h.proj.split(' — ')[0] : ''}`
+        : `${h.data}${h.serwis ? ' · ' + h.serwis : ''}`;
+      const prawa = h.koszt != null
+        ? `<span style="font-weight:700;color:var(--red)">-${h.koszt} zł</span>`
+        : `<span style="font-size:11px;color:var(--muted)">${h.data}</span>`;
+      html += `<div class="li"><div class="li-icon" style="background:var(--blue-l)">${meta.ikona}</div><div class="li-body"><div class="li-title">${meta.label}${h.opis ? ' — ' + h.opis : ''}</div><div class="li-sub">${sub}</div></div><div class="li-right">${prawa}</div></div>`;
+    });
+  }
+
+  html += `</div>`;
+  document.getElementById('dauto-content').innerHTML = html;
+}
+
+
+// ═══════ INIT ═══════
+document.addEventListener('DOMContentLoaded', () => {
+  switchTab('dashboard');
+  buildCzasCalendar();
+  renderProjektyList();
+  renderWydatkiList();
+});
+</script>
+<!-- Toast -->
+<div id="toast" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;transition:opacity .4s;max-width:80%;text-align:center"></div>
+</div><!-- .phone -->
+</body>
+</html>
