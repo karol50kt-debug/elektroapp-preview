@@ -705,7 +705,14 @@ function ustawGwarancje(months) {
 
 // ═══════ MODALS ═══════
 function openModal(id) {
-  document.getElementById(id).style.display = 'flex';
+  const el = document.getElementById(id);
+  // Modale są zdefiniowane wewnątrz poszczególnych zakładek (.sv), które mają
+  // display:none gdy nieaktywne — to ukrywa modal nawet z ustawionym display:flex.
+  // Przenosimy modal do .screen (poza wszystkie .sv), żeby działał niezależnie
+  // od tego, która zakładka jest aktualnie otwarta.
+  const screen = document.querySelector('.screen');
+  if (screen && el.parentElement !== screen) screen.appendChild(el);
+  el.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 function closeModal(id) {
