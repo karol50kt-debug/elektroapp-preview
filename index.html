@@ -704,6 +704,8 @@ function ustawGwarancje(months) {
 }
 
 // ═══════ MODALS ═══════
+let currentOpenModalId = null;
+
 function openModal(id) {
   const el = document.getElementById(id);
   // Modale są zdefiniowane wewnątrz poszczególnych zakładek (.sv), które mają
@@ -714,11 +716,29 @@ function openModal(id) {
   if (screen && el.parentElement !== screen) screen.appendChild(el);
   el.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  currentOpenModalId = id;
 }
 function closeModal(id) {
   document.getElementById(id).style.display = 'none';
   document.body.style.overflow = '';
+  if (currentOpenModalId === id) currentOpenModalId = null;
 }
+
+// ═══════ FIZYCZNY/GESTOWY PRZYCISK "WSTECZ" W TELEFONIE ═══════
+// Bez tego pierwsze cofnięcie na telefonie wychodzi z całej strony (to zwykła
+// przeglądarka, nie natywna appka). Podpinamy się pod historię przeglądarki:
+// każde cofnięcie zamyka otwarty modal/panel W APCE, zamiast opuszczać stronę.
+function pushHistoryGuard() {
+  history.pushState({ elektroGuard: true }, '', location.href);
+}
+window.addEventListener('popstate', () => {
+  if (currentOpenModalId) {
+    closeModal(currentOpenModalId);
+  } else {
+    goBack();
+  }
+  pushHistoryGuard();
+});
 
 // ═══════ DETAIL PANELS ═══════
 function openDet(id) {
@@ -1869,6 +1889,7 @@ document.addEventListener('DOMContentLoaded', () => {
   buildCzasCalendar();
   renderProjektyList();
   renderWydatkiList();
+  pushHistoryGuard();
 });
 </script>
 <!-- Toast -->
