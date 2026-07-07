@@ -195,7 +195,9 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
       <div class="fg" style="flex:1"><label>Razem godzin</label><div class="fi" id="nd-total-h" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
       <div class="fg" style="flex:1"><label>Koszt razem</label><div class="fi" id="nd-total-koszt" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
     </div>
-    <button class="btn-p" onclick="saveDzien()">Zapisz dzień pracy</button>
+    <div style="position:sticky;bottom:-32px;background:#fff;padding:8px 0 8px;margin:0 -16px;box-shadow:0 -4px 8px rgba(0,0,0,.05)">
+      <button class="btn-p" style="margin:0 16px;width:calc(100% - 32px)" onclick="saveDzien()">Zapisz dzień pracy</button>
+    </div>
   </div>
 </div>
 </div>
@@ -236,14 +238,12 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
     <div class="fg"><label>Nazwa projektu</label><input class="fi" id="npr-nazwa" placeholder="np. Instalacja elektryczna"></div>
     <div class="fg"><label>Klient</label><input class="fi" id="npr-klient" placeholder="Imię i nazwisko lub firma"></div>
     <div class="fg"><label>Adres</label><input class="fi" id="npr-adres" placeholder="ul. ..."></div>
-    <div style="display:flex;gap:8px">
-      <div class="fg" style="flex:1"><label>Status</label><select class="fs" id="npr-status"><option>W realizacji</option><option>Planowany</option><option>Zakończony</option><option>Wstrzymany</option></select></div>
-      <div class="fg" style="flex:1"><label>Postęp (%)</label><input class="fi" id="npr-postep" type="number" min="0" max="100" placeholder="0"></div>
-    </div>
+    <div class="fg"><label>Status</label><select class="fs" id="npr-status"><option>W realizacji</option><option>Planowany</option><option>Zakończony</option><option>Wstrzymany</option></select></div>
     <div style="display:flex;gap:8px">
       <div class="fg" style="flex:1"><label>Data start</label><input class="fi" id="npr-start" type="date"></div>
       <div class="fg" style="flex:1"><label>Wartość (zł)</label><input class="fi" id="npr-wartosc" type="number" placeholder="0"></div>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin:-6px 0 12px">ℹ️ Postęp (%) liczy się automatycznie z podetapów w zakładce „Ogólne" projektu.</div>
     <button class="btn-p" id="npr-submit-btn" onclick="saveProjekt()">Utwórz projekt</button>
   </div>
 </div>
@@ -323,7 +323,9 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
       <div class="fg" style="flex:1"><label>Godzin</label><div class="fi" id="ng-total-h" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
       <div class="fg" style="flex:1"><label>Koszt</label><div class="fi" id="ng-total-koszt" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
     </div>
-    <button class="btn-p" onclick="saveGodziny()">Zapisz</button>
+    <div style="position:sticky;bottom:-32px;background:#fff;padding:8px 0 8px;margin:0 -16px;box-shadow:0 -4px 8px rgba(0,0,0,.05)">
+      <button class="btn-p" style="margin:0 16px;width:calc(100% - 32px)" onclick="saveGodziny()">Zapisz</button>
+    </div>
   </div>
 </div>
 </div>
@@ -582,11 +584,16 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 // ═══════ DANE ═══════
 const DATA = {
   projekty: {
-    p1: { id:'p1', nazwa:'Instalacja elektryczna — Lipowa 12–18', klient:'Wspólnota Lipowa', adres:'ul. Lipowa 12–18, Wrocław', status:'W realizacji', wartosc:28500, postep:65, start:'01.03.2024', koniec:'30.05.2024', kolor:'#1565c0', kolorL:'#e3f2fd', pracownicy:['w1','w2'], kosztyRobocizna:11200, kosztyMaterialy:4200, opis:'Kompleksowa wymiana instalacji elektrycznej w 3 klatkach schodowych.' },
-    p2: { id:'p2', nazwa:'Modernizacja rozdzielni — Różana 1–8', klient:'Spółdzielnia Różana', adres:'os. Różana 1–8, Wrocław', status:'W realizacji', wartosc:15200, postep:40, start:'10.03.2024', koniec:'20.06.2024', kolor:'#2e7d32', kolorL:'#e8f5e9', pracownicy:['w2','w4'], kosztyRobocizna:5800, kosztyMaterialy:2100, opis:'Wymiana rozdzielnic głównych i licznikowych.' },
-    p3: { id:'p3', nazwa:'Nowe przyłącze — ul. Wrocławska 8', klient:'Deweloper ABC', adres:'ul. Wrocławska 8, Wrocław', status:'Planowany', wartosc:8900, postep:0, start:'15.05.2024', koniec:'30.06.2024', kolor:'#e65100', kolorL:'#fff3e0', pracownicy:['w1'], kosztyRobocizna:0, kosztyMaterialy:0, opis:'Wykonanie przyłącza energetycznego dla nowego budynku.' },
-    p4: { id:'p4', nazwa:'Wymiana oświetlenia — Bema 10–16', klient:'Wspólnota Bema', adres:'ul. Bema 10–16, Wrocław', status:'Zakończony', wartosc:6400, postep:100, start:'01.01.2024', koniec:'28.02.2024', kolor:'#6a1b9a', kolorL:'#f3e5f5', pracownicy:['w1','w3'], kosztyRobocizna:2800, kosztyMaterialy:1200, opis:'Montaż oświetlenia LED w częściach wspólnych.' },
-    p5: { id:'p5', nazwa:'Przegląd instalacji — Centrum Handlowe', klient:'CH Arkady', adres:'Centrum Handlowe Arkady, Wrocław', status:'Zakończony', wartosc:4200, postep:100, start:'05.02.2024', koniec:'10.02.2024', kolor:'#00838f', kolorL:'#e0f7fa', pracownicy:['w2'], kosztyRobocizna:1600, kosztyMaterialy:200, opis:'Roczny przegląd i protokół bezpieczeństwa.' },
+    p1: { id:'p1', nazwa:'Instalacja elektryczna — Lipowa 12–18', klient:'Wspólnota Lipowa', adres:'ul. Lipowa 12–18, Wrocław', status:'W realizacji', wartosc:28500, postep:60, start:'01.03.2024', koniec:'30.05.2024', kolor:'#1565c0', kolorL:'#e3f2fd', pracownicy:['w1','w2'], kosztyRobocizna:11200, kosztyMaterialy:4200, opis:'Kompleksowa wymiana instalacji elektrycznej w 3 klatkach schodowych.', zaplacono:false, dataZaplaty:null,
+      etapy:[ {nazwa:'Wycena i zamówienie materiałów', done:true}, {nazwa:'Demontaż starej instalacji', done:true}, {nazwa:'Montaż nowego okablowania', done:true}, {nazwa:'Montaż osprzętu i tablic', done:false}, {nazwa:'Odbiór i pomiary końcowe', done:false} ] },
+    p2: { id:'p2', nazwa:'Modernizacja rozdzielni — Różana 1–8', klient:'Spółdzielnia Różana', adres:'os. Różana 1–8, Wrocław', status:'W realizacji', wartosc:15200, postep:40, start:'10.03.2024', koniec:'20.06.2024', kolor:'#2e7d32', kolorL:'#e8f5e9', pracownicy:['w2','w4'], kosztyRobocizna:5800, kosztyMaterialy:2100, opis:'Wymiana rozdzielnic głównych i licznikowych.', zaplacono:false, dataZaplaty:null,
+      etapy:[ {nazwa:'Wycena i zamówienie materiałów', done:true}, {nazwa:'Demontaż starych rozdzielnic', done:true}, {nazwa:'Montaż nowych rozdzielnic', done:false}, {nazwa:'Podłączenie i konfiguracja', done:false}, {nazwa:'Odbiór i pomiary końcowe', done:false} ] },
+    p3: { id:'p3', nazwa:'Nowe przyłącze — ul. Wrocławska 8', klient:'Deweloper ABC', adres:'ul. Wrocławska 8, Wrocław', status:'Planowany', wartosc:8900, postep:0, start:'15.05.2024', koniec:'30.06.2024', kolor:'#e65100', kolorL:'#fff3e0', pracownicy:['w1'], kosztyRobocizna:0, kosztyMaterialy:0, opis:'Wykonanie przyłącza energetycznego dla nowego budynku.', zaplacono:false, dataZaplaty:null,
+      etapy:[ {nazwa:'Wycena', done:false}, {nazwa:'Zgłoszenie do zakładu energetycznego', done:false}, {nazwa:'Wykonanie przyłącza', done:false}, {nazwa:'Montaż licznika', done:false}, {nazwa:'Odbiór końcowy', done:false} ] },
+    p4: { id:'p4', nazwa:'Wymiana oświetlenia — Bema 10–16', klient:'Wspólnota Bema', adres:'ul. Bema 10–16, Wrocław', status:'Zakończony', wartosc:6400, postep:100, start:'01.01.2024', koniec:'28.02.2024', kolor:'#6a1b9a', kolorL:'#f3e5f5', pracownicy:['w1','w3'], kosztyRobocizna:2800, kosztyMaterialy:1200, opis:'Montaż oświetlenia LED w częściach wspólnych.', zaplacono:true, dataZaplaty:'05.03.2024',
+      etapy:[ {nazwa:'Wycena', done:true}, {nazwa:'Demontaż starego oświetlenia', done:true}, {nazwa:'Montaż opraw LED', done:true}, {nazwa:'Podłączenie i testy', done:true}, {nazwa:'Odbiór końcowy', done:true} ] },
+    p5: { id:'p5', nazwa:'Przegląd instalacji — Centrum Handlowe', klient:'CH Arkady', adres:'Centrum Handlowe Arkady, Wrocław', status:'Zakończony', wartosc:4200, postep:100, start:'05.02.2024', koniec:'10.02.2024', kolor:'#00838f', kolorL:'#e0f7fa', pracownicy:['w2'], kosztyRobocizna:1600, kosztyMaterialy:200, opis:'Roczny przegląd i protokół bezpieczeństwa.', zaplacono:true, dataZaplaty:'15.02.2024',
+      etapy:[ {nazwa:'Przegląd instalacji', done:true}, {nazwa:'Pomiary elektryczne', done:true}, {nazwa:'Sporządzenie protokołu', done:true}, {nazwa:'Przekazanie dokumentacji', done:true} ] },
   },
   pracownicy: {
     w1: { id:'w1', imie:'Mariusz', nazwisko:'Kowalczyk', rola:'Elektryk', stawka:45, tel:'501 234 567', status:'Aktywny', inicjaly:'MK', kolor:'#1565c0', projekty:['p1','p3','p4'], grafik:{ '01':null,'02':null,'03':'p1','04':'p1','05':'p1','06':null,'07':null,'08':'p1','09':'p1','10':'p1','11':'p3','12':'p3','13':null,'14':null,'15':'p3' } },
@@ -830,6 +837,10 @@ function buildProjDetail(id, tab) {
       </div>
       <button onclick="openEditProjekt('${id}')" style="flex-shrink:0;background:rgba(255,255,255,.6);border:none;border-radius:14px;padding:6px 10px;font-size:11px;font-weight:700;color:${p.kolor};cursor:pointer">✏️ Edytuj</button>
     </div>
+    <div style="display:flex;gap:6px;padding:10px 14px 0;flex-wrap:wrap">
+      ${['W realizacji','Planowany','Zakończony','Wstrzymany'].map(s => `
+        <button onclick="updateProjektStatus('${id}','${s}')" style="flex:1;min-width:72px;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:700;border:2px solid ${s===p.status?statusColors[s]:'#e0e0e0'};background:${s===p.status?statusBg[s]:'#fff'};color:${s===p.status?statusColors[s]:'#888'};cursor:pointer">${s}</button>`).join('')}
+    </div>
     <div style="display:flex;gap:2px;padding:12px 14px 0;border-bottom:1px solid #e0e0e0;margin:0 0 14px 0">
       ${['ogolne','pracownicy','wydatki','rentownosc'].map(t => `
         <div onclick="buildProjDetail('${id}','${t}')" style="padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;border-bottom:3px solid ${currentProjTab===t?p.kolor:'transparent'};color:${currentProjTab===t?p.kolor:'#888'};transition:.2s">
@@ -838,6 +849,8 @@ function buildProjDetail(id, tab) {
     </div>`;
 
   if (tab === 'ogolne') {
+    const etapy = p.etapy || [];
+    const etapyDoneCount = etapy.filter(e => e.done).length;
     html += `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 14px">
         <div style="background:#fff;border-radius:8px;padding:10px;border-top:3px solid ${p.kolor};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
@@ -846,7 +859,7 @@ function buildProjDetail(id, tab) {
         </div>
         <div style="background:#fff;border-radius:8px;padding:10px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
           <div style="font-size:16px;font-weight:800;color:var(--blue)">${p.postep}%</div>
-          <div style="font-size:9px;color:#888;margin-top:2px">Postęp</div>
+          <div style="font-size:9px;color:#888;margin-top:2px">Postęp${etapy.length ? ` (${etapyDoneCount}/${etapy.length})` : ''}</div>
         </div>
       </div>
       <div style="padding:0 14px">
@@ -856,9 +869,25 @@ function buildProjDetail(id, tab) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:14px">
           <div><span style="color:#888">Start:</span> <strong>${p.start}</strong></div>
           <div><span style="color:#888">Koniec:</span> <strong>${p.koniec}</strong></div>
-          <div><span style="color:#888">Status:</span> <span style="background:${statusBg[p.status]||'#f0f0f0'};color:${statusColors[p.status]||'#444'};padding:2px 8px;border-radius:20px;font-weight:700;font-size:11px">${p.status}</span></div>
         </div>
         <div style="font-size:13px;color:#555;line-height:1.5;margin-bottom:14px">${p.opis}</div>
+
+        <div style="background:${p.zaplacono ? 'var(--green-l)' : '#f8f9fa'};border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="font-size:12px;font-weight:700;color:${p.zaplacono ? 'var(--green)' : '#888'}">${p.zaplacono ? `✅ Zapłacono${p.dataZaplaty ? ' — ' + p.dataZaplaty : ''}` : '⏳ Nie zapłacono'}</div>
+          <button onclick="toggleZaplacono('${id}')" class="btn-s" style="flex-shrink:0">${p.zaplacono ? 'Cofnij' : 'Oznacz jako zapłacone'}</button>
+        </div>
+
+        <div class="sec-hdr" style="margin-bottom:6px"><h3 style="font-size:12px">Podetapy prac</h3></div>
+        ${etapy.map((e, i) => `
+          <label style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f0f0f0;cursor:pointer">
+            <input type="checkbox" ${e.done ? 'checked' : ''} onchange="toggleEtap('${id}',${i})" style="accent-color:${p.kolor};width:16px;height:16px;flex-shrink:0">
+            <span style="flex:1;font-size:12px;${e.done ? 'color:#aaa;text-decoration:line-through' : 'color:var(--text)'}">${e.nazwa}</span>
+            <button onclick="removeEtap('${id}',${i})" style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;flex-shrink:0">✕</button>
+          </label>`).join('') || `<div style="color:#aaa;font-size:12px;padding:8px 0">Brak podetapów — dodaj poniżej.</div>`}
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <input class="fi" id="net-${id}" placeholder="Nazwa nowego podetapu" style="flex:1;padding:8px 10px;font-size:12px" onkeydown="if(event.key==='Enter')addEtap('${id}')">
+          <button onclick="addEtap('${id}')" class="btn-s">＋ Dodaj</button>
+        </div>
       </div>`;
   } else if (tab === 'pracownicy') {
     html += `<div style="padding:0 14px">
@@ -925,6 +954,65 @@ function buildProjDetail(id, tab) {
   }, 10);
 }
 
+// Przelicza postęp (%) na podstawie zaznaczonych podetapów (jeśli projekt ich używa)
+function recalcPostepFromEtapy(p) {
+  if (p.etapy && p.etapy.length > 0) {
+    p.postep = Math.round((p.etapy.filter(e => e.done).length / p.etapy.length) * 100);
+  }
+}
+
+function toggleEtap(projId, idx) {
+  const p = DATA.projekty[projId];
+  if (!p || !p.etapy || !p.etapy[idx]) return;
+  p.etapy[idx].done = !p.etapy[idx].done;
+  recalcPostepFromEtapy(p);
+  buildProjDetail(projId, 'ogolne');
+}
+
+function addEtap(projId) {
+  const p = DATA.projekty[projId];
+  if (!p) return;
+  const input = document.getElementById('net-' + projId);
+  const nazwa = input.value.trim();
+  if (!nazwa) return;
+  if (!p.etapy) p.etapy = [];
+  p.etapy.push({ nazwa, done: false });
+  recalcPostepFromEtapy(p);
+  buildProjDetail(projId, 'ogolne');
+}
+
+function removeEtap(projId, idx) {
+  const p = DATA.projekty[projId];
+  if (!p || !p.etapy) return;
+  p.etapy.splice(idx, 1);
+  recalcPostepFromEtapy(p);
+  buildProjDetail(projId, 'ogolne');
+}
+
+function toggleZaplacono(projId) {
+  const p = DATA.projekty[projId];
+  if (!p) return;
+  p.zaplacono = !p.zaplacono;
+  p.dataZaplaty = p.zaplacono ? new Date().toLocaleDateString('pl-PL') : null;
+  buildProjDetail(projId, 'ogolne');
+}
+
+function updateProjektStatus(projId, newStatus) {
+  const p = DATA.projekty[projId];
+  if (!p) return;
+  p.status = newStatus;
+  if (newStatus !== 'Zakończony') {
+    const used = new Set(Object.values(DATA.projekty).filter(x => x.id !== p.id && x.status !== 'Zakończony').map(x => x.kolor));
+    if (used.has(p.kolor)) {
+      const c = assignProjectColor(p.id);
+      p.kolor = c.kolor; p.kolorL = c.kolorL;
+    }
+  }
+  showToast(`✅ Status zmieniony na: ${newStatus}`);
+  buildProjDetail(projId, currentProjTab);
+  renderProjektyList();
+}
+
 // Pula kontrastujących kolorów projektów — kolor jest "zarezerwowany" dopóki projekt nie ma statusu Zakończony
 const PROJECT_COLOR_POOL   = ['#1565c0','#2e7d32','#e65100','#6a1b9a','#00838f','#c62828','#37474f','#ad1457','#4527a0','#9e9d24'];
 const PROJECT_COLOR_POOL_L = ['#e3f2fd','#e8f5e9','#fff3e0','#f3e5f5','#e0f7fa','#ffebee','#eceff1','#fce4ec','#ede7f6','#f9fbe7'];
@@ -986,7 +1074,6 @@ function openNewProjekt() {
   document.getElementById('npr-klient').value = '';
   document.getElementById('npr-adres').value = '';
   document.getElementById('npr-status').value = 'W realizacji';
-  document.getElementById('npr-postep').value = '';
   document.getElementById('npr-start').value = '';
   document.getElementById('npr-wartosc').value = '';
   document.getElementById('npr-submit-btn').textContent = 'Utwórz projekt';
@@ -1002,7 +1089,6 @@ function openEditProjekt(id) {
   document.getElementById('npr-klient').value = p.klient;
   document.getElementById('npr-adres').value = p.adres || '';
   document.getElementById('npr-status').value = p.status;
-  document.getElementById('npr-postep').value = p.postep;
   document.getElementById('npr-wartosc').value = p.wartosc;
   document.getElementById('npr-submit-btn').textContent = 'Zapisz zmiany';
   openModal('modal-projekt');
@@ -1015,12 +1101,11 @@ function saveProjekt() {
   const klient = document.getElementById('npr-klient').value.trim();
   const adres = document.getElementById('npr-adres').value.trim();
   const status = document.getElementById('npr-status').value;
-  const postep = Number(document.getElementById('npr-postep').value) || 0;
   const wartosc = Number(document.getElementById('npr-wartosc').value) || 0;
 
   if (editId && DATA.projekty[editId]) {
     const p = DATA.projekty[editId];
-    Object.assign(p, { nazwa, klient, adres, status, postep, wartosc });
+    Object.assign(p, { nazwa, klient, adres, status, wartosc });
     if (status !== 'Zakończony') {
       const used = new Set(Object.values(DATA.projekty).filter(x => x.id !== p.id && x.status !== 'Zakończony').map(x => x.kolor));
       if (used.has(p.kolor)) {
@@ -1037,7 +1122,7 @@ function saveProjekt() {
   } else {
     const id = 'p_' + Date.now().toString(36);
     const c = assignProjectColor();
-    DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, postep, start:document.getElementById('npr-start').value || '', koniec:'', kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, opis:'' };
+    DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, postep:0, start:document.getElementById('npr-start').value || '', koniec:'', kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, opis:'', zaplacono:false, dataZaplaty:null, etapy:[] };
     showToast('✅ Projekt dodany!');
     renderProjektyList();
   }
@@ -1169,37 +1254,48 @@ function openPrac(id, opts = {}) {
   }, 50);
 }
 
+let pracCalMonth = 3, pracCalYear = 2024; // wspólny stan miesiąca dla kalendarza w detalu pracownika
+const MIESIACE_PL = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+
+function pracCalPrevMonth(id) { if (pracCalMonth > 0) pracCalMonth--; else { pracCalMonth = 11; pracCalYear--; } buildPracDetail(id); }
+function pracCalNextMonth(id) { if (pracCalMonth < 11) pracCalMonth++; else { pracCalMonth = 0; pracCalYear++; } buildPracDetail(id); }
+
 function buildPracDetail(id) {
   const w = DATA.pracownicy[id];
   const statusColor = w.status === 'Aktywny' ? 'var(--green)' : w.status === 'L4' ? 'var(--red)' : 'var(--orange)';
   const statusBg = w.status === 'Aktywny' ? 'var(--green-l)' : w.status === 'L4' ? 'var(--red-l)' : 'var(--orange-l)';
 
   // Kalendarz budowany z prawdziwych wpisów DATA.czasPracy (a nie osobnego, martwego pola grafik)
+  // Uwaga: klucze DATA.czasPracy to tylko dzień miesiąca (bez miesiąca/roku), więc — tak jak
+  // w kalendarzu zespołu — te same dane pokażą się dla tego samego dnia w każdym miesiącu.
+  const daysInMonth = new Date(pracCalYear, pracCalMonth + 1, 0).getDate();
   const days = [];
-  for (let i = 1; i <= 30; i++) {
+  for (let i = 1; i <= daysInMonth; i++) {
     const key = String(i).padStart(2,'0');
-    const dow = (i + 0) % 7; // 1=Pn,...,0=Nd (kwiecień 2024 zaczyna się w poniedziałek)
-    const isWeekend = dow === 6 || dow === 0;
+    const dow = new Date(pracCalYear, pracCalMonth, i).getDay(); // 0=Nd...6=Sb
+    const isWeekend = dow === 0 || dow === 6;
     const wpisyDnia = DATA.czasPracy[key] || [];
     const wpis = wpisyDnia.find(x => x.prac === id);
     const proj = wpis && !wpis.nieobecny ? DATA.projekty[wpis.proj] : null;
-    days.push({ day: i, key, isWeekend, proj, nieobecny: !!(wpis && wpis.nieobecny) });
+    days.push({ day: i, key, isWeekend, proj, wpis, nieobecny: !!(wpis && wpis.nieobecny) });
   }
+  const startOffset = (new Date(pracCalYear, pracCalMonth, 1).getDay() + 6) % 7; // Pn=0
 
   let calHtml = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">`;
   ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'].forEach(d => {
     calHtml += `<div style="text-align:center;font-size:8px;font-weight:700;color:#999;padding:2px 0">${d}</div>`;
   });
   calHtml += `</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
+  for (let i = 0; i < startOffset; i++) calHtml += `<div></div>`;
   days.forEach(d => {
     if (d.nieobecny) {
-      calHtml += `<div onclick="openCzasDayModal('${d.key}')" title="Nieobecny" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,#eee,#eee 3px,#e0e0e0 3px,#e0e0e0 6px);border:2px dashed #bbb;color:#c62828">🚫</div>`;
+      calHtml += `<div onclick="openPracDayModal('${id}','${d.key}')" title="Nieobecny" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,#eee,#eee 3px,#e0e0e0 3px,#e0e0e0 6px);border:2px dashed #bbb;color:#c62828">🚫</div>`;
       return;
     }
     let bg = d.isWeekend ? '#f5f5f5' : (d.proj ? d.proj.kolor + '33' : '#eef2f7');
     let border = d.proj ? `2px solid ${d.proj.kolor}` : (d.isWeekend ? '1px solid #e0e0e0' : '1px solid #dde3ea');
     let color = d.proj ? d.proj.kolor : (d.isWeekend ? '#ccc' : '#aaa');
-    let clickAttr = d.proj ? `onclick="openCzasDayModal('${d.key}')" title="${d.proj.nazwa}" style="cursor:pointer"` : '';
+    let clickAttr = d.proj ? `onclick="openPracDayModal('${id}','${d.key}')" title="${d.proj.nazwa}" style="cursor:pointer"` : '';
     calHtml += `<div ${clickAttr} style="border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:${bg};border:${border};color:${color}">${d.day}</div>`;
   });
   calHtml += `</div>`;
@@ -1213,6 +1309,23 @@ function buildPracDetail(id) {
     if (p) legendHtml += `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:#555">${p.nazwa.split(' — ')[0].substring(0,15)}</span></div>`;
   });
   legendHtml += `</div>`;
+
+  // Podsumowanie godzin per projekt w tym miesiącu
+  const godzPerProj = {};
+  days.forEach(d => {
+    if (d.wpis && !d.wpis.nieobecny) {
+      godzPerProj[d.wpis.proj] = (godzPerProj[d.wpis.proj] || 0) + d.wpis.godz;
+    }
+  });
+  const sumaHtml = Object.entries(godzPerProj).sort((a,b) => b[1]-a[1]).map(([pid, godz]) => {
+    const p = DATA.projekty[pid];
+    if (!p) return '';
+    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0;cursor:pointer">
+      <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
+      <div style="flex:1;font-size:12px;color:var(--text)">${p.nazwa.split(' — ')[0]}</div>
+      <div style="font-size:12px;font-weight:800;color:${p.kolor}">${godz}h</div>
+    </div>`;
+  }).join('') || `<div style="color:#aaa;font-size:12px;padding:6px 0">Brak godzin w tym miesiącu</div>`;
 
   // Projekty lista
   let projListHtml = w.projekty.map(pid => {
@@ -1232,15 +1345,62 @@ function buildPracDetail(id) {
     </div>
     <div style="padding:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:12px;font-weight:800;color:var(--text)">📅 Kwiecień 2024 — Grafik</div>
-        <button onclick="openGodzinyModal('${id}')" class="btn-s">＋ Godziny</button>
+        <button onclick="pracCalPrevMonth('${id}')" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--blue)">‹</button>
+        <div style="font-size:12px;font-weight:800;color:var(--text)">📅 ${MIESIACE_PL[pracCalMonth]} ${pracCalYear}</div>
+        <button onclick="pracCalNextMonth('${id}')" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--blue)">›</button>
       </div>
       ${calHtml}${legendHtml}
+      <button onclick="openGodzinyModal('${id}')" class="btn-s" style="width:100%;margin-top:12px">＋ Godziny</button>
+    </div>
+    <div style="padding:0 14px 14px">
+      <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">⏱️ Godziny w tym miesiącu — per projekt</div>
+      ${sumaHtml}
     </div>
     <div style="padding:0 14px 14px">
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">📋 Projekty (kliknij → szczegóły)</div>
       ${projListHtml || '<div style="color:#aaa;font-size:12px">Brak projektów</div>'}
     </div>`;
+}
+
+// Szczegóły JEDNEGO dnia dla TEGO pracownika (z zakresem od–do), w odróżnieniu od
+// openCzasDayModal, który pokazuje wszystkich pracowników danego dnia (widok zespołu)
+function openPracDayModal(pracId, dayKey) {
+  const w = DATA.pracownicy[pracId];
+  const wpisyDnia = DATA.czasPracy[dayKey] || [];
+  const wpis = wpisyDnia.find(x => x.prac === pracId);
+  if (!w || !wpis) return;
+
+  const dateLabel = `${dayKey}.${String(pracCalMonth+1).padStart(2,'0')}.${pracCalYear}`;
+  document.getElementById('modal-dzien-title').textContent = '📅 ' + dateLabel;
+
+  let html;
+  if (wpis.nieobecny) {
+    html = `<div style="padding:12px;background:#f8f9fa;border-radius:8px;text-align:center;color:var(--red);font-weight:700">🚫 Nieobecny${wpis.powod ? ' — ' + wpis.powod : ''}</div>`;
+  } else {
+    const proj = DATA.projekty[wpis.proj];
+    const koszt = Math.round(w.stawka * wpis.godz);
+    html = `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8f9fa;border-radius:8px">
+        <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${w.inicjaly}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">${w.imie} ${w.nazwisko}</div>
+          <div style="font-size:11px;color:#888">${proj ? proj.nazwa : ''}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <div style="background:var(--blue-l);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:16px;font-weight:800;color:var(--blue)">${wpis.od && wpis.do ? `${wpis.od}–${wpis.do}` : wpis.godz + 'h'}</div>
+          <div style="font-size:10px;color:#888">Godziny${wpis.od && wpis.do ? ` (${wpis.godz}h)` : ''}</div>
+        </div>
+        <div style="background:var(--green-l);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:16px;font-weight:800;color:var(--green)">${koszt} zł</div>
+          <div style="font-size:10px;color:#888">Wynagrodzenie</div>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('modal-dzien-body').innerHTML = html;
+  openModal('modal-dzien-detail');
 }
 
 // ═══════ AWARIE ═══════
@@ -1540,27 +1700,59 @@ function buildCzasCalendar() {
     grid.insertAdjacentHTML('beforeend', '<div></div>');
   }
 
+  const monthProjIds = new Set();
+
   for (let d = 1; d <= daysInMonth; d++) {
     const key = String(d).padStart(2,'0');
-    const wpisy = DATA.czasPracy[key];
+    const wpisy = DATA.czasPracy[key] || [];
     const dow = new Date(czasYear, czasMonth, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
-    const hasData = !!wpisy;
-    const totalH = hasData ? wpisy.reduce((s,w) => s+w.godz, 0) : 0;
+    const obecni = wpisy.filter(w => !w.nieobecny);
+    const totalH = obecni.reduce((s,w) => s+w.godz, 0);
+    const projIds = [...new Set(obecni.map(w => w.proj).filter(Boolean))];
+    const colors = projIds.map(pid => DATA.projekty[pid] && DATA.projekty[pid].kolor).filter(Boolean);
+    projIds.forEach(pid => monthProjIds.add(pid));
 
-    const bg = hasData ? 'var(--blue)' : (isWeekend ? '#f0f0f0' : '#f8f9fa');
-    const col = hasData ? '#fff' : (isWeekend ? '#ccc' : '#aaa');
-    const cursor = hasData ? 'cursor:pointer' : '';
+    let bg, col, top;
+    if (colors.length === 1) {
+      bg = colors[0]; col = '#fff'; top = `<div style="font-size:7px;font-weight:700;opacity:.9">${totalH}h</div>`;
+    } else if (colors.length > 1) {
+      bg = buildStripeBackground(colors); col = '#fff'; top = `<div style="font-size:7px;font-weight:700;opacity:.9">${totalH}h</div>`;
+    } else if (wpisy.length > 0) {
+      // tylko nieobecności tego dnia, brak realnej pracy nad projektem
+      bg = 'repeating-linear-gradient(45deg,#eee,#eee 3px,#e0e0e0 3px,#e0e0e0 6px)'; col = '#c62828'; top = `<div style="font-size:8px">🚫</div>`;
+    } else {
+      bg = isWeekend ? '#f0f0f0' : '#f8f9fa'; col = isWeekend ? '#ccc' : '#aaa'; top = '';
+    }
+    const cursor = wpisy.length > 0 ? 'cursor:pointer' : '';
 
     grid.insertAdjacentHTML('beforeend', `
-      <div onclick="${hasData ? `openCzasDayModal('${key}')` : ''}" 
+      <div onclick="${wpisy.length > 0 ? `openCzasDayModal('${key}')` : ''}"
            style="border-radius:6px;padding:4px 2px;text-align:center;background:${bg};color:${col};${cursor};position:relative">
         <div style="font-size:10px;font-weight:700">${d}</div>
-        ${hasData ? `<div style="font-size:7px;font-weight:700;opacity:.9">${totalH}h</div>` : ''}
+        ${top}
       </div>`);
   }
 
+  const legendEl = document.getElementById('czas-legend');
+  if (legendEl) {
+    legendEl.innerHTML = [...monthProjIds].map(pid => {
+      const p = DATA.projekty[pid];
+      if (!p) return '';
+      return `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:#555">${p.nazwa.split(' — ')[0].substring(0,18)}</span></div>`;
+    }).join('');
+  }
+
   renderCzasList();
+}
+
+// Buduje tło z ukośnymi pasami kolorów — używane gdy w jednym dniu pracowano nad kilkoma projektami
+function buildStripeBackground(colors) {
+  if (colors.length === 1) return colors[0];
+  const step = 100 / colors.length;
+  const stops = [];
+  colors.forEach((c, i) => stops.push(`${c} ${(i*step).toFixed(2)}%`, `${c} ${((i+1)*step).toFixed(2)}%`));
+  return `linear-gradient(135deg, ${stops.join(', ')})`;
 }
 
 // Lista dni pod kalendarzem — budowana z prawdziwych wpisów DATA.czasPracy (posortowane od najnowszych)
@@ -1658,14 +1850,17 @@ function buildPracownikRow(w, prefix) {
         <option value="nieobecny">🚫 Nieobecny</option>
       </select>
       <div id="${prefix}-obecny-${w.id}" style="display:none">
-        <div style="display:flex;gap:6px;align-items:center">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
           <input type="time" class="fi" id="${prefix}-od-${w.id}" value="07:00" oninput="recalcDzien('${prefix}')" style="flex:1;padding:6px 8px;font-size:12px">
           <span style="font-size:11px;color:var(--muted)">–</span>
           <input type="time" class="fi" id="${prefix}-do-${w.id}" value="15:00" oninput="recalcDzien('${prefix}')" style="flex:1;padding:6px 8px;font-size:12px">
-          <select class="fs" id="${prefix}-auto-${w.id}" onchange="recalcDzien('${prefix}')" style="flex:1.2;padding:6px 8px;font-size:12px">
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select class="fs" id="${prefix}-auto-${w.id}" onchange="recalcDzien('${prefix}')" style="flex:1.6;padding:6px 8px;font-size:12px">
             <option value="">— bez auta —</option>
             ${Object.values(DATA.samochody).map(a => `<option value="${a.id}">${a.marka} ${a.model} (${a.rej})</option>`).join('')}
           </select>
+          <input type="number" class="fi" id="${prefix}-km-${w.id}" placeholder="km" min="0" style="width:70px;padding:6px 8px;font-size:12px">
         </div>
       </div>
       <div id="${prefix}-nieobecny-${w.id}" style="display:none">
@@ -1733,16 +1928,19 @@ function collectDzienWpisy(prefix, dayKey, dateLabel, projId) {
     if (mode === 'obecny') {
       const godz = dzienGodziny(prefix, w.id);
       if (godz <= 0) return;
-      wpisy.push({ prac: w.id, godz, proj: projId });
+      const od = document.getElementById(`${prefix}-od-${w.id}`).value;
+      const doo = document.getElementById(`${prefix}-do-${w.id}`).value;
+      wpisy.push({ prac: w.id, godz, proj: projId, od, do: doo });
       const autoId = document.getElementById(`${prefix}-auto-${w.id}`).value;
       if (autoId && DATA.samochody[autoId]) {
+        const km = Number(document.getElementById(`${prefix}-km-${w.id}`).value) || 0;
         DATA.samochody[autoId].historia.unshift({
           typ: 'jazda', data: dateLabel,
           prac: w.imie + ' ' + w.nazwisko,
-          od: document.getElementById(`${prefix}-od-${w.id}`).value,
-          do: document.getElementById(`${prefix}-do-${w.id}`).value,
+          od, do: doo, km: km || null,
           proj: DATA.projekty[projId] ? DATA.projekty[projId].nazwa : '',
         });
+        if (km > 0) DATA.samochody[autoId].przebieg += km;
       }
     } else if (mode === 'nieobecny') {
       const powod = document.getElementById(`${prefix}-powod-${w.id}`).value;
@@ -1869,7 +2067,7 @@ function buildAutoDetail(id) {
     a.historia.forEach(h => {
       const meta = AUTO_TYP_META[h.typ] || { ikona:'📄', label:h.typ };
       const sub = h.typ === 'jazda'
-        ? `👤 ${h.prac} · ${h.od}–${h.do}${h.proj ? ' · ' + h.proj.split(' — ')[0] : ''}`
+        ? `👤 ${h.prac} · ${h.od}–${h.do}${h.km ? ' · ' + h.km + ' km' : ''}${h.proj ? ' · ' + h.proj.split(' — ')[0] : ''}`
         : `${h.data}${h.serwis ? ' · ' + h.serwis : ''}`;
       const prawa = h.koszt != null
         ? `<span style="font-weight:700;color:var(--red)">-${h.koszt} zł</span>`
