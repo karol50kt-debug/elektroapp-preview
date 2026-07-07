@@ -751,11 +751,13 @@ const DATA = {
   // Paski wynagrodzeń — obieg: roboczy (wygenerowany, tylko właściciel) →
   // zatwierdzony (widoczny dla pracownika) → wypłacony (zarejestrowana wypłata).
   // Marzec 2024 celowo NIE jest jeszcze wygenerowany — właściciel robi to przyciskiem.
+  // mIdx = miesiąc 0-based (1 = luty). Pole "dni" (rozpis dzień po dniu) dla lutego
+  // jest dogenerowywane przy starcie (augmentPaskiMock), dla nowych pasków tworzy je generujPaski().
   paski: {
-    w1: [ { miesiac:'Luty 2024', godziny:160, stawka:45, premia:0, status:'wypłacony', zatwierdzono:'01.03.2024', wyplacono:'05.03.2024' } ],
-    w2: [ { miesiac:'Luty 2024', godziny:152, stawka:42, premia:150, status:'wypłacony', zatwierdzono:'01.03.2024', wyplacono:'05.03.2024' } ],
-    w3: [ { miesiac:'Luty 2024', godziny:120, stawka:35, premia:0, status:'wypłacony', zatwierdzono:'01.03.2024', wyplacono:'05.03.2024' } ],
-    w4: [ { miesiac:'Luty 2024', godziny:144, stawka:25, premia:0, status:'wypłacony', zatwierdzono:'01.03.2024', wyplacono:'05.03.2024' } ],
+    w1: [ { miesiac:'Luty 2024', mIdx:1, rok:2024, godziny:160, stawka:45, premia:0, status:'wypłacony', zatwierdzono:'01.03.2024', wyplacono:'05.03.2024' } ],
+    w2: [ { miesiac:'Luty 2024', mIdx:1, rok:2024, godziny:152, stawka:42, premia:150, status:'wypłacony', zatwierdzono:'01.03.2024', wyplacono:'05.03.2024' } ],
+    w3: [ { miesiac:'Luty 2024', mIdx:1, rok:2024, godziny:120, stawka:35, premia:0, status:'wypłacony', zatwierdzono:'01.03.2024', wyplacono:'05.03.2024' } ],
+    w4: [ { miesiac:'Luty 2024', mIdx:1, rok:2024, godziny:144, stawka:25, premia:0, status:'wypłacony', zatwierdzono:'01.03.2024', wyplacono:'05.03.2024' } ],
   },
 };
 
@@ -1449,17 +1451,76 @@ function pasekBadge(status) {
   return `<span style="background:${bg};color:${fg};padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">${label}</span>`;
 }
 
+const DNI_TYG_SHORT = ['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+
+// Rozpis dzień po dniu z oficjalnej ewidencji właściciela (DATA.czasPracy)
+function pasekRozpisDni(pracId, mIdx, rok) {
+  const daysInMonth = new Date(rok, mIdx + 1, 0).getDate();
+  const dni = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = String(d).padStart(2, '0');
+    const wpis = (DATA.czasPracy[key] || []).find(x => x.prac === pracId);
+    if (wpis && wpis.nieobecny) dni.push({ d, nieobecny: true, powod: wpis.powod });
+    else if (wpis) dni.push({ d, od: wpis.od, do: wpis.do, godz: wpis.godz, proj: wpis.proj });
+    else dni.push({ d });
+  }
+  return dni;
+}
+
+function buildPasekDniHtml(pasek) {
+  if (!pasek.dni) return '';
+  const rows = pasek.dni.map(x => {
+    const dow = new Date(pasek.rok, pasek.mIdx, x.d).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const dataTxt = `${String(x.d).padStart(2,'0')}.${String(pasek.mIdx+1).padStart(2,'0')} ${DNI_TYG_SHORT[dow]}`;
+    let tresc, kolor;
+    if (x.nieobecny) { tresc = `🚫 Nieobecny${x.powod ? ' (' + x.powod + ')' : ''}`; kolor = 'var(--red)'; }
+    else if (x.godz) { tresc = `${x.od && x.do ? x.od + '–' + x.do : ''} · ${x.godz}h`; kolor = 'var(--text)'; }
+    else { tresc = '—'; kolor = '#ccc'; }
+    return `<div style="display:grid;grid-template-columns:64px 1fr;gap:8px;padding:4px 8px;font-size:11px;${isWeekend ? 'background:#f8f9fa;' : ''}border-bottom:1px solid #f3f3f3">
+      <span style="color:${isWeekend ? '#bbb' : 'var(--muted)'};font-weight:700">${dataTxt}</span>
+      <span style="color:${kolor};font-weight:${x.godz ? 700 : 400}">${tresc}</span>
+    </div>`;
+  }).join('');
+  return `<details style="margin-top:8px">
+    <summary style="font-size:11px;font-weight:800;color:var(--blue);cursor:pointer;padding:4px 0">📅 Rozpis dni (${pasek.dni.filter(x => x.godz).length} dni pracy)</summary>
+    <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:6px">${rows}</div>
+  </details>`;
+}
+
+// Dogenerowanie rozpisu dni do mockowych pasków za luty (typowe dni robocze 07:00–15:00)
+function augmentPaskiMock() {
+  Object.keys(DATA.paski).forEach(pracId => {
+    DATA.paski[pracId].forEach(pasek => {
+      if (pasek.dni) return;
+      const daysInMonth = new Date(pasek.rok, pasek.mIdx + 1, 0).getDate();
+      let pozostalo = pasek.godziny;
+      pasek.dni = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dow = new Date(pasek.rok, pasek.mIdx, d).getDay();
+        const roboczy = dow !== 0 && dow !== 6;
+        if (roboczy && pozostalo > 0) {
+          const godz = Math.min(8, pozostalo);
+          pozostalo -= godz;
+          const doH = 7 + Math.floor(godz), doM = Math.round((godz % 1) * 60);
+          pasek.dni.push({ d, od: '07:00', do: `${String(doH).padStart(2,'0')}:${String(doM).padStart(2,'0')}`, godz });
+        } else {
+          pasek.dni.push({ d });
+        }
+      }
+    });
+  });
+}
+
 function generujPaski() {
   let ile = 0;
   Object.values(DATA.pracownicy).forEach(w => {
     const juz = (DATA.paski[w.id] || []).some(p => p.miesiac === PASEK_MIESIAC);
     if (juz) return;
-    let godziny = 0;
-    Object.values(DATA.czasPracy).forEach(dzien => {
-      dzien.forEach(x => { if (x.prac === w.id && !x.nieobecny) godziny += x.godz; });
-    });
+    const dni = pasekRozpisDni(w.id, 2, 2024); // Marzec 2024
+    const godziny = dni.reduce((s, x) => s + (x.godz || 0), 0);
     if (!DATA.paski[w.id]) DATA.paski[w.id] = [];
-    DATA.paski[w.id].unshift({ miesiac: PASEK_MIESIAC, godziny, stawka: w.stawka, premia: 0, status: 'roboczy', zatwierdzono: null, wyplacono: null });
+    DATA.paski[w.id].unshift({ miesiac: PASEK_MIESIAC, mIdx: 2, rok: 2024, godziny, dni, stawka: w.stawka, premia: 0, status: 'roboczy', zatwierdzono: null, wyplacono: null });
     ile++;
   });
   showToast(ile ? `🧾 Wygenerowano ${ile} paski — zweryfikuj i zatwierdź` : 'Paski za ten miesiąc już istnieją');
@@ -1533,6 +1594,7 @@ function buildPaskiAdmin() {
             <button onclick="wyplacPasek('${w.id}',${idx})" class="btn-g" style="flex-shrink:0">💸 Wypłać</button>
           </div>` : ''}
         ${pasek.status === 'wypłacony' ? `<div style="font-size:10px;color:var(--muted)">Wypłacono ${pasek.wyplacono} · zarejestrowano w wydatkach</div>` : ''}
+        ${buildPasekDniHtml(pasek)}
       </div>`;
     });
   });
@@ -2709,6 +2771,7 @@ function buildPaski() {
         <div class="dr"><span class="dr-l">Premia</span><span class="dr-r">${(pasek.premia||0).toLocaleString('pl-PL')} zł</span></div>
         ${wyplacony ? `<div class="dr"><span class="dr-l">Data wypłaty</span><span class="dr-r">${pasek.wyplacono}</span></div>` : ''}
         <div class="dr" style="border-bottom:none"><span class="dr-l" style="font-weight:800;color:var(--text)">Razem</span><span class="dr-r" style="font-size:15px;font-weight:900;color:var(--green)">${razem.toLocaleString('pl-PL')} zł</span></div>
+        ${buildPasekDniHtml(pasek)}
       </div>
     </div>`;
   });
@@ -2770,6 +2833,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 
 // ═══════ INIT ═══════
 document.addEventListener('DOMContentLoaded', () => {
+  augmentPaskiMock();
   renderLoginTiles();
   renderTabbar();
   switchTab('dashboard');
