@@ -621,12 +621,12 @@ const DATA = {
     b3: { id:'b3', nazwa:'Wspólnota Bema 10–16', adres:'ul. Bema 10–16, Wrocław', lat:51.1200, lng:16.9800, kody:[{typ:'Furtka',kod:'3690'},{typ:'Piwnica',kod:'0369'},{typ:'Rozdzielnia',kod:'1111'}], awarie:['a4'], ikona:'🏗️' },
   },
   czasPracy: {
-    '10': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p1'},{prac:'w4',godz:8,proj:'p2'}],
-    '09': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p2'}],
-    '08': [{prac:'w1',godz:8,proj:'p3'},{prac:'w2',godz:8,proj:'p1'},{prac:'w4',godz:8,proj:'p2'},{prac:'w3',godz:8,proj:'p4'}],
-    '05': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p2'}],
-    '04': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p2'},{prac:'w4',godz:8,proj:'p2'}],
-    '03': [{prac:'w1',godz:8,proj:'p1'},{prac:'w2',godz:8,proj:'p2'}],
+    '10': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
+    '09': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:30',do:'15:30'}],
+    '08': [{prac:'w1',godz:8,proj:'p3',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'},{prac:'w3',godz:8,proj:'p4',od:'06:00',do:'14:00'}],
+    '05': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'}],
+    '04': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
+    '03': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:30',do:'15:30'}],
   },
   wydatki: {
     e1: { id:'e1', opis:'Przewody YKY 5×6mm²', kwota:1240, typ:'Materiały', data:'08.04.2024', proj:'p1' },
@@ -1826,8 +1826,8 @@ function openCzasDayModal(dayKey) {
         <div style="font-size:10px;color:#888">${proj?proj.nazwa.split(' — ')[0]:''}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:13px;font-weight:800;color:var(--blue)">${w.godz}h</div>
-        <div style="font-size:10px;color:var(--green);font-weight:700">${koszt} zł</div>
+        <div style="font-size:13px;font-weight:800;color:var(--blue)">${w.od && w.do ? `${w.od}–${w.do}` : w.godz + 'h'}</div>
+        <div style="font-size:10px;color:#888">${w.od && w.do ? w.godz + 'h · ' : ''}<span style="color:var(--green);font-weight:700">${koszt} zł</span></div>
       </div>
     </div>`;
   });
