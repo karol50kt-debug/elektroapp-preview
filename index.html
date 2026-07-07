@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>ElektroApp v2.0 — Preview</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d47a1">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
@@ -141,6 +145,47 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 /* SCREEN TABS */
 .sv{display:none;flex-direction:column;flex:1;overflow:hidden;position:relative}
 .sv.active{display:flex}
+/* LOGIN */
+.login-ov{position:absolute;inset:0;background:linear-gradient(160deg,#0d47a1 0%,#1565c0 55%,#1e88e5 100%);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;overflow-y:auto}
+.login-logo{font-size:44px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+.login-title{color:#fff;font-size:22px;font-weight:900;letter-spacing:.5px}
+.login-sub{color:rgba(255,255,255,.75);font-size:12px;margin-bottom:8px}
+.login-tile{width:100%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s;backdrop-filter:blur(4px)}
+.login-tile:hover{background:rgba(255,255,255,.22)}
+.login-tile .lt-av{width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;flex-shrink:0}
+.login-tile .lt-n{color:#fff;font-size:14px;font-weight:800}
+.login-tile .lt-r{color:rgba(255,255,255,.7);font-size:11px}
+.pin-dots{display:flex;gap:12px;margin:6px 0}
+.pin-dot{width:14px;height:14px;border-radius:7px;border:2px solid rgba(255,255,255,.7);background:transparent}
+.pin-dot.filled{background:#fff}
+.pin-pad{display:grid;grid-template-columns:repeat(3,64px);gap:10px}
+.pin-key{height:52px;border-radius:26px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:20px;font-weight:800;cursor:pointer}
+.pin-key:active{background:rgba(255,255,255,.35)}
+/* KOLOROWE NAGŁÓWKI PER ZAKŁADKA */
+#sv-dashboard .hdr{background:linear-gradient(135deg,#1565c0,#0d47a1)}
+#sv-projekty .hdr{background:linear-gradient(135deg,#3949ab,#5e35b1)}
+#sv-pracownicy .hdr{background:linear-gradient(135deg,#2e7d32,#00838f)}
+#sv-awarie .hdr{background:linear-gradient(135deg,#c62828,#e65100)}
+#sv-narzedzia .hdr{background:linear-gradient(135deg,#37474f,#546e7a)}
+#sv-wydatki .hdr{background:linear-gradient(135deg,#e65100,#f57f17)}
+#sv-kody .hdr{background:linear-gradient(135deg,#6a1b9a,#ad1457)}
+#sv-samochody .hdr{background:linear-gradient(135deg,#00838f,#00695c)}
+#sv-mojegodziny .hdr{background:linear-gradient(135deg,#1565c0,#00838f)}
+#sv-paski .hdr{background:linear-gradient(135deg,#2e7d32,#558b2f)}
+#sv-ustawienia .hdr{background:linear-gradient(135deg,#37474f,#263238)}
+.det-hdr{background:linear-gradient(135deg,var(--blue),var(--blue-d))}
+/* UPRAWNIENIA: ukrywanie finansów i funkcji admina */
+body.no-fin .fin{display:none!important}
+body.employee .admin-only{display:none!important}
+/* POWIADOMIENIA */
+.bell-wrap{position:relative}
+.bell-cnt{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+.notif-panel{position:absolute;top:96px;left:10px;right:10px;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.3);z-index:70;display:none;max-height:340px;overflow-y:auto}
+.notif-panel.open{display:block}
+.notif-item{display:flex;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);align-items:flex-start}
+.notif-item .ni-i{font-size:18px;flex-shrink:0}
+.notif-item .ni-t{font-size:12px;color:var(--text);line-height:1.4}
+.notif-item .ni-c{font-size:10px;color:var(--muted);margin-top:2px}
 /* SCAN */
 .scan-ov{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 .scan-frame{width:200px;height:200px;position:relative}
@@ -159,7 +204,7 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 
 <!-- ═══════ DASHBOARD ═══════ -->
 <div class="sv active" id="sv-dashboard">
-<div class="hdr"><div class="hdr-title">⚡ ElektroApp</div><div class="hdr-right"><button class="hdr-btn" onclick="openDzienModal()">+ Dzień</button><div class="avatar">K</div></div></div>
+<div class="hdr"><div class="hdr-title">⚡ ElektroApp</div><div class="hdr-right"><button class="hdr-btn" onclick="openDzienModal()">+ Dzień</button><div class="bell-wrap"><button class="hdr-btn" onclick="toggleNotifPanel()">🔔<span class="bell-cnt" style="display:none">0</span></button></div><div class="avatar" onclick="logout()" title="Wyloguj" style="cursor:pointer">K</div></div></div>
 <div class="content">
   <div style="margin-bottom:14px">
     <div style="font-size:11px;color:var(--muted)" id="dash-date"></div>
@@ -349,8 +394,8 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
   <div class="card" style="padding:0 14px" id="list-awarie">
     <div class="li" data-status="Zgłoszona" onclick="openAwaria('a3')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--red)"></div><div class="li-icon" style="background:var(--red-l)">⚡</div></div><div class="li-body"><div class="li-title">Przepalony obwód — piwnica</div><div class="li-sub">Lipowa · 10.04.2024</div></div><div class="li-right"><span class="badge" style="background:var(--red-l);color:var(--red)">Zgłoszona</span><div style="font-size:10px;color:var(--red);font-weight:700;margin-top:2px">🔴 Wysoki</div></div></div>
     <div class="li" data-status="W realizacji" onclick="openAwaria('a2')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--orange)"></div><div class="li-icon" style="background:var(--orange-l)">💡</div></div><div class="li-body"><div class="li-title">Migające światło w garażu</div><div class="li-sub">Różana · 02.04.2024</div></div><div class="li-right"><span class="badge" style="background:var(--orange-l);color:var(--orange)">W realizacji</span><div style="font-size:10px;color:var(--orange);font-weight:700;margin-top:2px">🟠 Średni</div></div></div>
-    <div class="li" data-status="Zakończona" onclick="openAwaria('a1')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></div><div class="li-icon" style="background:#f5f5f5">⚡</div></div><div class="li-body"><div class="li-title">Brak prądu — klatka schodowa</div><div class="li-sub">Lipowa · 15.03.2024</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Zakończona</span><div style="font-size:10px;color:var(--muted);margin-top:2px">280 zł</div></div></div>
-    <div class="li" data-status="Zakończona" onclick="openAwaria('a4')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></div><div class="li-icon" style="background:#f5f5f5">🔔</div></div><div class="li-body"><div class="li-title">Domofon nie działa — klatka B</div><div class="li-sub">Bema · 20.03.2024</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Zakończona</span><div style="font-size:10px;color:var(--muted);margin-top:2px">90 zł</div></div></div>
+    <div class="li" data-status="Zakończona" onclick="openAwaria('a1')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></div><div class="li-icon" style="background:#f5f5f5">⚡</div></div><div class="li-body"><div class="li-title">Brak prądu — klatka schodowa</div><div class="li-sub">Lipowa · 15.03.2024</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Zakończona</span><div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">280 zł</div></div></div>
+    <div class="li" data-status="Zakończona" onclick="openAwaria('a4')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></div><div class="li-icon" style="background:#f5f5f5">🔔</div></div><div class="li-body"><div class="li-title">Domofon nie działa — klatka B</div><div class="li-sub">Bema · 20.03.2024</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Zakończona</span><div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">90 zł</div></div></div>
     <div class="li-empty" id="empty-awarie" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
   </div>
   <button class="fab" onclick="openModal('modal-awaria')">＋</button>
@@ -486,7 +531,7 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 
 <!-- ═══════ KODY ═══════ -->
 <div class="sv" id="sv-kody">
-<div class="hdr"><div class="hdr-title">🔑 Kody dostępu</div><div class="hdr-right"><button class="hdr-btn" onclick="openModal('modal-kod')">＋</button><div class="avatar">K</div></div></div>
+<div class="hdr"><div class="hdr-title">🔑 Kody dostępu</div><div class="hdr-right"><button class="hdr-btn admin-only" onclick="openModal('modal-kod')">＋</button><div class="avatar">K</div></div></div>
 <div class="content">
   <div class="kpi-scroll">
     <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">3</div><div class="l">Obiekty</div></div>
@@ -568,17 +613,43 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 </div>
 </div>
 
-<!-- Bottom Nav -->
-<nav class="tabbar">
-  <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="ti">⚡</span><span class="tl">Pulpit</span></button>
-  <button class="tab" data-tab="projekty" onclick="switchTab('projekty')"><span class="ti">📋</span><span class="tl">Projekty</span></button>
-  <button class="tab" data-tab="pracownicy" onclick="switchTab('pracownicy')"><span class="ti">👷</span><span class="tl">Ludzie</span></button>
-  <button class="tab" data-tab="awarie" onclick="switchTab('awarie')"><span class="ti">🚨</span><span class="tl">Awarie</span></button>
-  <button class="tab" data-tab="narzedzia" onclick="switchTab('narzedzia')"><span class="ti">🔧</span><span class="tl">Narzędzia</span></button>
-  <button class="tab" data-tab="wydatki" onclick="switchTab('wydatki')"><span class="ti">💰</span><span class="tl">Wydatki</span></button>
-  <button class="tab" data-tab="kody" onclick="switchTab('kody')"><span class="ti">🔑</span><span class="tl">Kody</span></button>
-  <button class="tab" data-tab="samochody" onclick="switchTab('samochody')"><span class="ti">🚐</span><span class="tl">Auta</span></button>
-</nav>
+<!-- ═══════ MOJE GODZINY (widok pracownika) ═══════ -->
+<div class="sv" id="sv-mojegodziny">
+<div class="hdr"><div class="hdr-title">⏱️ Moje godziny</div><div class="hdr-right"><div class="bell-wrap"><button class="hdr-btn" onclick="toggleNotifPanel()">🔔<span class="bell-cnt" style="display:none">0</span></button></div><button class="hdr-btn" onclick="logout()" title="Wyloguj">🚪</button></div></div>
+<div class="content" id="moje-content"></div>
+</div>
+
+<!-- ═══════ PASKI WYNAGRODZEŃ (widok pracownika) ═══════ -->
+<div class="sv" id="sv-paski">
+<div class="hdr"><div class="hdr-title">🧾 Moje paski</div><div class="hdr-right"><div class="bell-wrap"><button class="hdr-btn" onclick="toggleNotifPanel()">🔔<span class="bell-cnt" style="display:none">0</span></button></div><button class="hdr-btn" onclick="logout()" title="Wyloguj">🚪</button></div></div>
+<div class="content" id="paski-content"></div>
+</div>
+
+<!-- ═══════ USTAWIENIA (tylko admin) ═══════ -->
+<div class="sv" id="sv-ustawienia">
+<div class="hdr"><div class="hdr-title">⚙️ Ustawienia</div><div class="hdr-right"><button class="hdr-btn" onclick="logout()" title="Wyloguj">🚪</button><div class="avatar">K</div></div></div>
+<div class="content" id="ustawienia-content"></div>
+</div>
+
+<!-- Bottom Nav (budowany dynamicznie wg roli po zalogowaniu) -->
+<nav class="tabbar" id="tabbar"></nav>
+
+<!-- Panel powiadomień -->
+<div class="notif-panel" id="notif-panel"></div>
+
+<!-- ═══════ EKRAN LOGOWANIA ═══════ -->
+<div class="login-ov" id="login-ov">
+  <div class="login-logo">⚡</div>
+  <div class="login-title">ElektroApp</div>
+  <div class="login-sub">ElektroSmart Instalacje · wybierz konto</div>
+  <div id="login-tiles" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
+  <div id="login-pin" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
+    <div style="color:#fff;font-size:14px;font-weight:700" id="pin-user-label"></div>
+    <div class="pin-dots" id="pin-dots"></div>
+    <div class="pin-pad" id="pin-pad"></div>
+    <button onclick="pinCancel()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;margin-top:6px">← Wybierz inne konto</button>
+  </div>
+</div>
 </div><!-- .screen -->
 <script>
 // ═══════ DANE ═══════
@@ -644,6 +715,23 @@ const DATA = {
       { typ:'tankowanie', data:'01.04.2024', opis:'55L', koszt:258 },
     ] },
   },
+  // Konta logowania. Właściciel (admin) widzi wszystko; pracownikom uprawnienia
+  // konfiguruje się w zakładce Ustawienia. Pracownik NIGDY nie widzi finansów firmy
+  // (widzi tylko własne wynagrodzenie na swoim pasku).
+  uzytkownicy: {
+    u0: { id:'u0', nazwa:'Karol', rola:'Właściciel', pin:'2580', pracownik:null, inicjaly:'K', kolor:'#0d47a1', admin:true },
+    uw1: { id:'uw1', nazwa:'Mariusz Kowalczyk', rola:'Elektryk', pin:'1111', pracownik:'w1', inicjaly:'MK', kolor:'#1565c0', admin:false, uprawnienia:{ godziny:true, paski:true, kody:true, awarie:true, projekty:false, narzedzia:false } },
+    uw2: { id:'uw2', nazwa:'Tomasz Wiśniewski', rola:'Elektryk', pin:'2222', pracownik:'w2', inicjaly:'TW', kolor:'#2e7d32', admin:false, uprawnienia:{ godziny:true, paski:true, kody:true, awarie:true, projekty:false, narzedzia:false } },
+    uw3: { id:'uw3', nazwa:'Marcin Dąbrowski', rola:'Monter', pin:'3333', pracownik:'w3', inicjaly:'MD', kolor:'#c62828', admin:false, uprawnienia:{ godziny:true, paski:true, kody:false, awarie:false, projekty:false, narzedzia:false } },
+    uw4: { id:'uw4', nazwa:'Kamil Zając', rola:'Pomocnik', pin:'4444', pracownik:'w4', inicjaly:'KZ', kolor:'#e65100', admin:false, uprawnienia:{ godziny:true, paski:true, kody:true, awarie:true, projekty:false, narzedzia:false } },
+  },
+  // Zamknięte paski wynagrodzeń (poprzedni miesiąc). Bieżący miesiąc liczy się na żywo z czasPracy.
+  paski: {
+    w1: { miesiac:'Marzec 2024', godziny:168, stawka:45, premia:200, wyplacono:'10.04.2024' },
+    w2: { miesiac:'Marzec 2024', godziny:160, stawka:42, premia:0, wyplacono:'10.04.2024' },
+    w3: { miesiac:'Marzec 2024', godziny:84, stawka:35, premia:0, wyplacono:'10.04.2024' },
+    w4: { miesiac:'Marzec 2024', godziny:152, stawka:25, premia:100, wyplacono:'10.04.2024' },
+  },
 };
 
 // ═══════ NAWIGACJA (z historią powrotu) ═══════
@@ -665,7 +753,13 @@ function switchTab(tab, opts = {}) {
   document.querySelectorAll('.det').forEach(d => d.classList.remove('open'));
   const scanOv = document.getElementById('scan-ov');
   if (scanOv) scanOv.style.display = 'none';
+  const notifPanel = document.getElementById('notif-panel');
+  if (notifPanel) notifPanel.classList.remove('open');
   currentTab = tab;
+  // Widoki renderowane przy wejściu
+  if (tab === 'mojegodziny') buildMojeGodziny();
+  if (tab === 'paski') buildPaski();
+  if (tab === 'ustawienia') buildUstawienia();
 }
 
 // Wywołaj PRZED przejściem do nowego detalu/zakładki, żeby zapamiętać skąd wracać
@@ -1453,7 +1547,7 @@ function buildAwariaDetail(id) {
         </div>
       </div>
 
-      <div class="fg"><label>Koszt naprawy (zł)</label><input class="fi" type="number" value="${a.koszt||0}" placeholder="0"></div>
+      <div class="fg fin"><label>Koszt naprawy (zł)</label><input class="fi" type="number" value="${a.koszt||0}" placeholder="0"></div>
       <div class="fg"><label>Notatka / opis prac</label><textarea class="fi" rows="3" style="resize:none" placeholder="Co zrobiono, jakie części...">${a.notatka||''}</textarea></div>
 
       ${a.status === 'Zakończona' ? `
@@ -1468,6 +1562,7 @@ function updateAwariaStatus(id, newStatus, btn) {
   DATA.awarie[id].status = newStatus;
   buildAwariaDetail(id);
   showToast('Status zmieniony: ' + newStatus);
+  addNotif('🚨', `Awaria „${DATA.awarie[id].opis}" — status: ${newStatus}`);
 }
 
 // ═══════ NARZĘDZIA ═══════
@@ -2026,6 +2121,8 @@ function saveGodziny() {
   closeModal('modal-godziny');
   buildCzasCalendar();
   if (document.getElementById('det-prac').classList.contains('open')) buildPracDetail(pracId);
+  if (currentTab === 'mojegodziny') buildMojeGodziny();
+  addNotif('⏱️', 'Zapisano nowe godziny pracy');
 }
 
 // ═══════ SAMOCHODY: DETAL + HISTORIA (przyda się przy mandacie) ═══════
@@ -2081,8 +2178,318 @@ function buildAutoDetail(id) {
 }
 
 
+// ═══════ LOGOWANIE I ROLE ═══════
+let currentUser = null;
+let pinTarget = null, pinBuffer = '';
+
+function can(perm) {
+  if (!currentUser) return false;
+  if (currentUser.admin) return true;
+  return !!(currentUser.uprawnienia && currentUser.uprawnienia[perm]);
+}
+
+function renderLoginTiles() {
+  document.getElementById('login-tiles').innerHTML = Object.values(DATA.uzytkownicy).map(u => `
+    <div class="login-tile" onclick="pinStart('${u.id}')">
+      <div class="lt-av" style="background:${u.kolor}">${u.inicjaly}</div>
+      <div><div class="lt-n">${u.nazwa}</div><div class="lt-r">${u.rola}${u.admin ? ' · pełny dostęp' : ''}</div></div>
+      <div style="margin-left:auto;color:rgba(255,255,255,.5);font-size:16px">›</div>
+    </div>`).join('');
+}
+
+function pinStart(uid) {
+  pinTarget = DATA.uzytkownicy[uid];
+  pinBuffer = '';
+  document.getElementById('login-tiles').style.display = 'none';
+  document.getElementById('login-pin').style.display = 'flex';
+  document.getElementById('pin-user-label').textContent = `${pinTarget.nazwa} — podaj PIN (demo: ${pinTarget.pin})`;
+  document.getElementById('pin-pad').innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k =>
+    k === '' ? '<div></div>' : `<button class="pin-key" onclick="pinKey('${k}')">${k}</button>`).join('');
+  renderPinDots();
+}
+
+function renderPinDots() {
+  document.getElementById('pin-dots').innerHTML = [0,1,2,3].map(i =>
+    `<div class="pin-dot${i < pinBuffer.length ? ' filled' : ''}"></div>`).join('');
+}
+
+function pinKey(k) {
+  if (k === '⌫') { pinBuffer = pinBuffer.slice(0, -1); renderPinDots(); return; }
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += k;
+  renderPinDots();
+  if (pinBuffer.length === 4) {
+    if (pinBuffer === pinTarget.pin) { setUser(pinTarget); }
+    else { pinBuffer = ''; renderPinDots(); showToast('❌ Błędny PIN'); }
+  }
+}
+
+function pinCancel() {
+  pinTarget = null; pinBuffer = '';
+  document.getElementById('login-pin').style.display = 'none';
+  document.getElementById('login-tiles').style.display = 'flex';
+}
+
+function setUser(u) {
+  currentUser = u;
+  document.body.classList.toggle('no-fin', !can('finanse') && !u.admin);
+  document.body.classList.toggle('employee', !u.admin);
+  document.getElementById('login-ov').style.display = 'none';
+  renderTabbar();
+  NOTIFS.length = 0;
+  if (u.admin) {
+    addNotif('🚨', 'Nowa awaria: Przepalony obwód — piwnica (Lipowa)');
+    addNotif('🚐', 'Za 30 dni kończy się OC: Transporter T6 (15.06)');
+    addNotif('🧾', 'Projekt „Wymiana oświetlenia — Bema" czeka na płatność');
+    switchTab('dashboard');
+  } else {
+    addNotif('🧾', 'Twój pasek za marzec 2024 jest dostępny');
+    if (can('awarie')) addNotif('🚨', 'Przydzielono Ci awarię: Migające światło w garażu');
+    switchTab('mojegodziny');
+  }
+  showToast(`👋 Witaj, ${u.nazwa.split(' ')[0]}!`);
+}
+
+function logout() {
+  currentUser = null;
+  pinCancel();
+  document.getElementById('login-ov').style.display = 'flex';
+  document.getElementById('notif-panel').classList.remove('open');
+  document.body.classList.remove('no-fin', 'employee');
+}
+
+// ═══════ TABBAR wg ROLI ═══════
+const TAB_DEFS = {
+  dashboard:{i:'⚡',l:'Pulpit'}, projekty:{i:'📋',l:'Projekty'}, pracownicy:{i:'👷',l:'Ludzie'},
+  awarie:{i:'🚨',l:'Awarie'}, narzedzia:{i:'🔧',l:'Narzędzia'}, wydatki:{i:'💰',l:'Wydatki'},
+  kody:{i:'🔑',l:'Kody'}, samochody:{i:'🚐',l:'Auta'}, ustawienia:{i:'⚙️',l:'Firma'},
+  mojegodziny:{i:'⏱️',l:'Godziny'}, paski:{i:'🧾',l:'Paski'},
+};
+
+function renderTabbar() {
+  let tabs;
+  if (currentUser && currentUser.admin) {
+    tabs = ['dashboard','projekty','pracownicy','awarie','narzedzia','wydatki','kody','samochody','ustawienia'];
+  } else {
+    tabs = ['mojegodziny','paski'];
+    if (can('kody')) tabs.push('kody');
+    if (can('awarie')) tabs.push('awarie');
+    if (can('projekty')) tabs.push('projekty');
+    if (can('narzedzia')) tabs.push('narzedzia');
+  }
+  document.getElementById('tabbar').innerHTML = tabs.map(t =>
+    `<button class="tab" data-tab="${t}" onclick="switchTab('${t}')"><span class="ti">${TAB_DEFS[t].i}</span><span class="tl">${TAB_DEFS[t].l}</span></button>`).join('');
+}
+
+// ═══════ POWIADOMIENIA ═══════
+const NOTIFS = [];
+let pushEnabled = false;
+
+function addNotif(ikona, tekst) {
+  NOTIFS.unshift({ ikona, tekst, czas: new Date().toLocaleTimeString('pl-PL', {hour:'2-digit',minute:'2-digit'}) });
+  updateBellCounts();
+  if (pushEnabled && 'Notification' in window && Notification.permission === 'granted') {
+    try { new Notification('⚡ ElektroApp', { body: tekst, icon: 'icon-192.png' }); } catch(e) {}
+  }
+}
+
+function updateBellCounts() {
+  document.querySelectorAll('.bell-cnt').forEach(el => {
+    el.textContent = NOTIFS.length;
+    el.style.display = NOTIFS.length > 0 ? 'flex' : 'none';
+  });
+}
+
+function toggleNotifPanel() {
+  const p = document.getElementById('notif-panel');
+  if (p.classList.contains('open')) { p.classList.remove('open'); return; }
+  p.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:800">🔔 Powiadomienia</div>
+      <button onclick="wyczyscNotify()" style="background:none;border:none;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer">Wyczyść</button>
+    </div>
+    ${NOTIFS.map(n => `<div class="notif-item"><div class="ni-i">${n.ikona}</div><div><div class="ni-t">${n.tekst}</div><div class="ni-c">${n.czas}</div></div></div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Brak powiadomień</div>'}
+    <div style="padding:10px 14px">
+      <button class="btn-s" style="width:100%" onclick="enablePush()">${pushEnabled ? '✅ Push włączone' : '📲 Włącz powiadomienia push'}</button>
+    </div>`;
+  p.classList.add('open');
+}
+
+function wyczyscNotify() {
+  NOTIFS.length = 0;
+  updateBellCounts();
+  document.getElementById('notif-panel').classList.remove('open');
+}
+
+function enablePush() {
+  if (!('Notification' in window)) { showToast('⚠️ Ta przeglądarka nie wspiera powiadomień'); return; }
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') {
+      pushEnabled = true;
+      showToast('✅ Powiadomienia push włączone');
+      try { new Notification('⚡ ElektroApp', { body: 'Powiadomienia działają! Będziesz na bieżąco z awariami i projektami.', icon: 'icon-192.png' }); } catch(e) {}
+      document.getElementById('notif-panel').classList.remove('open');
+    } else {
+      showToast('⚠️ Brak zgody na powiadomienia');
+    }
+  });
+}
+
+// ═══════ MOJE GODZINY (pracownik) ═══════
+function mojePrevMonth() { if (pracCalMonth > 0) pracCalMonth--; else { pracCalMonth = 11; pracCalYear--; } buildMojeGodziny(); }
+function mojeNextMonth() { if (pracCalMonth < 11) pracCalMonth++; else { pracCalMonth = 0; pracCalYear++; } buildMojeGodziny(); }
+
+function buildMojeGodziny() {
+  if (!currentUser || !currentUser.pracownik) return;
+  const id = currentUser.pracownik;
+  const w = DATA.pracownicy[id];
+  const daysInMonth = new Date(pracCalYear, pracCalMonth + 1, 0).getDate();
+  const startOffset = (new Date(pracCalYear, pracCalMonth, 1).getDay() + 6) % 7;
+
+  let sumaH = 0, sumaZl = 0;
+  let calHtml = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">` +
+    ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'].map(d => `<div style="text-align:center;font-size:8px;font-weight:700;color:#999;padding:2px 0">${d}</div>`).join('') +
+    `</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
+  for (let i = 0; i < startOffset; i++) calHtml += `<div></div>`;
+  for (let i = 1; i <= daysInMonth; i++) {
+    const key = String(i).padStart(2,'0');
+    const dow = new Date(pracCalYear, pracCalMonth, i).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const wpis = (DATA.czasPracy[key] || []).find(x => x.prac === id);
+    if (wpis && wpis.nieobecny) {
+      calHtml += `<div onclick="openPracDayModal('${id}','${key}')" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,#eee,#eee 3px,#e0e0e0 3px,#e0e0e0 6px);border:2px dashed #bbb;color:#c62828">🚫</div>`;
+      continue;
+    }
+    const proj = wpis ? DATA.projekty[wpis.proj] : null;
+    if (wpis) { sumaH += wpis.godz; sumaZl += wpis.godz * w.stawka; }
+    const bg = proj ? proj.kolor + '33' : (isWeekend ? '#f5f5f5' : '#eef2f7');
+    const border = proj ? `2px solid ${proj.kolor}` : '1px solid #dde3ea';
+    const color = proj ? proj.kolor : (isWeekend ? '#ccc' : '#aaa');
+    const click = wpis ? `onclick="openPracDayModal('${id}','${key}')" style="cursor:pointer"` : '';
+    calHtml += `<div ${click} style="border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:${bg};border:${border};color:${color}">${i}</div>`;
+  }
+  calHtml += `</div>`;
+
+  document.getElementById('moje-content').innerHTML = `
+    <div style="background:linear-gradient(135deg,${w.kolor},${w.kolor}cc);border-radius:14px;padding:16px;color:#fff;margin-bottom:12px">
+      <div style="font-size:11px;opacity:.8">Dzień dobry,</div>
+      <div style="font-size:20px;font-weight:900">${w.imie} 👋</div>
+      <div style="display:flex;gap:18px;margin-top:12px">
+        <div><div style="font-size:10px;opacity:.75">Godziny (ten mies.)</div><div style="font-size:17px;font-weight:800">${sumaH}h</div></div>
+        <div><div style="font-size:10px;opacity:.75">Zarobek (brutto)</div><div style="font-size:17px;font-weight:800">${Math.round(sumaZl)} zł</div></div>
+        <div><div style="font-size:10px;opacity:.75">Stawka</div><div style="font-size:17px;font-weight:800">${w.stawka} zł/h</div></div>
+      </div>
+    </div>
+    <div class="card" style="padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <button onclick="mojePrevMonth()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--blue)">‹</button>
+        <div style="font-size:12px;font-weight:800">📅 ${MIESIACE_PL[pracCalMonth]} ${pracCalYear}</div>
+        <button onclick="mojeNextMonth()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--blue)">›</button>
+      </div>
+      ${calHtml}
+      <button class="btn-p" style="margin-top:12px" onclick="openGodzinyModal('${id}')">＋ Wpisz godziny</button>
+    </div>`;
+}
+
+// ═══════ PASKI WYNAGRODZEŃ (pracownik) ═══════
+function buildPaski() {
+  if (!currentUser || !currentUser.pracownik) return;
+  const id = currentUser.pracownik;
+  const w = DATA.pracownicy[id];
+  const pasek = DATA.paski[id];
+
+  let biezaceH = 0;
+  Object.values(DATA.czasPracy).forEach(dzien => {
+    dzien.forEach(x => { if (x.prac === id && !x.nieobecny) biezaceH += x.godz; });
+  });
+  const biezaceZl = Math.round(biezaceH * w.stawka);
+
+  let html = `
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="background:linear-gradient(135deg,var(--green),#558b2f);padding:14px 16px;color:#fff">
+        <div style="font-size:11px;opacity:.85">Bieżący miesiąc (w trakcie)</div>
+        <div style="font-size:16px;font-weight:800">Kwiecień 2024</div>
+      </div>
+      <div style="padding:14px 16px">
+        <div class="dr"><span class="dr-l">Przepracowane godziny</span><span class="dr-r">${biezaceH}h</span></div>
+        <div class="dr"><span class="dr-l">Stawka</span><span class="dr-r">${w.stawka} zł/h</span></div>
+        <div class="dr" style="border-bottom:none"><span class="dr-l" style="font-weight:800;color:var(--text)">Do wypłaty (na dziś)</span><span class="dr-r" style="font-size:15px;font-weight:900;color:var(--green)">${biezaceZl} zł</span></div>
+      </div>
+    </div>`;
+
+  if (pasek) {
+    const podstawa = pasek.godziny * pasek.stawka;
+    const razem = podstawa + (pasek.premia || 0);
+    html += `
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#37474f,#546e7a);padding:14px 16px;color:#fff;display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:11px;opacity:.85">Pasek wynagrodzenia</div><div style="font-size:16px;font-weight:800">${pasek.miesiac}</div></div>
+        <span style="background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">✅ Wypłacono</span>
+      </div>
+      <div style="padding:14px 16px">
+        <div class="dr"><span class="dr-l">Godziny</span><span class="dr-r">${pasek.godziny}h</span></div>
+        <div class="dr"><span class="dr-l">Stawka</span><span class="dr-r">${pasek.stawka} zł/h</span></div>
+        <div class="dr"><span class="dr-l">Podstawa</span><span class="dr-r">${podstawa.toLocaleString('pl-PL')} zł</span></div>
+        <div class="dr"><span class="dr-l">Premia</span><span class="dr-r">${(pasek.premia||0).toLocaleString('pl-PL')} zł</span></div>
+        <div class="dr"><span class="dr-l">Data wypłaty</span><span class="dr-r">${pasek.wyplacono}</span></div>
+        <div class="dr" style="border-bottom:none"><span class="dr-l" style="font-weight:800;color:var(--text)">Razem</span><span class="dr-r" style="font-size:15px;font-weight:900;color:var(--green)">${razem.toLocaleString('pl-PL')} zł</span></div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('paski-content').innerHTML = html;
+}
+
+// ═══════ USTAWIENIA / UPRAWNIENIA (admin) ═══════
+const PERM_LABELS = { godziny:'⏱️ Godziny', paski:'🧾 Paski', kody:'🔑 Kody', awarie:'🚨 Awarie', projekty:'📋 Projekty', narzedzia:'🔧 Narzędzia' };
+
+function buildUstawienia() {
+  const pracownicy = Object.values(DATA.uzytkownicy).filter(u => !u.admin);
+  document.getElementById('ustawienia-content').innerHTML = `
+    <div class="sec-hdr"><h3>👥 Uprawnienia pracowników</h3></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Zaznacz, co widzi każdy pracownik po zalogowaniu. Finanse firmy są zawsze ukryte przed pracownikami.</div>
+    ${pracownicy.map(u => `
+      <div class="card" style="padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:36px;height:36px;border-radius:18px;background:${u.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${u.inicjaly}</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:800">${u.nazwa}</div><div style="font-size:11px;color:var(--muted)">${u.rola} · PIN: ${u.pin}</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          ${Object.keys(PERM_LABELS).map(perm => `
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;background:#f8f9fa;border-radius:8px">
+              <input type="checkbox" ${u.uprawnienia[perm] ? 'checked' : ''} onchange="togglePerm('${u.id}','${perm}')" style="accent-color:var(--blue)">
+              ${PERM_LABELS[perm]}
+            </label>`).join('')}
+        </div>
+      </div>`).join('')}
+    <div class="sec-hdr" style="margin-top:14px"><h3>📲 Powiadomienia</h3></div>
+    <div class="card" style="padding:12px 14px">
+      <button class="btn-s" style="width:100%" onclick="enablePush()">${pushEnabled ? '✅ Push włączone' : 'Włącz powiadomienia push na tym urządzeniu'}</button>
+      <button class="btn-s" style="width:100%;margin-top:8px" onclick="addNotif('🧪','Testowe powiadomienie — działa!');showToast('🔔 Wysłano testowe powiadomienie')">Wyślij testowe powiadomienie</button>
+    </div>
+    <div class="sec-hdr" style="margin-top:14px"><h3>ℹ️ Aplikacja</h3></div>
+    <div class="card" style="padding:12px 14px;font-size:11px;color:var(--muted);line-height:1.6">
+      ElektroApp v2.0 — zarządzanie firmą elektryczną.<br>
+      💡 Na telefonie: menu przeglądarki → <strong>„Dodaj do ekranu głównego"</strong>, żeby mieć ikonę jak prawdziwa aplikacja.
+    </div>`;
+}
+
+function togglePerm(uid, perm) {
+  const u = DATA.uzytkownicy[uid];
+  if (!u || u.admin) return;
+  u.uprawnienia[perm] = !u.uprawnienia[perm];
+  showToast(`✅ ${u.nazwa.split(' ')[0]}: ${PERM_LABELS[perm].replace(/^\S+ /,'')} ${u.uprawnienia[perm] ? 'włączone' : 'wyłączone'}`);
+}
+
+// ═══════ SERVICE WORKER (instalacja jako appka / PWA) ═══════
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
 // ═══════ INIT ═══════
 document.addEventListener('DOMContentLoaded', () => {
+  renderLoginTiles();
+  renderTabbar();
   switchTab('dashboard');
   buildCzasCalendar();
   renderProjektyList();
