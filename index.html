@@ -186,6 +186,12 @@ body.employee .admin-only{display:none!important}
 .notif-item .ni-i{font-size:18px;flex-shrink:0}
 .notif-item .ni-t{font-size:12px;color:var(--text);line-height:1.4}
 .notif-item .ni-c{font-size:10px;color:var(--muted);margin-top:2px}
+/* PEŁNY EKRAN NA TELEFONIE (produkcyjnie: bez ramki telefonu) */
+@media (max-width:560px){
+  body{padding:0;background:var(--bg)}
+  .phone-label{display:none}
+  .phone{width:100%;height:100dvh;border-radius:0;box-shadow:none}
+}
 /* SCAN */
 .scan-ov{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 .scan-frame{width:200px;height:200px;position:relative}
@@ -215,19 +221,15 @@ body.employee .admin-only{display:none!important}
   <div class="kpi-grid">
     <div class="kpi" style="border-color:var(--blue)" onclick="switchTab('projekty')"><div class="kpi-icon" style="background:var(--blue-l)">📋</div><div><div class="kpi-val" style="color:var(--blue)" id="dash-kpi-projekty">3</div><div class="kpi-lbl">Aktywne projekty</div></div></div>
     <div class="kpi" style="border-color:var(--green)" onclick="switchTab('pracownicy')"><div class="kpi-icon" style="background:var(--green-l)">👷</div><div><div class="kpi-val" style="color:var(--green)">3</div><div class="kpi-lbl">Pracownicy</div></div></div>
-    <div class="kpi" style="border-color:var(--red)" onclick="switchTab('awarie')"><div class="kpi-icon" style="background:var(--red-l)">🚨</div><div><div class="kpi-val" style="color:var(--red)">2</div><div class="kpi-lbl">Otwarte awarie</div></div></div>
-    <div class="kpi" style="border-color:var(--green)"><div class="kpi-icon" style="background:var(--green-l)">💰</div><div><div class="kpi-val" style="color:var(--green)">50k zł</div><div class="kpi-lbl">Przychody YTD</div></div></div>
-    <div class="kpi" style="border-color:var(--orange)" onclick="switchTab('wydatki')"><div class="kpi-icon" style="background:var(--orange-l)">📊</div><div><div class="kpi-val" style="color:var(--orange)">1 125 zł</div><div class="kpi-lbl">Wydatki mies.</div></div></div>
-    <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:#f5f5f5">✅</div><div><div class="kpi-val" style="color:var(--muted)">1</div><div class="kpi-lbl">Zakończone</div></div></div>
+    <div class="kpi" style="border-color:var(--red)" onclick="switchTab('awarie')"><div class="kpi-icon" style="background:var(--red-l)">🚨</div><div><div class="kpi-val" style="color:var(--red)" id="dash-kpi-awarie">2</div><div class="kpi-lbl">Otwarte awarie</div></div></div>
+    <div class="kpi" style="border-color:var(--green)"><div class="kpi-icon" style="background:var(--green-l)">💰</div><div><div class="kpi-val" style="color:var(--green)" id="dash-kpi-przychody">0 zł</div><div class="kpi-lbl">Przychody</div></div></div>
+    <div class="kpi" style="border-color:var(--orange)" onclick="switchTab('wydatki')"><div class="kpi-icon" style="background:var(--orange-l)">📊</div><div><div class="kpi-val" style="color:var(--orange)" id="dash-kpi-wydatki">0 zł</div><div class="kpi-lbl">Wydatki</div></div></div>
+    <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:#f5f5f5">✅</div><div><div class="kpi-val" style="color:var(--muted)" id="dash-kpi-zakonczone">0</div><div class="kpi-lbl">Zakończone</div></div></div>
   </div>
   <div class="sec-hdr"><h3>Aktywne projekty</h3><a onclick="switchTab('projekty')">Wszystkie →</a></div>
   <div class="card" style="padding:10px 14px" id="dash-projekty-list"></div>
   <div class="sec-hdr"><h3>Otwarte awarie</h3><a onclick="switchTab('awarie')">Wszystkie →</a></div>
-  <div class="card" style="padding:10px 14px">
-    <div class="li" onclick="openAwaria('a3')"><div class="li-icon" style="background:var(--red-l)">⚠️</div><div class="li-body"><div class="li-title">Przepalony obwód — piwnica</div><div class="li-sub">Lipowa · 10.04.2024</div></div><span class="badge" style="background:var(--red-l);color:var(--red)">Wysoki</span></div>
-    <div class="li" onclick="openAwaria('a2')"><div class="li-icon" style="background:var(--orange-l)">⚠️</div><div class="li-body"><div class="li-title">Migające światło w garażu</div><div class="li-sub">Różana · 02.04.2024</div></div><span class="badge" style="background:var(--orange-l);color:var(--orange)">Średni</span></div>
-  </div>
-  <div class="mig"><div class="badge2">v2.0</div><h4>React Native Migration</h4><div class="pb"><div class="pbf" style="width:45%"></div></div><p>45% — wszystkie ekrany gotowe</p><div class="step">✅ PWA prototyp</div><div class="step">✅ Google Sheets API</div><div class="step">✅ RN scaffold + ekrany + QR</div><div class="step">⬜ OAuth 2.0 (zapis)</div><div class="step">⬜ Produkcyjny APK</div></div>
+  <div class="card" style="padding:10px 14px" id="dash-awarie-list"></div>
 </div>
 <!-- Modal Dodaj Dzień -->
 <div class="modal-ov" id="modal-dzien" style="display:none" onclick="if(event.target===this)closeModal('modal-dzien')">
@@ -384,10 +386,10 @@ body.employee .admin-only{display:none!important}
 <div class="hdr"><div class="hdr-title">🚨 Awarie</div><div class="hdr-right"><div class="avatar">K</div></div></div>
 <div class="content" style="position:relative">
   <div class="kpi-scroll">
-    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">4</div><div class="l">Łącznie</div></div>
-    <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">1</div><div class="l">Zgłoszone</div></div>
-    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">1</div><div class="l">W realizacji</div></div>
-    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">2</div><div class="l">Zakończone</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)" id="aw-kpi-total">0</div><div class="l">Łącznie</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)" id="aw-kpi-zgloszone">0</div><div class="l">Zgłoszone</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)" id="aw-kpi-realizacja">0</div><div class="l">W realizacji</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)" id="aw-kpi-zakonczone">0</div><div class="l">Zakończone</div></div>
   </div>
   <div class="frow" id="frow-awarie">
     <div class="ftab active" onclick="setFtab(this,'awarie')">Wszystkie</div>
@@ -396,29 +398,25 @@ body.employee .admin-only{display:none!important}
     <div class="ftab" onclick="setFtab(this,'awarie')">Zakończone</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-awarie">
-    <div class="li" data-status="Zgłoszona" onclick="openAwaria('a3')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--red)"></div><div class="li-icon" style="background:var(--red-l)">⚡</div></div><div class="li-body"><div class="li-title">Przepalony obwód — piwnica</div><div class="li-sub">Lipowa · 10.04.2024</div></div><div class="li-right"><span class="badge" style="background:var(--red-l);color:var(--red)">Zgłoszona</span><div style="font-size:10px;color:var(--red);font-weight:700;margin-top:2px">🔴 Wysoki</div></div></div>
-    <div class="li" data-status="W realizacji" onclick="openAwaria('a2')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--orange)"></div><div class="li-icon" style="background:var(--orange-l)">💡</div></div><div class="li-body"><div class="li-title">Migające światło w garażu</div><div class="li-sub">Różana · 02.04.2024</div></div><div class="li-right"><span class="badge" style="background:var(--orange-l);color:var(--orange)">W realizacji</span><div style="font-size:10px;color:var(--orange);font-weight:700;margin-top:2px">🟠 Średni</div></div></div>
-    <div class="li" data-status="Zakończona" onclick="openAwaria('a1')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></div><div class="li-icon" style="background:#f5f5f5">⚡</div></div><div class="li-body"><div class="li-title">Brak prądu — klatka schodowa</div><div class="li-sub">Lipowa · 15.03.2024</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Zakończona</span><div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">280 zł</div></div></div>
-    <div class="li" data-status="Zakończona" onclick="openAwaria('a4')"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:var(--muted)"></div><div class="li-icon" style="background:#f5f5f5">🔔</div></div><div class="li-body"><div class="li-title">Domofon nie działa — klatka B</div><div class="li-sub">Bema · 20.03.2024</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Zakończona</span><div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">90 zł</div></div></div>
     <div class="li-empty" id="empty-awarie" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
   </div>
-  <button class="fab" onclick="openModal('modal-awaria')">＋</button>
+  <button class="fab" onclick="openNewAwaria()">＋</button>
 </div>
 <!-- Detail awaria (edytowalna) -->
 <div class="det" id="det-awaria">
-  <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700;flex:1" id="dawaria-title">Awaria</div><button class="hdr-btn" onclick="showToast('✅ Zapisano zmiany')">Zapisz</button></div>
+  <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700;flex:1" id="dawaria-title">Awaria</div><button class="hdr-btn" onclick="saveAwariaDetail()">Zapisz</button></div>
   <div class="det-content" id="dawaria-content"></div>
 </div>
 <!-- Modal dodaj awarię -->
 <div class="modal-ov" id="modal-awaria" style="display:none" onclick="if(event.target===this)closeModal('modal-awaria')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-awaria')">✕</button><h3>🚨 Nowa awaria</h3>
-    <div class="fg"><label>Blok / lokalizacja</label><select class="fs"><option>Wspólnota Lipowa 12–18</option><option>Spółdzielnia Różana</option><option>Wspólnota Bema 10–16</option></select></div>
-    <div class="fg"><label>Opis awarii</label><textarea class="fi" rows="3" placeholder="Opisz problem..." style="resize:none"></textarea></div>
+    <div class="fg"><label>Blok / lokalizacja</label><select class="fs" id="na-blok"></select></div>
+    <div class="fg"><label>Opis awarii</label><textarea class="fi" id="na-opis" rows="3" placeholder="Opisz problem..." style="resize:none"></textarea></div>
     <div style="display:flex;gap:8px">
-      <div class="fg" style="flex:1"><label>Priorytet</label><select class="fs"><option>Niski</option><option selected>Średni</option><option>Wysoki</option><option>Krytyczny</option></select></div>
-      <div class="fg" style="flex:1"><label>Przydziel do</label><select class="fs"><option>— brak —</option><option>Mariusz K.</option><option>Tomasz W.</option><option>Kamil Z.</option></select></div>
+      <div class="fg" style="flex:1"><label>Priorytet</label><select class="fs" id="na-priorytet"><option>Niski</option><option selected>Średni</option><option>Wysoki</option><option>Krytyczny</option></select></div>
+      <div class="fg admin-only" style="flex:1"><label>Przydziel do</label><select class="fs" id="na-pracownik"></select></div>
     </div>
-    <button class="btn-p" onclick="showToast('✅ Awaria zgłoszona!');closeModal('modal-awaria')">Zgłoś awarię</button>
+    <button class="btn-p" onclick="saveAwaria()">Zgłoś awarię</button>
   </div>
 </div>
 </div>
@@ -726,13 +724,25 @@ const DATA = {
     b2: { id:'b2', nazwa:'Spółdzielnia Różana', adres:'os. Różana 1–8, Wrocław', lat:51.0892, lng:16.9988, kody:[{typ:'Wejście główne',kod:'2468'},{typ:'Piwnica',kod:'1357'},{typ:'Siłownia',kod:'7531'},{typ:'Rozdzielnia',kod:'9876'}], awarie:['a2'], ikona:'🏠' },
     b3: { id:'b3', nazwa:'Wspólnota Bema 10–16', adres:'ul. Bema 10–16, Wrocław', lat:51.1200, lng:16.9800, kody:[{typ:'Furtka',kod:'3690'},{typ:'Piwnica',kod:'0369'},{typ:'Rozdzielnia',kod:'1111'}], awarie:['a4'], ikona:'🏗️' },
   },
+  // Klucze = pełne daty YYYY-MM-DD, żeby wpisy z różnych miesięcy się nie nadpisywały
   czasPracy: {
-    '10': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
-    '09': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:30',do:'15:30'}],
-    '08': [{prac:'w1',godz:8,proj:'p3',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'},{prac:'w3',godz:8,proj:'p4',od:'06:00',do:'14:00'}],
-    '05': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'}],
-    '04': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
-    '03': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:30',do:'15:30'}],
+    '2024-04-10': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
+    '2024-04-09': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:30',do:'15:30'}],
+    '2024-04-08': [{prac:'w1',godz:8,proj:'p3',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'},{prac:'w3',godz:8,proj:'p4',od:'06:00',do:'14:00'}],
+    '2024-04-05': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'}],
+    '2024-04-04': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
+    '2024-04-03': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:30',do:'15:30'}],
+    // Marzec — do wygenerowania pasków
+    '2024-03-04': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
+    '2024-03-05': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
+    '2024-03-06': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p1',od:'07:00',do:'15:00'}],
+    '2024-03-07': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w3',nieobecny:true,powod:'L4'}],
+    '2024-03-08': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:6,proj:'p2',od:'07:00',do:'13:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
+    '2024-03-11': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
+    '2024-03-12': [{prac:'w1',godz:10,proj:'p1',od:'06:00',do:'16:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'}],
+    '2024-03-13': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'},{prac:'w4',nieobecny:true,powod:'Urlop'}],
+    '2024-03-14': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
+    '2024-03-15': [{prac:'w1',godz:8,proj:'p1',od:'07:00',do:'15:00'},{prac:'w2',godz:8,proj:'p2',od:'07:00',do:'15:00'},{prac:'w4',godz:8,proj:'p2',od:'08:00',do:'16:00'}],
   },
   wydatki: {
     e1: { id:'e1', opis:'Przewody YKY 5×6mm²', kwota:1240, typ:'Materiały', data:'08.04.2024', proj:'p1' },
@@ -764,10 +774,10 @@ const DATA = {
   // Widzi je tylko właściciel (w porównaniu) i sam pracownik. To NIE jest oficjalna
   // ewidencja — oficjalna to DATA.czasPracy prowadzona przez właściciela.
   czasPracyWlasne: {
-    w1: { '08':{godz:8,od:'07:00',do:'15:00',proj:'p3'}, '09':{godz:8.5,od:'07:00',do:'15:30',proj:'p1'}, '10':{godz:8,od:'07:00',do:'15:00',proj:'p1'}, '11':{godz:6,od:'07:00',do:'13:00',proj:'p1'} },
-    w2: { '09':{godz:8,od:'07:30',do:'15:30',proj:'p2'}, '10':{godz:8,od:'07:00',do:'15:00',proj:'p1'} },
+    w1: { '2024-04-08':{godz:8,od:'07:00',do:'15:00',proj:'p3'}, '2024-04-09':{godz:8.5,od:'07:00',do:'15:30',proj:'p1'}, '2024-04-10':{godz:8,od:'07:00',do:'15:00',proj:'p1'}, '2024-04-11':{godz:6,od:'07:00',do:'13:00',proj:'p1'} },
+    w2: { '2024-04-09':{godz:8,od:'07:30',do:'15:30',proj:'p2'}, '2024-04-10':{godz:8,od:'07:00',do:'15:00',proj:'p1'} },
     w3: {},
-    w4: { '10':{godz:7.5,od:'08:00',do:'15:30',proj:'p2'} },
+    w4: { '2024-04-10':{godz:7.5,od:'08:00',do:'15:30',proj:'p2'} },
   },
   // Paski wynagrodzeń — obieg: roboczy (wygenerowany, tylko właściciel) →
   // zatwierdzony (widoczny dla pracownika) → wypłacony (zarejestrowana wypłata).
@@ -781,6 +791,38 @@ const DATA = {
     w4: [ { miesiac:'Luty 2024', mIdx:1, rok:2024, godziny:144, stawka:25, premia:0, status:'wypłacony', zatwierdzono:'01.03.2024', wyplacono:'05.03.2024' } ],
   },
 };
+
+// Klucz daty YYYY-MM-DD (miesiąc 0-based, jak w Date)
+function dk(rok, mIdx, dzien) {
+  return `${rok}-${String(mIdx + 1).padStart(2, '0')}-${String(dzien).padStart(2, '0')}`;
+}
+
+// ═══════ TRWAŁOŚĆ DANYCH (localStorage) ═══════
+// Wersja schematu — po zmianie struktury DATA stary zapis jest odrzucany,
+// żeby nie wczytać niekompatybilnych danych.
+const STORAGE_KEY = 'elektroapp_state_v1';
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: DATA, prefs: NOTIF_PREFS }));
+  } catch (e) { /* tryb prywatny / brak miejsca — działamy dalej bez zapisu */ }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!saved || !saved.data) return;
+    Object.keys(saved.data).forEach(k => { DATA[k] = saved.data[k]; });
+    if (saved.prefs) Object.assign(NOTIF_PREFS, saved.prefs);
+  } catch (e) { /* uszkodzony zapis — start od danych domyślnych */ }
+}
+
+function resetState() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  location.reload();
+}
 
 // ═══════ NAWIGACJA (z historią powrotu) ═══════
 let currentTab = 'dashboard';
@@ -1111,6 +1153,7 @@ function zadaniaLeafStats(zadania) {
 function recalcPostep(p) {
   const s = zadaniaLeafStats(p.zadania);
   if (s.total > 0) p.postep = Math.round((s.done / s.total) * 100);
+  saveState();
 }
 
 function buildZadanieHtml(p, i) {
@@ -1211,6 +1254,7 @@ function toggleZaplacono(projId) {
   if (!p) return;
   p.zaplacono = !p.zaplacono;
   p.dataZaplaty = p.zaplacono ? new Date().toLocaleDateString('pl-PL') : null;
+  saveState();
   buildProjDetail(projId, 'ogolne');
 }
 
@@ -1226,6 +1270,7 @@ function updateProjektStatus(projId, newStatus) {
     }
   }
   showToast(`✅ Status zmieniony na: ${newStatus}`);
+  saveState();
   buildProjDetail(projId, currentProjTab);
   renderProjektyList();
 }
@@ -1282,6 +1327,8 @@ function renderProjektyList() {
 
   const kpiEl = document.getElementById('dash-kpi-projekty');
   if (kpiEl) kpiEl.textContent = all.filter(p => p.status === 'W realizacji').length;
+  const zakEl = document.getElementById('dash-kpi-zakonczone');
+  if (zakEl) zakEl.textContent = all.filter(p => p.status === 'Zakończony').length;
 }
 
 function openNewProjekt() {
@@ -1343,6 +1390,7 @@ function saveProjekt() {
     showToast('✅ Projekt dodany!');
     renderProjektyList();
   }
+  saveState();
   closeModal('modal-projekt');
 }
 
@@ -1379,10 +1427,12 @@ function renderWydatkiList() {
 
   const miesiac = all.filter(e => e.typ !== 'Przychód').reduce((s, e) => s + e.kwota, 0);
   const materialy = all.filter(e => e.typ === 'Materiały').reduce((s, e) => s + e.kwota, 0);
-  const miesiacEl = document.getElementById('wyd-kpi-miesiac');
-  const materialyEl = document.getElementById('wyd-kpi-materialy');
-  if (miesiacEl) miesiacEl.textContent = miesiac.toLocaleString('pl-PL') + ' zł';
-  if (materialyEl) materialyEl.textContent = materialy.toLocaleString('pl-PL') + ' zł';
+  const przychody = all.filter(e => e.typ === 'Przychód').reduce((s, e) => s + e.kwota, 0);
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('wyd-kpi-miesiac', miesiac.toLocaleString('pl-PL') + ' zł');
+  setTxt('wyd-kpi-materialy', materialy.toLocaleString('pl-PL') + ' zł');
+  setTxt('dash-kpi-wydatki', miesiac >= 10000 ? Math.round(miesiac/1000) + 'k zł' : miesiac.toLocaleString('pl-PL') + ' zł');
+  setTxt('dash-kpi-przychody', przychody >= 10000 ? Math.round(przychody/1000) + 'k zł' : przychody.toLocaleString('pl-PL') + ' zł');
 }
 
 function fillWydatekProjektSelect(selectedProj) {
@@ -1438,6 +1488,7 @@ function saveWydatek() {
     showToast('✅ Wydatek zapisany!');
   }
   renderWydatkiList();
+  saveState();
   closeModal('modal-wydatek');
 }
 
@@ -1447,6 +1498,7 @@ function deleteWydatek() {
   delete DATA.wydatki[editId];
   showToast('🗑️ Wydatek usunięty');
   renderWydatkiList();
+  saveState();
   closeModal('modal-wydatek');
 }
 
@@ -1479,7 +1531,7 @@ function pasekRozpisDni(pracId, mIdx, rok) {
   const daysInMonth = new Date(rok, mIdx + 1, 0).getDate();
   const dni = [];
   for (let d = 1; d <= daysInMonth; d++) {
-    const key = String(d).padStart(2, '0');
+    const key = dk(rok, mIdx, d);
     const wpis = (DATA.czasPracy[key] || []).find(x => x.prac === pracId);
     if (wpis && wpis.nieobecny) dni.push({ d, nieobecny: true, powod: wpis.powod });
     else if (wpis) dni.push({ d, od: wpis.od, do: wpis.do, godz: wpis.godz, proj: wpis.proj });
@@ -1557,6 +1609,7 @@ function savePasekDzien() {
     pasek.dni[pasekEdit.di] = { d };
   }
   pasek.godziny = pasek.dni.reduce((s, y) => s + (y.godz || 0), 0);
+  saveState();
   closeModal('modal-pasek-dzien');
   showToast('✅ Poprawiono dzień — suma przeliczona');
   buildPaskiAdmin();
@@ -1653,6 +1706,7 @@ function generujPaski() {
     ile++;
   });
   showToast(ile ? `🧾 Wygenerowano ${ile} paski — zweryfikuj i zatwierdź` : 'Paski za ten miesiąc już istnieją');
+  saveState();
   buildPaskiAdmin();
 }
 
@@ -1664,6 +1718,7 @@ function zatwierdzPasek(pracId, idx) {
   const w = DATA.pracownicy[pracId];
   showToast(`✅ Zatwierdzono pasek: ${w.imie} ${w.nazwisko}`);
   addNotif('🧾', `Pasek ${pasek.miesiac} zatwierdzony dla ${w.imie} — pracownik już go widzi`);
+  saveState();
   buildPaskiAdmin();
 }
 
@@ -1679,6 +1734,7 @@ function wyplacPasek(pracId, idx) {
   renderWydatkiList();
   showToast(`💸 Wypłacono ${kwota.toLocaleString('pl-PL')} zł — zarejestrowano w wydatkach`);
   addNotif('💸', `Wypłata: ${w.imie} ${w.nazwisko} — ${kwota.toLocaleString('pl-PL')} zł (${pasek.miesiac})`);
+  saveState();
   buildPaskiAdmin();
 }
 
@@ -1756,13 +1812,11 @@ function buildPracDetail(id) {
   const statusColor = w.status === 'Aktywny' ? 'var(--green)' : w.status === 'L4' ? 'var(--red)' : 'var(--orange)';
   const statusBg = w.status === 'Aktywny' ? 'var(--green-l)' : w.status === 'L4' ? 'var(--red-l)' : 'var(--orange-l)';
 
-  // Kalendarz budowany z prawdziwych wpisów DATA.czasPracy (a nie osobnego, martwego pola grafik)
-  // Uwaga: klucze DATA.czasPracy to tylko dzień miesiąca (bez miesiąca/roku), więc — tak jak
-  // w kalendarzu zespołu — te same dane pokażą się dla tego samego dnia w każdym miesiącu.
+  // Kalendarz budowany z prawdziwych wpisów DATA.czasPracy (klucze = pełne daty)
   const daysInMonth = new Date(pracCalYear, pracCalMonth + 1, 0).getDate();
   const days = [];
   for (let i = 1; i <= daysInMonth; i++) {
-    const key = String(i).padStart(2,'0');
+    const key = dk(pracCalYear, pracCalMonth, i);
     const dow = new Date(pracCalYear, pracCalMonth, i).getDay(); // 0=Nd...6=Sb
     const isWeekend = dow === 0 || dow === 6;
     const wpisyDnia = DATA.czasPracy[key] || [];
@@ -1859,12 +1913,13 @@ function buildPracDetail(id) {
 function buildPorownanieHtml(pracId) {
   if (!currentUser || !currentUser.admin) return '';
   const wlasne = DATA.czasPracyWlasne[pracId] || {};
+  const prefix = `${pracCalYear}-${String(pracCalMonth + 1).padStart(2, '0')}-`;
   const dni = new Set();
   Object.keys(DATA.czasPracy).forEach(k => {
-    if ((DATA.czasPracy[k] || []).some(x => x.prac === pracId)) dni.add(k);
+    if (k.startsWith(prefix) && (DATA.czasPracy[k] || []).some(x => x.prac === pracId)) dni.add(k);
   });
-  Object.keys(wlasne).forEach(k => dni.add(k));
-  const sorted = [...dni].sort((a, b) => Number(a) - Number(b));
+  Object.keys(wlasne).forEach(k => { if (k.startsWith(prefix)) dni.add(k); });
+  const sorted = [...dni].sort();
   if (sorted.length === 0) return '';
 
   let zgodne = 0, rozne = 0;
@@ -1879,8 +1934,8 @@ function buildPorownanieHtml(pracId) {
     if (zgoda) zgodne++; else rozne++;
     const bg = zgoda ? 'var(--green-l)' : 'var(--orange-l)';
     const ikona = zgoda ? '✅' : '⚠️';
-    return `<div style="display:grid;grid-template-columns:34px 1fr 1fr 24px;gap:6px;align-items:center;padding:6px 8px;background:${bg};border-radius:8px;margin-bottom:4px;font-size:11px">
-      <strong>${key}.${String(pracCalMonth+1).padStart(2,'0')}</strong>
+    return `<div style="display:grid;grid-template-columns:38px 1fr 1fr 24px;gap:6px;align-items:center;padding:6px 8px;background:${bg};border-radius:8px;margin-bottom:4px;font-size:11px">
+      <strong>${key.slice(8)}.${key.slice(5,7)}</strong>
       <span>${mojeTxt}${mojeH ? ` <span style="color:#888">(${mojeH}h)</span>` : ''}</span>
       <span>${jegoTxt}${jegoH ? ` <span style="color:#888">(${jegoH}h)</span>` : ''}</span>
       <span style="text-align:center">${ikona}</span>
@@ -1907,7 +1962,7 @@ function openPracDayModal(pracId, dayKey, src) {
     : (DATA.czasPracy[dayKey] || []).find(x => x.prac === pracId);
   if (!w || !wpis) return;
 
-  const dateLabel = `${dayKey}.${String(pracCalMonth+1).padStart(2,'0')}.${pracCalYear}`;
+  const dateLabel = dayKey.split('-').reverse().join('.');
   document.getElementById('modal-dzien-title').textContent = '📅 ' + dateLabel;
 
   let html;
@@ -1941,6 +1996,81 @@ function openPracDayModal(pracId, dayKey, src) {
 }
 
 // ═══════ AWARIE ═══════
+const AWARIA_STATUS_META = {
+  'Zgłoszona':    { bg:'var(--red-l)',    fg:'var(--red)',    dot:'var(--red)' },
+  'W realizacji': { bg:'var(--orange-l)', fg:'var(--orange)', dot:'var(--orange)' },
+  'Zakończona':   { bg:'var(--green-l)',  fg:'var(--green)',  dot:'var(--muted)' },
+};
+const PRIORYTET_META = { 'Krytyczny':'🟣', 'Wysoki':'🔴', 'Średni':'🟠', 'Niski':'🟢' };
+
+function renderAwarieList() {
+  const listEl = document.getElementById('list-awarie');
+  const emptyEl = document.getElementById('empty-awarie');
+  const all = Object.values(DATA.awarie).sort((a, b) => (b.data || '').split('.').reverse().join('').localeCompare((a.data || '').split('.').reverse().join('')));
+
+  if (listEl) {
+    listEl.querySelectorAll(':scope > .li').forEach(li => li.remove());
+    all.forEach(a => {
+      const m = AWARIA_STATUS_META[a.status] || AWARIA_STATUS_META['Zgłoszona'];
+      const zak = a.status === 'Zakończona';
+      const li = document.createElement('div');
+      li.className = 'li';
+      li.dataset.status = a.status;
+      li.dataset.text = `${a.opis} ${a.blok}`.toLowerCase();
+      li.onclick = () => openAwaria(a.id);
+      li.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:${m.dot}"></div><div class="li-icon" style="background:${zak ? '#f5f5f5' : m.bg}">${a.ikona || '⚡'}</div></div><div class="li-body"><div class="li-title">${a.opis}</div><div class="li-sub">${a.blok.split(' ').slice(1).join(' ') || a.blok} · ${a.data}</div></div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${a.status}</span>${zak && a.koszt ? `<div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">${a.koszt} zł</div>` : `<div style="font-size:10px;color:${m.fg};font-weight:700;margin-top:2px">${PRIORYTET_META[a.priorytet] || ''} ${zak ? '' : a.priorytet}</div>`}</div>`;
+      listEl.insertBefore(li, emptyEl);
+    });
+    applyFilter('awarie');
+  }
+
+  // KPI zakładki
+  const cnt = s => all.filter(a => a.status === s).length;
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('aw-kpi-total', all.length);
+  setTxt('aw-kpi-zgloszone', cnt('Zgłoszona'));
+  setTxt('aw-kpi-realizacja', cnt('W realizacji'));
+  setTxt('aw-kpi-zakonczone', cnt('Zakończona'));
+
+  // Pulpit
+  const otwarte = all.filter(a => a.status !== 'Zakończona');
+  setTxt('dash-kpi-awarie', otwarte.length);
+  const dashEl = document.getElementById('dash-awarie-list');
+  if (dashEl) {
+    dashEl.innerHTML = otwarte.slice(0, 3).map(a => {
+      const m = AWARIA_STATUS_META[a.status];
+      return `<div class="li" onclick="openAwaria('${a.id}')"><div class="li-icon" style="background:${m.bg}">⚠️</div><div class="li-body"><div class="li-title">${a.opis}</div><div class="li-sub">${a.blok.split(' ').slice(1).join(' ')} · ${a.data}</div></div><span class="badge" style="background:${m.bg};color:${m.fg}">${a.priorytet}</span></div>`;
+    }).join('') || `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak otwartych awarii ✅</div>`;
+  }
+}
+
+function openNewAwaria() {
+  document.getElementById('na-blok').innerHTML = Object.values(DATA.bloki).map(b => `<option value="${b.id}">${b.nazwa}</option>`).join('');
+  document.getElementById('na-pracownik').innerHTML = '<option value="">— brak —</option>' + Object.values(DATA.pracownicy).map(w => `<option value="${w.id}">${w.imie} ${w.nazwisko.charAt(0)}.</option>`).join('');
+  document.getElementById('na-opis').value = '';
+  document.getElementById('na-priorytet').value = 'Średni';
+  openModal('modal-awaria');
+}
+
+function saveAwaria() {
+  const opis = document.getElementById('na-opis').value.trim();
+  if (!opis) { showToast('⚠️ Opisz awarię'); return; }
+  const blokId = document.getElementById('na-blok').value;
+  const blok = DATA.bloki[blokId];
+  const id = 'a_' + Date.now().toString(36);
+  DATA.awarie[id] = {
+    id, opis, blok: blok ? blok.nazwa : '', data: new Date().toLocaleDateString('pl-PL'),
+    status: 'Zgłoszona', priorytet: document.getElementById('na-priorytet').value,
+    pracownik: document.getElementById('na-pracownik').value || null, koszt: 0, notatka: '', ikona: '⚡',
+  };
+  if (blok) blok.awarie.push(id);
+  renderAwarieList();
+  saveState();
+  closeModal('modal-awaria');
+  showToast('✅ Awaria zgłoszona!');
+  if (NOTIF_PREFS.awarie) addNotif('🚨', `Nowa awaria: ${opis}`);
+}
+
 function openAwaria(id, opts = {}) {
   if (!opts.skipPush) pushNav();
   switchTab('awarie', { keepStack: true });
@@ -1948,6 +2078,7 @@ function openAwaria(id, opts = {}) {
     const a = DATA.awarie[id];
     if (!a) return;
     document.getElementById('dawaria-title').textContent = a.ikona + ' ' + a.opis.substring(0,20) + '…';
+    currentAwariaId = id;
     buildAwariaDetail(id);
     openDet('det-awaria');
     lastReopen['det-awaria'] = () => openAwaria(id, { skipPush: true });
@@ -1978,20 +2109,20 @@ function buildAwariaDetail(id) {
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
         <div class="fg" style="margin-bottom:0"><label>Priorytet</label>
-          <select class="fs" style="border-color:${priColors[a.priorytet]||'#ddd'}">
+          <select class="fs" id="aw-priorytet" style="border-color:${priColors[a.priorytet]||'#ddd'}">
             ${['Niski','Średni','Wysoki','Krytyczny'].map(p => `<option${p===a.priorytet?' selected':''}>${p}</option>`).join('')}
           </select>
         </div>
         <div class="fg" style="margin-bottom:0"><label>Przydziel do</label>
-          <select class="fs">
+          <select class="fs" id="aw-pracownik">
             <option value="">— brak —</option>
             ${Object.values(DATA.pracownicy).map(w => `<option value="${w.id}"${w.id===a.pracownik?' selected':''}>${w.imie} ${w.nazwisko.charAt(0)}.</option>`).join('')}
           </select>
         </div>
       </div>
 
-      <div class="fg fin"><label>Koszt naprawy (zł)</label><input class="fi" type="number" value="${a.koszt||0}" placeholder="0"></div>
-      <div class="fg"><label>Notatka / opis prac</label><textarea class="fi" rows="3" style="resize:none" placeholder="Co zrobiono, jakie części...">${a.notatka||''}</textarea></div>
+      <div class="fg fin"><label>Koszt naprawy (zł)</label><input class="fi" id="aw-koszt" type="number" value="${a.koszt||0}" placeholder="0"></div>
+      <div class="fg"><label>Notatka / opis prac</label><textarea class="fi" id="aw-notatka" rows="3" style="resize:none" placeholder="Co zrobiono, jakie części...">${a.notatka||''}</textarea></div>
 
       ${a.status === 'Zakończona' ? `
       <div style="background:var(--green-l);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;margin-top:4px">
@@ -2004,8 +2135,28 @@ function buildAwariaDetail(id) {
 function updateAwariaStatus(id, newStatus, btn) {
   DATA.awarie[id].status = newStatus;
   buildAwariaDetail(id);
+  renderAwarieList();
+  saveState();
   showToast('Status zmieniony: ' + newStatus);
-  addNotif('🚨', `Awaria „${DATA.awarie[id].opis}" — status: ${newStatus}`);
+  if (NOTIF_PREFS.awarie) addNotif('🚨', `Awaria „${DATA.awarie[id].opis}" — status: ${newStatus}`);
+}
+
+// Zapis pól z detalu awarii (przycisk "Zapisz" w nagłówku)
+let currentAwariaId = null;
+function saveAwariaDetail() {
+  const a = DATA.awarie[currentAwariaId];
+  if (!a) return;
+  const pri = document.getElementById('aw-priorytet');
+  const prac = document.getElementById('aw-pracownik');
+  const koszt = document.getElementById('aw-koszt');
+  const not = document.getElementById('aw-notatka');
+  if (pri) a.priorytet = pri.value;
+  if (prac) a.pracownik = prac.value || null;
+  if (koszt) a.koszt = Number(koszt.value) || 0;
+  if (not) a.notatka = not.value;
+  renderAwarieList();
+  saveState();
+  showToast('✅ Zapisano zmiany');
 }
 
 // ═══════ NARZĘDZIA ═══════
@@ -2241,7 +2392,7 @@ function buildCzasCalendar() {
   const monthProjIds = new Set();
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const key = String(d).padStart(2,'0');
+    const key = dk(czasYear, czasMonth, d);
     const wpisy = DATA.czasPracy[key] || [];
     const dow = new Date(czasYear, czasMonth, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
@@ -2297,10 +2448,10 @@ function buildStripeBackground(colors) {
 function renderCzasList() {
   const listEl = document.getElementById('czas-list');
   if (!listEl) return;
-  const dayNames = ['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
+  const prefix = `${czasYear}-${String(czasMonth + 1).padStart(2, '0')}-`;
   const keys = Object.keys(DATA.czasPracy)
-    .filter(k => (DATA.czasPracy[k] || []).length > 0)
-    .sort((a, b) => Number(b) - Number(a));
+    .filter(k => k.startsWith(prefix) && (DATA.czasPracy[k] || []).length > 0)
+    .sort((a, b) => b.localeCompare(a));
 
   if (keys.length === 0) {
     listEl.innerHTML = `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px">Brak wpisów w tym miesiącu</div>`;
@@ -2316,9 +2467,10 @@ function renderCzasList() {
       const prac = DATA.pracownicy[w.prac];
       return s + (prac ? prac.stawka * w.godz : 0);
     }, 0);
-    const dow = new Date(czasYear, czasMonth, Number(key)).getDay();
+    const [y, m, d] = key.split('-').map(Number);
+    const dow = new Date(y, m - 1, d).getDay();
     const sub = [`${obecni.length} obecnych`, nieobecni.length ? `${nieobecni.length} nieobecnych` : null, `${totalH}h łącznie`].filter(Boolean).join(' · ');
-    return `<div class="li" onclick="openCzasDayModal('${key}')"><div class="li-icon" style="background:var(--blue-l);font-size:14px">👷</div><div class="li-body"><div class="li-title">${key}.${String(czasMonth+1).padStart(2,'0')} – ${dayNames[dow]}</div><div class="li-sub">${sub}</div></div><div class="li-right"><span style="font-weight:700;color:var(--blue)">${Math.round(totalKoszt)} zł</span></div></div>`;
+    return `<div class="li" onclick="openCzasDayModal('${key}')"><div class="li-icon" style="background:var(--blue-l);font-size:14px">👷</div><div class="li-body"><div class="li-title">${String(d).padStart(2,'0')}.${String(m).padStart(2,'0')} – ${DNI_TYG_SHORT[dow]}</div><div class="li-sub">${sub}</div></div><div class="li-right"><span class="fin" style="font-weight:700;color:var(--blue)">${Math.round(totalKoszt)} zł</span></div></div>`;
   }).join('');
 }
 
@@ -2329,7 +2481,7 @@ function openCzasDayModal(dayKey) {
   const wpisy = DATA.czasPracy[dayKey];
   if (!wpisy) return;
 
-  const dateLabel = dayKey + '.04.2024';
+  const dateLabel = dayKey.split('-').reverse().join('.');
   document.getElementById('modal-dzien-title').textContent = '📅 ' + dateLabel;
 
   const totalH = wpisy.reduce((s,w) => s+w.godz, 0);
@@ -2509,7 +2661,7 @@ function openDzienModalForProject(projId) {
 function saveDzien() {
   const dataVal = document.getElementById('nd-data').value;
   if (!dataVal) { showToast('⚠️ Podaj datę'); return; }
-  const dayKey = dataVal.split('-')[2];
+  const dayKey = dataVal; // pełna data YYYY-MM-DD
   const dateLabel = dataVal.split('-').reverse().join('.');
   const projId = document.getElementById('nd-projekt').value;
 
@@ -2517,6 +2669,9 @@ function saveDzien() {
   if (wpisy.length === 0) { showToast('⚠️ Zaznacz co najmniej jednego pracownika'); return; }
 
   if (!DATA.czasPracy[dayKey]) DATA.czasPracy[dayKey] = [];
+  // nadpisz ewentualne wcześniejsze wpisy tych samych pracowników na ten dzień
+  const ids = new Set(wpisy.map(x => x.prac));
+  DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x => !ids.has(x.prac));
   DATA.czasPracy[dayKey].push(...wpisy);
 
   const obecni = wpisy.filter(w => !w.nieobecny).length;
@@ -2525,6 +2680,7 @@ function saveDzien() {
   if (obecni) parts.push(`${obecni} obecnych`);
   if (nieobecni) parts.push(`${nieobecni} nieobecnych`);
   showToast(`✅ Zapisano dzień pracy (${parts.join(', ')})`);
+  saveState();
   closeModal('modal-dzien');
   buildCzasCalendar();
 }
@@ -2547,7 +2703,7 @@ function openGodzinyModal(pracId) {
 function saveGodziny() {
   const dataVal = document.getElementById('ng-data').value;
   if (!dataVal) { showToast('⚠️ Podaj datę'); return; }
-  const dayKey = dataVal.split('-')[2];
+  const dayKey = dataVal; // pełna data YYYY-MM-DD
   const dateLabel = dataVal.split('-').reverse().join('.');
   const projId = document.getElementById('ng-projekt').value;
 
@@ -2571,6 +2727,7 @@ function saveGodziny() {
   }
 
   showToast('✅ Zapisano godziny');
+  saveState();
   closeModal('modal-godziny');
   if (document.getElementById('det-prac').classList.contains('open')) buildPracDetail(pracId);
   if (currentTab === 'mojegodziny') buildMojeGodziny();
@@ -2654,7 +2811,7 @@ function pinStart(uid) {
   pinBuffer = '';
   document.getElementById('login-tiles').style.display = 'none';
   document.getElementById('login-pin').style.display = 'flex';
-  document.getElementById('pin-user-label').textContent = `${pinTarget.nazwa} — podaj PIN (demo: ${pinTarget.pin})`;
+  document.getElementById('pin-user-label').textContent = `${pinTarget.nazwa} — podaj PIN`;
   document.getElementById('pin-pad').innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k =>
     k === '' ? '<div></div>' : `<button class="pin-key" onclick="pinKey('${k}')">${k}</button>`).join('');
   renderPinDots();
@@ -2752,6 +2909,7 @@ const NOTIF_PREF_LABELS = {
 
 function toggleNotifPref(k) {
   NOTIF_PREFS[k] = !NOTIF_PREFS[k];
+  saveState();
   showToast(NOTIF_PREFS[k] ? '🔔 Włączono' : '🔕 Wyłączono');
   if (NOTIF_PREFS[k] && k === 'czasDnia') {
     // demo działania przypomnienia
@@ -2828,7 +2986,7 @@ function buildMojeGodziny() {
     `</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
   for (let i = 0; i < startOffset; i++) calHtml += `<div></div>`;
   for (let i = 1; i <= daysInMonth; i++) {
-    const key = String(i).padStart(2,'0');
+    const key = dk(pracCalYear, pracCalMonth, i);
     const dow = new Date(pracCalYear, pracCalMonth, i).getDay();
     const isWeekend = dow === 0 || dow === 6;
     const wpis = wlasne[key];
@@ -2947,7 +3105,9 @@ function buildUstawienia() {
     <div class="sec-hdr" style="margin-top:14px"><h3>ℹ️ Aplikacja</h3></div>
     <div class="card" style="padding:12px 14px;font-size:11px;color:var(--muted);line-height:1.6">
       ElektroApp v2.0 — zarządzanie firmą elektryczną.<br>
-      💡 Na telefonie: menu przeglądarki → <strong>„Dodaj do ekranu głównego"</strong>, żeby mieć ikonę jak prawdziwa aplikacja.
+      💡 Na telefonie: menu przeglądarki → <strong>„Dodaj do ekranu głównego"</strong>, żeby mieć ikonę jak prawdziwa aplikacja.<br><br>
+      Dane zapisują się automatycznie na tym urządzeniu (localStorage).
+      <button class="btn-r" style="width:100%;margin-top:10px" onclick="if(confirm('Usunąć wszystkie zapisane dane i wrócić do danych przykładowych?'))resetState()">♻️ Resetuj dane do przykładowych</button>
     </div>`;
 }
 
@@ -2955,6 +3115,7 @@ function togglePerm(uid, perm) {
   const u = DATA.uzytkownicy[uid];
   if (!u || u.admin) return;
   u.uprawnienia[perm] = !u.uprawnienia[perm];
+  saveState();
   showToast(`✅ ${u.nazwa.split(' ')[0]}: ${PERM_LABELS[perm].replace(/^\S+ /,'')} ${u.uprawnienia[perm] ? 'włączone' : 'wyłączone'}`);
 }
 
@@ -2965,6 +3126,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 
 // ═══════ INIT ═══════
 document.addEventListener('DOMContentLoaded', () => {
+  loadState();
   augmentPaskiMock();
   renderLoginTiles();
   renderTabbar();
@@ -2972,6 +3134,9 @@ document.addEventListener('DOMContentLoaded', () => {
   buildCzasCalendar();
   renderProjektyList();
   renderWydatkiList();
+  renderAwarieList();
+  const dashDate = document.getElementById('dash-date');
+  if (dashDate) dashDate.textContent = new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   pushHistoryGuard();
 });
 </script>
