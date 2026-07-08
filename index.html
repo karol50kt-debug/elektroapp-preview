@@ -3074,14 +3074,22 @@ const PERM_LABELS = { godziny:'⏱️ Godziny', paski:'🧾 Paski', kody:'🔑 K
 
 function buildUstawienia() {
   const pracownicy = Object.values(DATA.uzytkownicy).filter(u => !u.admin);
+  const admin = Object.values(DATA.uzytkownicy).find(u => u.admin);
   document.getElementById('ustawienia-content').innerHTML = `
-    <div class="sec-hdr"><h3>👥 Uprawnienia pracowników</h3></div>
+    <div class="sec-hdr"><h3>👤 Moje konto</h3></div>
+    <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;border-radius:18px;background:${admin.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${admin.inicjaly}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:800">${admin.nazwa}</div><div style="font-size:11px;color:var(--muted)">${admin.rola} · PIN: ${admin.pin}</div></div>
+      <button onclick="zmienPin('${admin.id}')" class="btn-s" style="flex-shrink:0;padding:5px 10px;font-size:11px">🔑 Zmień PIN</button>
+    </div>
+    <div class="sec-hdr" style="margin-top:14px"><h3>👥 Uprawnienia pracowników</h3></div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Zaznacz, co widzi każdy pracownik po zalogowaniu. Finanse firmy są zawsze ukryte przed pracownikami.</div>
     ${pracownicy.map(u => `
       <div class="card" style="padding:12px 14px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
           <div style="width:36px;height:36px;border-radius:18px;background:${u.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${u.inicjaly}</div>
           <div style="flex:1"><div style="font-size:13px;font-weight:800">${u.nazwa}</div><div style="font-size:11px;color:var(--muted)">${u.rola} · PIN: ${u.pin}</div></div>
+          <button onclick="zmienPin('${u.id}')" class="btn-s" style="flex-shrink:0;padding:5px 10px;font-size:11px">🔑 Zmień PIN</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           ${Object.keys(PERM_LABELS).map(perm => `
@@ -3109,6 +3117,18 @@ function buildUstawienia() {
       Dane zapisują się automatycznie na tym urządzeniu (localStorage).
       <button class="btn-r" style="width:100%;margin-top:10px" onclick="if(confirm('Usunąć wszystkie zapisane dane i wrócić do danych przykładowych?'))resetState()">♻️ Resetuj dane do przykładowych</button>
     </div>`;
+}
+
+function zmienPin(uid) {
+  const u = DATA.uzytkownicy[uid];
+  if (!u) return;
+  const nowy = prompt(`Nowy 4-cyfrowy PIN dla: ${u.nazwa}`, '');
+  if (nowy === null) return; // anulowano
+  if (!/^\d{4}$/.test(nowy)) { showToast('⚠️ PIN musi mieć dokładnie 4 cyfry'); return; }
+  u.pin = nowy;
+  saveState();
+  showToast(`✅ Zmieniono PIN: ${u.nazwa.split(' ')[0]}`);
+  if (currentTab === 'ustawienia') buildUstawienia();
 }
 
 function togglePerm(uid, perm) {
