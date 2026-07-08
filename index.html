@@ -642,6 +642,27 @@ body.employee .admin-only{display:none!important}
 <!-- Panel powiadomień -->
 <div class="notif-panel" id="notif-panel"></div>
 
+<!-- Modal: edycja dnia w pasku (korekta błędu przed zatwierdzeniem) -->
+<div class="modal-ov" id="modal-pasek-dzien" style="display:none" onclick="if(event.target===this)closeModal('modal-pasek-dzien')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-pasek-dzien')">✕</button><h3 id="pe-heading">✏️ Korekta dnia</h3>
+    <div class="fg"><label>Stan</label>
+      <select class="fs" id="pe-stan" onchange="peStanChange()">
+        <option value="obecny">✅ Obecny</option>
+        <option value="nieobecny">🚫 Nieobecny</option>
+        <option value="brak">— Brak wpisu (dzień wolny)</option>
+      </select>
+    </div>
+    <div id="pe-obecny-fields" style="display:flex;gap:8px">
+      <div class="fg" style="flex:1"><label>Od</label><input class="fi" id="pe-od" type="time" value="07:00"></div>
+      <div class="fg" style="flex:1"><label>Do</label><input class="fi" id="pe-do" type="time" value="15:00"></div>
+    </div>
+    <div id="pe-nieobecny-fields" style="display:none">
+      <div class="fg"><label>Powód</label><select class="fs" id="pe-powod"><option>Urlop</option><option>L4</option><option>Inne</option></select></div>
+    </div>
+    <button class="btn-p" onclick="savePasekDzien()">Zapisz korektę</button>
+  </div>
+</div>
+
 <!-- ═══════ EKRAN LOGOWANIA ═══════ -->
 <div class="login-ov" id="login-ov">
   <div class="login-logo">⚡</div>
@@ -1467,9 +1488,9 @@ function pasekRozpisDni(pracId, mIdx, rok) {
   return dni;
 }
 
-function buildPasekDniHtml(pasek) {
+function buildPasekDniHtml(pasek, pracId, idx, editable) {
   if (!pasek.dni) return '';
-  const rows = pasek.dni.map(x => {
+  const rows = pasek.dni.map((x, di) => {
     const dow = new Date(pasek.rok, pasek.mIdx, x.d).getDay();
     const isWeekend = dow === 0 || dow === 6;
     const dataTxt = `${String(x.d).padStart(2,'0')}.${String(pasek.mIdx+1).padStart(2,'0')} ${DNI_TYG_SHORT[dow]}`;
@@ -1477,15 +1498,123 @@ function buildPasekDniHtml(pasek) {
     if (x.nieobecny) { tresc = `🚫 Nieobecny${x.powod ? ' (' + x.powod + ')' : ''}`; kolor = 'var(--red)'; }
     else if (x.godz) { tresc = `${x.od && x.do ? x.od + '–' + x.do : ''} · ${x.godz}h`; kolor = 'var(--text)'; }
     else { tresc = '—'; kolor = '#ccc'; }
-    return `<div style="display:grid;grid-template-columns:64px 1fr;gap:8px;padding:4px 8px;font-size:11px;${isWeekend ? 'background:#f8f9fa;' : ''}border-bottom:1px solid #f3f3f3">
+    const editAttr = editable ? `onclick="openPasekDzienEdit('${pracId}',${idx},${di})" style="cursor:pointer"` : '';
+    return `<div ${editAttr} style="display:grid;grid-template-columns:64px 1fr ${editable ? '20px' : ''};gap:8px;padding:4px 8px;font-size:11px;${isWeekend ? 'background:#f8f9fa;' : ''}border-bottom:1px solid #f3f3f3;align-items:center">
       <span style="color:${isWeekend ? '#bbb' : 'var(--muted)'};font-weight:700">${dataTxt}</span>
       <span style="color:${kolor};font-weight:${x.godz ? 700 : 400}">${tresc}</span>
+      ${editable ? '<span style="color:#ccc;font-size:10px">✏️</span>' : ''}
     </div>`;
   }).join('');
   return `<details style="margin-top:8px">
-    <summary style="font-size:11px;font-weight:800;color:var(--blue);cursor:pointer;padding:4px 0">📅 Rozpis dni (${pasek.dni.filter(x => x.godz).length} dni pracy)</summary>
+    <summary style="font-size:11px;font-weight:800;color:var(--blue);cursor:pointer;padding:4px 0">📅 Rozpis dni (${pasek.dni.filter(x => x.godz).length} dni pracy)${editable ? ' · dotknij dzień, aby poprawić' : ''}</summary>
     <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:6px">${rows}</div>
   </details>`;
+}
+
+// ═══════ EDYCJA DNIA W PASKU (korekta przed zatwierdzeniem) ═══════
+let pasekEdit = null; // { pracId, idx, di }
+
+function openPasekDzienEdit(pracId, idx, di) {
+  pasekEdit = { pracId, idx, di };
+  const pasek = DATA.paski[pracId][idx];
+  const x = pasek.dni[di];
+  const dow = new Date(pasek.rok, pasek.mIdx, x.d).getDay();
+  document.getElementById('pe-heading').textContent = `✏️ Korekta: ${String(x.d).padStart(2,'0')}.${String(pasek.mIdx+1).padStart(2,'0')} (${DNI_TYG_SHORT[dow]})`;
+  document.getElementById('pe-stan').value = x.nieobecny ? 'nieobecny' : (x.godz ? 'obecny' : 'brak');
+  document.getElementById('pe-od').value = x.od || '07:00';
+  document.getElementById('pe-do').value = x.do || '15:00';
+  if (x.powod) document.getElementById('pe-powod').value = x.powod;
+  peStanChange();
+  openModal('modal-pasek-dzien');
+}
+
+function peStanChange() {
+  const stan = document.getElementById('pe-stan').value;
+  document.getElementById('pe-obecny-fields').style.display = stan === 'obecny' ? 'flex' : 'none';
+  document.getElementById('pe-nieobecny-fields').style.display = stan === 'nieobecny' ? 'block' : 'none';
+}
+
+function godzinyZOdDo(od, doo) {
+  const [oh, om] = od.split(':').map(Number);
+  const [dh, dm] = doo.split(':').map(Number);
+  let mins = (dh * 60 + dm) - (oh * 60 + om);
+  if (mins < 0) mins += 24 * 60;
+  return Math.round((mins / 60) * 100) / 100;
+}
+
+function savePasekDzien() {
+  if (!pasekEdit) return;
+  const pasek = DATA.paski[pasekEdit.pracId][pasekEdit.idx];
+  const x = pasek.dni[pasekEdit.di];
+  const stan = document.getElementById('pe-stan').value;
+  const d = x.d;
+  if (stan === 'obecny') {
+    const od = document.getElementById('pe-od').value, doo = document.getElementById('pe-do').value;
+    pasek.dni[pasekEdit.di] = { d, od, do: doo, godz: godzinyZOdDo(od, doo) };
+  } else if (stan === 'nieobecny') {
+    pasek.dni[pasekEdit.di] = { d, nieobecny: true, powod: document.getElementById('pe-powod').value };
+  } else {
+    pasek.dni[pasekEdit.di] = { d };
+  }
+  pasek.godziny = pasek.dni.reduce((s, y) => s + (y.godz || 0), 0);
+  closeModal('modal-pasek-dzien');
+  showToast('✅ Poprawiono dzień — suma przeliczona');
+  buildPaskiAdmin();
+}
+
+// ═══════ WYDRUK / PDF PASKA ═══════
+function drukujPasek(pracId, idx) {
+  const pasek = DATA.paski[pracId][idx];
+  const w = DATA.pracownicy[pracId];
+  const podstawa = pasek.godziny * pasek.stawka;
+  const razem = podstawa + (pasek.premia || 0);
+  const rows = (pasek.dni || []).map(x => {
+    const dow = new Date(pasek.rok, pasek.mIdx, x.d).getDay();
+    const wk = dow === 0 || dow === 6;
+    const tresc = x.nieobecny ? `Nieobecny${x.powod ? ' (' + x.powod + ')' : ''}` : (x.godz ? `${x.od}–${x.do}` : '—');
+    return `<tr${wk ? ' class="wk"' : ''}><td>${String(x.d).padStart(2,'0')}.${String(pasek.mIdx+1).padStart(2,'0')}.${pasek.rok}</td><td>${DNI_TYG_SHORT[dow]}</td><td>${tresc}</td><td style="text-align:right">${x.godz ? x.godz + ' h' : ''}</td></tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><title>Pasek — ${w.imie} ${w.nazwisko} — ${pasek.miesiac}</title>
+  <style>
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a1a;max-width:640px;margin:0 auto;padding:28px 20px;font-size:13px}
+    .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0d47a1;padding-bottom:12px;margin-bottom:16px}
+    h1{font-size:19px;margin:0;color:#0d47a1}
+    h2{font-size:14px;margin:2px 0 0;font-weight:600;color:#555}
+    table{width:100%;border-collapse:collapse;margin:12px 0}
+    th{background:#0d47a1;color:#fff;text-align:left;padding:6px 8px;font-size:11px}
+    td{padding:4px 8px;border-bottom:1px solid #e0e0e0;font-size:11.5px}
+    tr.wk td{background:#f5f5f5;color:#999}
+    .sums td{font-size:13px;font-weight:700;border-top:2px solid #0d47a1;border-bottom:none}
+    .total{font-size:16px;font-weight:900;color:#2e7d32}
+    .sig{display:flex;justify-content:space-between;margin-top:52px}
+    .sig div{width:42%;border-top:1px solid #888;padding-top:5px;font-size:10.5px;color:#666;text-align:center}
+    .meta{font-size:11px;color:#666}
+    @media print { body{padding:0} }
+  </style></head><body>
+  <div class="head">
+    <div><h1>⚡ ElektroApp — ElektroSmart Instalacje</h1><h2>Pasek wynagrodzenia — ${pasek.miesiac}</h2></div>
+    <div class="meta" style="text-align:right">${pasek.status === 'wypłacony' ? 'Wypłacono: ' + pasek.wyplacono : (pasek.zatwierdzono ? 'Zatwierdzono: ' + pasek.zatwierdzono : 'ROBOCZY — do weryfikacji')}</div>
+  </div>
+  <p><strong>${w.imie} ${w.nazwisko}</strong> · ${w.rola} · stawka ${pasek.stawka} zł/h</p>
+  <table>
+    <tr><th>Data</th><th>Dzień</th><th>Obecność / godziny</th><th style="text-align:right">Liczba godzin</th></tr>
+    ${rows}
+    <tr class="sums"><td colspan="3">Razem godzin</td><td style="text-align:right">${pasek.godziny} h</td></tr>
+  </table>
+  <table>
+    <tr><td>Podstawa (${pasek.godziny} h × ${pasek.stawka} zł)</td><td style="text-align:right">${podstawa.toLocaleString('pl-PL')} zł</td></tr>
+    <tr><td>Premia</td><td style="text-align:right">${(pasek.premia||0).toLocaleString('pl-PL')} zł</td></tr>
+    <tr class="sums"><td>Do wypłaty</td><td style="text-align:right" class="total">${razem.toLocaleString('pl-PL')} zł</td></tr>
+  </table>
+  <div class="sig"><div>podpis pracodawcy</div><div>podpis pracownika</div></div>
+  ${'<scr'+'ipt>'}window.onload = () => window.print();${'</scr'+'ipt>'}
+  ${'</bo'+'dy></ht'+'ml>'}`;
+
+  const win = window.open('', '_blank');
+  if (!win) { showToast('⚠️ Odblokuj wyskakujące okna, aby drukować'); return; }
+  win.document.write(html);
+  win.document.close();
 }
 
 // Dogenerowanie rozpisu dni do mockowych pasków za luty (typowe dni robocze 07:00–15:00)
@@ -1577,6 +1706,7 @@ function buildPaskiAdmin() {
           <div style="width:34px;height:34px;border-radius:17px;background:${w.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${w.inicjaly}</div>
           <div style="flex:1"><div style="font-size:13px;font-weight:800">${w.imie} ${w.nazwisko}</div><div style="font-size:10px;color:var(--muted)">${pasek.miesiac}</div></div>
           ${pasekBadge(pasek.status)}
+          <button onclick="drukujPasek('${w.id}',${idx})" title="Drukuj / PDF" style="background:var(--blue-l);border:none;border-radius:8px;padding:5px 8px;font-size:13px;cursor:pointer">🖨️</button>
         </div>
         <div style="display:flex;gap:12px;font-size:11px;color:#555;margin-bottom:8px">
           <span>⏱️ ${pasek.godziny}h × ${pasek.stawka} zł = <strong>${podstawa.toLocaleString('pl-PL')} zł</strong></span>
@@ -1594,7 +1724,7 @@ function buildPaskiAdmin() {
             <button onclick="wyplacPasek('${w.id}',${idx})" class="btn-g" style="flex-shrink:0">💸 Wypłać</button>
           </div>` : ''}
         ${pasek.status === 'wypłacony' ? `<div style="font-size:10px;color:var(--muted)">Wypłacono ${pasek.wyplacono} · zarejestrowano w wydatkach</div>` : ''}
-        ${buildPasekDniHtml(pasek)}
+        ${buildPasekDniHtml(pasek, w.id, idx, pasek.status === 'roboczy')}
       </div>`;
     });
   });
@@ -2754,7 +2884,8 @@ function buildPaski() {
     </div>`;
   }
 
-  widoczne.forEach(pasek => {
+  (DATA.paski[id] || []).forEach((pasek, idx) => {
+    if (pasek.status !== 'zatwierdzony' && pasek.status !== 'wypłacony') return;
     const podstawa = pasek.godziny * pasek.stawka;
     const razem = podstawa + (pasek.premia || 0);
     const wyplacony = pasek.status === 'wypłacony';
@@ -2771,7 +2902,8 @@ function buildPaski() {
         <div class="dr"><span class="dr-l">Premia</span><span class="dr-r">${(pasek.premia||0).toLocaleString('pl-PL')} zł</span></div>
         ${wyplacony ? `<div class="dr"><span class="dr-l">Data wypłaty</span><span class="dr-r">${pasek.wyplacono}</span></div>` : ''}
         <div class="dr" style="border-bottom:none"><span class="dr-l" style="font-weight:800;color:var(--text)">Razem</span><span class="dr-r" style="font-size:15px;font-weight:900;color:var(--green)">${razem.toLocaleString('pl-PL')} zł</span></div>
-        ${buildPasekDniHtml(pasek)}
+        ${buildPasekDniHtml(pasek, id, idx, false)}
+        <button class="btn-s" style="width:100%;margin-top:10px" onclick="drukujPasek('${id}',${idx})">🖨️ Drukuj / zapisz PDF</button>
       </div>
     </div>`;
   });
