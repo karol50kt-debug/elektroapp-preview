@@ -175,6 +175,7 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 #sv-mojegodziny .hdr{background:linear-gradient(135deg,#1565c0,#00838f)}
 #sv-paski .hdr{background:linear-gradient(135deg,#2e7d32,#558b2f)}
 #sv-ustawienia .hdr{background:linear-gradient(135deg,#37474f,#263238)}
+#sv-zakupy .hdr{background:linear-gradient(135deg,#5d4037,#795548)}
 .det-hdr{background:linear-gradient(135deg,var(--blue),var(--blue-d))}
 /* UPRAWNIENIA: ukrywanie finansów i funkcji admina */
 body.no-fin .fin{display:none!important}
@@ -626,6 +627,51 @@ body.employee .admin-only{display:none!important}
 <div class="content" id="ustawienia-content"></div>
 </div>
 
+<!-- ═══════ ZAKUPY (dostawcy · WZ · faktury zakupowe) ═══════ -->
+<div class="sv" id="sv-zakupy">
+<div class="hdr"><div class="hdr-title">🚚 Zakupy</div><div class="hdr-right"><button class="hdr-btn" onclick="openNowyDostawca()" title="Nowy dostawca">＋</button><div class="avatar" onclick="logout()" title="Wyloguj" style="cursor:pointer">K</div></div></div>
+<div class="content" id="zakupy-content"></div>
+<!-- Detal dostawcy -->
+<div class="det" id="det-dostawca">
+  <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700;flex:1" id="ddost-title">Dostawca</div></div>
+  <div class="det-content" id="ddost-content"></div>
+</div>
+</div>
+
+<!-- Modal: nowy/edytuj dostawca -->
+<div class="modal-ov" id="modal-dostawca" style="display:none" onclick="if(event.target===this)closeModal('modal-dostawca')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-dostawca')">✕</button><h3 id="nd-dost-heading">🚚 Nowy dostawca</h3>
+    <input type="hidden" id="nd-dost-id" value="">
+    <div class="fg"><label>Nazwa</label><input class="fi" id="nd-dost-nazwa" placeholder="np. Elektrohurt Siedlce"></div>
+    <div class="fg"><label>Kontakt (tel / e-mail — opcjonalnie)</label><input class="fi" id="nd-dost-kontakt" placeholder="601 234 567"></div>
+    <button class="btn-p" onclick="saveDostawca()">Zapisz dostawcę</button>
+    <button class="btn-r" id="nd-dost-delete" style="display:none;margin-top:8px" onclick="deleteDostawca()">🗑️ Usuń dostawcę</button>
+  </div>
+</div>
+
+<!-- Modal: nowe WZ -->
+<div class="modal-ov" id="modal-wz" style="display:none" onclick="if(event.target===this)closeModal('modal-wz')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-wz')">✕</button><h3>📄 Nowe WZ (towar na WZ)</h3>
+    <div class="fg"><label>Numer WZ</label><div style="display:flex;gap:6px"><input class="fi" id="nwz-nr" placeholder="np. WZ/2026/123" style="flex:1"><button class="btn-s" onclick="showToast('📷 OCR numeru WZ — w planach (na razie wpisz ręcznie)')" title="Skanuj (wkrótce)">📷</button></div></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Kwota (zł)</label><input class="fi" id="nwz-kwota" type="number" placeholder="0.00"></div><div class="fg" style="flex:1"><label>Data</label><input class="fi" id="nwz-data" type="date"></div></div>
+    <div class="fg"><label>Dostawca</label><select class="fs" id="nwz-dostawca"></select></div>
+    <div class="fg"><label>Przypisz do</label><select class="fs" id="nwz-cel"></select></div>
+    <button class="btn-p" onclick="saveWZ()">Zapisz WZ</button>
+  </div>
+</div>
+
+<!-- Modal: nowa faktura zakupowa (podpina WZ) -->
+<div class="modal-ov" id="modal-faktura-zak" style="display:none" onclick="if(event.target===this)closeModal('modal-faktura-zak')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-faktura-zak')">✕</button><h3 id="nfz-heading">🧾 Nowa faktura zakupowa</h3>
+    <input type="hidden" id="nfz-dostawca" value="">
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Nr faktury</label><input class="fi" id="nfz-nr" placeholder="FV/2026/..."></div><div class="fg" style="flex:1"><label>Termin płatności</label><input class="fi" id="nfz-termin" type="date"></div></div>
+    <div style="font-weight:700;font-size:12px;margin-bottom:6px">Podepnij WZ (niezafakturowane):</div>
+    <div id="nfz-wz-lista" style="margin-bottom:10px"></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:10px"><span>Suma zaznaczonych</span><span id="nfz-suma" style="color:var(--red)">0 zł</span></div>
+    <button class="btn-p" onclick="saveFakturaZak()">Zapisz fakturę</button>
+  </div>
+</div>
+
 <!-- Bottom Nav (budowany dynamicznie wg roli po zalogowaniu) -->
 <nav class="tabbar" id="tabbar"></nav>
 
@@ -790,6 +836,10 @@ const DATA = {
 const MIGRACJA_APPSHEET = {"uzytkownicy":{"u0":{"id":"u0","nazwa":"Karol","rola":"Właściciel","pin":"2580","pracownik":null,"inicjaly":"K","kolor":"#0d47a1","admin":true},"uw1":{"id":"uw1","nazwa":"Tomek","rola":"Elektryk","pin":"1111","pracownik":"w1","inicjaly":"TO","kolor":"#1565c0","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw2":{"id":"uw2","nazwa":"Maciek Sosna","rola":"Elektryk","pin":"2222","pracownik":"w2","inicjaly":"MS","kolor":"#2e7d32","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw3":{"id":"uw3","nazwa":"Patryk od dzyna","rola":"Elektryk","pin":"3333","pracownik":"w3","inicjaly":"PO","kolor":"#e65100","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw4":{"id":"uw4","nazwa":"Piotrek świecki","rola":"Elektryk","pin":"4444","pracownik":"w4","inicjaly":"PŚ","kolor":"#6a1b9a","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw5":{"id":"uw5","nazwa":"Michal Krolik","rola":"Elektryk","pin":"5555","pracownik":"w5","inicjaly":"MK","kolor":"#00838f","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw6":{"id":"uw6","nazwa":"Arek","rola":"Elektryk","pin":"6666","pracownik":"w6","inicjaly":"AR","kolor":"#c62828","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}}},"pracownicy":{"w1":{"id":"w1","imie":"Tomek","nazwisko":"","rola":"Elektryk","stawka":28,"tel":"48884943058","status":"Aktywny","aktywny":true,"inicjaly":"TO","kolor":"#1565c0","projekty":["p3","p2","p1","p4","p5"]},"w2":{"id":"w2","imie":"Maciek","nazwisko":"Sosna","rola":"Elektryk","stawka":32,"tel":"48576144228","status":"Aktywny","aktywny":true,"inicjaly":"MS","kolor":"#2e7d32","projekty":["p3","p2","p1","p4","p5","p6","p7","p9","p10"]},"w3":{"id":"w3","imie":"Patryk","nazwisko":"od dzyna","rola":"Elektryk","stawka":30,"tel":"","status":"Aktywny","aktywny":true,"inicjaly":"PO","kolor":"#e65100","projekty":["p5","p6","p7","p3","p9","p10","p4"]},"w4":{"id":"w4","imie":"Piotrek","nazwisko":"świecki","rola":"Elektryk","stawka":30,"tel":"","status":"Aktywny","aktywny":true,"inicjaly":"PŚ","kolor":"#6a1b9a","projekty":["p6","p5","p8","p7","p10","p4"]},"w5":{"id":"w5","imie":"Michal","nazwisko":"Krolik","rola":"Elektryk","stawka":30,"tel":"","status":"Aktywny","aktywny":true,"inicjaly":"MK","kolor":"#00838f","projekty":["p6"]},"w6":{"id":"w6","imie":"Arek","nazwisko":"","rola":"Elektryk","stawka":27,"tel":"883 449 233","status":"Aktywny","aktywny":true,"inicjaly":"AR","kolor":"#c62828","projekty":["p5","p8","p7","p3","p9","p10","p4"]}},"projekty":{"p1":{"id":"p1","nazwa":"Mariusz","klient":"Mariusz","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"20.04.2026","koniec":"30.04.2026","terminWykonania":"30.04.2026","kolor":"#1565c0","kolorL":"#e3f2fd","pracownicy":[],"kosztyRobocizna":3300,"kosztyMaterialy":10994,"planLudzie":6720,"planMaterial":12500,"planZysk":5780,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p2":{"id":"p2","nazwa":"Pieczarkami Cabaj","klient":"Pieczarkami Cabaj","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"13.04.2026","koniec":"08.05.2026","terminWykonania":"08.05.2026","kolor":"#2e7d32","kolorL":"#e8f5e9","pracownicy":[],"kosztyRobocizna":3553,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":6426,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p3":{"id":"p3","nazwa":"Chomka","klient":"Chomka","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"01.04.2026","koniec":"08.04.2026","terminWykonania":"08.04.2026","kolor":"#e65100","kolorL":"#fff3e0","pracownicy":[],"kosztyRobocizna":2285,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p4":{"id":"p4","nazwa":"Wewnetrzny","klient":"Wewnetrzny","adres":"","status":"W realizacji","wartosc":0,"postep":0,"start":"","koniec":"","terminWykonania":"","kolor":"#6a1b9a","kolorL":"#f3e5f5","pracownicy":[],"kosztyRobocizna":1006,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p5":{"id":"p5","nazwa":"Skwara warszawa","klient":"Skwara warszawa","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"07.05.2026","koniec":"29.05.2026","terminWykonania":"29.05.2026","kolor":"#00838f","kolorL":"#e0f7fa","pracownicy":[],"kosztyRobocizna":12225,"kosztyMaterialy":0,"planLudzie":22680,"planMaterial":2940,"planZysk":4380,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p6":{"id":"p6","nazwa":"Szkoła Dąbrowska stany","klient":"Szkoła Dąbrowska stany","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"20.05.2026","koniec":"22.05.2026","terminWykonania":"22.05.2026","kolor":"#c62828","kolorL":"#ffebee","pracownicy":[],"kosztyRobocizna":3046,"kosztyMaterialy":864,"planLudzie":0,"planMaterial":0,"planZysk":12222,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p7":{"id":"p7","nazwa":"Szkoła grala dąbrowizna","klient":"Szkoła grala dąbrowizna","adres":"","status":"W realizacji","wartosc":0,"postep":0,"start":"10.06.2026","koniec":"24.06.2026","terminWykonania":"24.06.2026","kolor":"#37474f","kolorL":"#eceff1","pracownicy":[],"kosztyRobocizna":8437,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":20722,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p8":{"id":"p8","nazwa":"Wspólnoty","klient":"Wspólnoty","adres":"","status":"Planowany","wartosc":0,"postep":0,"start":"","koniec":"","terminWykonania":"","kolor":"#ad1457","kolorL":"#fce4ec","pracownicy":[],"kosztyRobocizna":465,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p9":{"id":"p9","nazwa":"Borki kosy 29","klient":"Borki kosy 29","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"26.06.2026","koniec":"26.06.2026","terminWykonania":"26.06.2026","kolor":"#4527a0","kolorL":"#ede7f6","pracownicy":[],"kosztyRobocizna":979,"kosztyMaterialy":584,"planLudzie":1800,"planMaterial":800,"planZysk":3400,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p10":{"id":"p10","nazwa":"Szkoła skórzec","klient":"Szkoła skórzec","adres":"","status":"W realizacji","wartosc":0,"postep":0,"start":"25.06.2026","koniec":"","terminWykonania":"","kolor":"#9e9d24","kolorL":"#f9fbe7","pracownicy":[],"kosztyRobocizna":6478,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]}},"czasPracy":{"2026-04-10":[{"prac":"w2","godz":8,"proj":"p3","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-13":[{"prac":"w2","godz":8,"proj":"p3","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-07":[{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-08":[{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-09":[{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-14":[{"prac":"w2","godz":8,"proj":"p3","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-15":[{"prac":"w1","godz":9.5,"proj":"p2","od":"08:00","do":"17:30"},{"prac":"w2","godz":8,"proj":"p2","od":"08:00","do":"16:00"}],"2026-04-16":[{"prac":"w1","godz":9.02,"proj":"p2","od":"08:00","do":"17:01"},{"prac":"w2","godz":9,"proj":"p2","od":"08:00","do":"17:00"}],"2026-04-17":[{"prac":"w2","godz":8,"proj":"p2","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p2","od":"08:00","do":"16:00"}],"2026-04-20":[{"prac":"w1","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"}],"2026-04-21":[{"prac":"w2","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"},{"prac":"w1","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"}],"2026-04-22":[{"prac":"w2","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"},{"prac":"w1","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"}],"2026-04-23":[{"prac":"w2","godz":8,"proj":"p2","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p2","od":"08:00","do":"16:00"}],"2026-04-24":[{"prac":"w2","godz":8.5,"proj":"p1","od":"08:00","do":"16:30"},{"prac":"w1","godz":8.5,"proj":"p1","od":"08:00","do":"16:30"}],"2026-04-27":[{"prac":"w2","godz":8,"proj":"p1","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p1","od":"08:00","do":"16:00"}],"2026-04-28":[{"prac":"w2","godz":10,"proj":"p1","od":"08:00","do":"18:00"},{"prac":"w1","godz":10,"proj":"p1","od":"08:00","do":"18:00"}],"2026-04-29":[{"prac":"w2","godz":10,"proj":"p1","od":"08:00","do":"18:00"},{"prac":"w1","godz":10,"proj":"p1","od":"08:00","do":"18:00"}],"2026-05-04":[{"prac":"w2","godz":9,"proj":"p1","od":"08:00","do":"17:00"},{"prac":"w1","godz":9,"proj":"p1","od":"08:00","do":"17:00"}],"2026-05-05":[{"prac":"w2","godz":9.5,"proj":"p1","od":"08:00","do":"17:30"},{"prac":"w1","godz":9.5,"proj":"p1","od":"08:00","do":"17:30"}],"2026-05-06":[{"prac":"w1","godz":9,"proj":"p4","od":"08:00","do":"17:00"},{"prac":"w2","godz":9,"proj":"p4","od":"08:00","do":"17:00"}],"2026-05-07":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w1","godz":4,"proj":"p4","od":"12:00","do":"16:00"}],"2026-05-08":[{"prac":"w1","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-11":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-12":[{"prac":"w2","godz":10.5,"proj":"p5","od":"07:00","do":"17:30"}],"2026-05-13":[{"prac":"w2","godz":10.5,"proj":"p5","od":"07:00","do":"17:30"}],"2026-05-14":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-18":[{"prac":"w2","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"}],"2026-05-19":[{"prac":"w3","godz":9,"proj":"p5","od":"07:00","do":"16:00"},{"prac":"w2","godz":9,"proj":"p5","od":"07:00","do":"16:00"}],"2026-05-20":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w4","godz":12,"proj":"p6","od":"07:00","do":"19:00"}],"2026-05-21":[{"prac":"w5","godz":12,"proj":"p6","od":"07:00","do":"19:00"},{"prac":"w3","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w2","godz":11,"proj":"p5","od":"07:00","do":"18:00"}],"2026-05-22":[{"prac":"w5","godz":13.5,"proj":"p6","od":"07:00","do":"20:30"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-23":[{"prac":"w3","godz":9,"proj":"p6","od":"07:00","do":"16:00"},{"prac":"w4","godz":9,"proj":"p6","od":"07:00","do":"16:00"}],"2026-05-15":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-26":[{"prac":"w4","godz":12,"proj":"p6","od":"07:00","do":"19:00"},{"prac":"w2","godz":10.5,"proj":"p5","od":"07:00","do":"17:30"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-27":[{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p6","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-25":[{"prac":"w3","godz":9.5,"proj":"p6","od":"07:00","do":"16:30"},{"prac":"w2","godz":13,"proj":"p6","od":"07:00","do":"20:00"}],"2026-05-28":[{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-11":[{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w6","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-01":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-02":[{"prac":"w6","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-03":[{"prac":"w6","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w2","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w3","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w4","godz":11,"proj":"p5","od":"07:00","do":"18:00"}],"2026-06-05":[{"prac":"w6","godz":5,"proj":"p8","od":"13:00","do":"18:00"}],"2026-06-08":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w4","godz":11,"proj":"p8","od":"07:00","do":"18:00"},{"prac":"w6","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-09":[{"prac":"w2","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"},{"prac":"w3","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"},{"prac":"w4","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"}],"2026-06-10":[{"prac":"w2","godz":10,"proj":"p7","od":"07:00","do":"17:00"},{"prac":"w6","godz":10,"proj":"p7","od":"07:00","do":"17:00"}],"2026-06-12":[{"prac":"w2","godz":9,"proj":"p7","od":"08:00","do":"17:00"},{"prac":"w6","godz":8,"proj":"p7","od":"08:00","do":"16:00"},{"prac":"w3","godz":8,"proj":"p7","od":"08:00","do":"16:00"}],"2026-06-15":[{"prac":"w6","godz":8,"proj":"p7","od":"08:30","do":"16:30"},{"prac":"w2","godz":8,"proj":"p7","od":"08:30","do":"16:30"},{"prac":"w4","godz":8,"proj":"p7","od":"08:30","do":"16:30"}],"2026-06-18":[{"prac":"w6","godz":5,"proj":"p7","od":"11:30","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-19":[{"prac":"w6","godz":9,"proj":"p7","od":"08:00","do":"17:00"},{"prac":"w2","godz":9,"proj":"p7","od":"08:00","do":"17:00"},{"prac":"w3","godz":7,"proj":"p7","od":"08:00","do":"15:00"}],"2026-06-22":[{"prac":"w3","godz":10.5,"proj":"p7","od":"07:00","do":"17:30"},{"prac":"w6","godz":13,"proj":"p7","od":"07:00","do":"20:00"},{"prac":"w2","godz":13,"proj":"p7","od":"07:00","do":"20:00"},{"prac":"w4","godz":13,"proj":"p7","od":"07:00","do":"20:00"}],"2026-06-23":[{"prac":"w6","godz":2,"proj":"p3","od":"10:00","do":"12:00"},{"prac":"w3","godz":2,"proj":"p3","od":"10:00","do":"12:00"},{"prac":"w6","godz":2,"proj":"p4","od":"08:00","do":"10:00"},{"prac":"w6","godz":4,"proj":"p7","od":"12:00","do":"16:00"},{"prac":"w3","godz":2,"proj":"p4","od":"08:00","do":"10:00"},{"prac":"w3","godz":5,"proj":"p7","od":"12:00","do":"17:00"},{"prac":"w2","godz":8,"proj":"p7","od":"08:00","do":"16:00"},{"prac":"w4","godz":8,"proj":"p4","od":"08:00","do":"16:00"}],"2026-06-26":[{"prac":"w6","godz":11,"proj":"p9","od":"08:00","do":"19:00"},{"prac":"w2","godz":11,"proj":"p9","od":"08:00","do":"19:00"},{"prac":"w3","godz":11,"proj":"p9","od":"08:00","do":"19:00"}],"2026-06-29":[{"prac":"w6","godz":8,"proj":"p10","od":"08:00","do":"16:00"},{"prac":"w2","godz":8,"proj":"p10","od":"08:00","do":"16:00"},{"prac":"w3","godz":8,"proj":"p10","od":"08:00","do":"16:00"},{"prac":"w4","godz":8,"proj":"p10","od":"08:00","do":"16:00"}],"2026-06-30":[{"prac":"w6","godz":4,"proj":"p10","od":"12:00","do":"16:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p10","od":"07:00","do":"17:00"}],"2026-07-03":[{"prac":"w6","godz":9,"proj":"p10","od":"07:00","do":"16:00"},{"prac":"w6","godz":1,"proj":"p3","od":"16:00","do":"17:00"},{"prac":"w2","godz":9,"proj":"p10","od":"07:00","do":"16:00"},{"prac":"w2","godz":1,"proj":"p3","od":"16:00","do":"17:00"},{"prac":"w3","godz":9,"proj":"p10","od":"07:00","do":"16:00"}],"2026-06-16":[{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w6","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w4","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-17":[{"prac":"w6","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-24":[{"prac":"w6","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w6","godz":5.5,"proj":"p5","od":"12:00","do":"17:30"},{"prac":"w3","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w3","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w3","godz":5.5,"proj":"p5","od":"12:00","do":"17:30"},{"prac":"w2","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w2","godz":6.5,"proj":"p5","od":"12:00","do":"18:30"}],"2026-06-25":[{"prac":"w6","godz":8.5,"proj":"p10","od":"08:00","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p10","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p10","od":"08:00","do":"16:30"}],"2026-07-06":[{"prac":"w6","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p10","od":"07:00","do":"17:00"}],"2026-07-07":[{"prac":"w6","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p10","od":"07:00","do":"17:00"}],"2026-07-08":[{"prac":"w6","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w3","godz":9,"proj":"p10","od":"08:00","do":"17:00"}]},"bloki":{"b1":{"id":"b1","nazwa":"3 Maja 20","adres":"3 Maja 20, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"120 KLUCZ 2707"}],"awarie":["a2","a4","a5","a6","a7","a8","a10","a11"],"ikona":"🏢"},"b2":{"id":"b2","nazwa":"3 maja 43","adres":"3 maja 43, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"143 klucz 2707"}],"awarie":[],"ikona":"🏢"},"b3":{"id":"b3","nazwa":"3 maja 37","adres":"3 maja 37, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"Kl.1 30 Klucz 1919 Kl.2 30 Klucz 1304 Kl.3 30 Klucz 4132 Kl.4 40 Klucz 2909 Kl.5 200 Klucz 0000"}],"awarie":[],"ikona":"🏢"},"b4":{"id":"b4","nazwa":"Gospodarcza 6 A/B/C","adres":"Gospodarcza 6 A/B/C, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"Dzwonek 6128 Dzwonek"}],"awarie":[],"ikona":"🏢"},"b5":{"id":"b5","nazwa":"Maczka 10","adres":"Maczka 10, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"100 Klucz 2303 Kl.8 200 Klucz 2303"}],"awarie":["a13"],"ikona":"🏢"},"b6":{"id":"b6","nazwa":"Maczka 12","adres":"Maczka 12, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"A 100 Klucz 2301 B 200 Klucz 2301"}],"awarie":[],"ikona":"🏢"},"b7":{"id":"b7","nazwa":"Pescantina 8","adres":"Pescantina 8, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"200 Klucz 2301"}],"awarie":["a12"],"ikona":"🏢"},"b8":{"id":"b8","nazwa":"Pescantina 10","adres":"Pescantina 10, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"200 Klucz 2301"}],"awarie":[],"ikona":"🏢"},"b9":{"id":"b9","nazwa":"Sokołowska 27","adres":"Sokołowska 27, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"#1906#"}],"awarie":[],"ikona":"🏢"},"b10":{"id":"b10","nazwa":"Sokołowska 35","adres":"Sokołowska 35, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"150 Klucz 1500"}],"awarie":[],"ikona":"🏢"},"b11":{"id":"b11","nazwa":"Sokołowska 35A","adres":"Sokołowska 35A, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"196 Klucz 1906"}],"awarie":[],"ikona":"🏢"},"b12":{"id":"b12","nazwa":"Sokołowska 37A","adres":"Sokołowska 37A, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"Kl. 1 150 Klucz 1500 Kl.inne 100 Klucz 1401"}],"awarie":[],"ikona":"🏢"},"b13":{"id":"b13","nazwa":"Sokołowska 81","adres":"Sokołowska 81, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"150 Klucz 1500"}],"awarie":[],"ikona":"🏢"},"b14":{"id":"b14","nazwa":"Sokołowska 87","adres":"Sokołowska 87, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"Kl.1 200 Klucz 2002 Kl.2 200 Klucz 2002 Kl.3 150 Klucz 1500"}],"awarie":[],"ikona":"🏢"},"b15":{"id":"b15","nazwa":"Żytnia 28","adres":"Żytnia 28, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"196 Klucz 1906"}],"awarie":[],"ikona":"🏢"},"b16":{"id":"b16","nazwa":"Wiatraczna 5","adres":"Wiatraczna 5, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"100 Klucz 1401"}],"awarie":[],"ikona":"🏢"},"b17":{"id":"b17","nazwa":"Sekulska 5","adres":"Sekulska 5, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"100 Klucz 1401"}],"awarie":[],"ikona":"🏢"},"b18":{"id":"b18","nazwa":"Wyszyńskiego 21A","adres":"Wyszyńskiego 21A, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"200 Klucz 0409"}],"awarie":[],"ikona":"🏢"},"b19":{"id":"b19","nazwa":"Wyszyńskiego 23","adres":"Wyszyńskiego 23, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"100 Klucz 1401"}],"awarie":[],"ikona":"🏢"}},"awarie":{"a1":{"id":"a1","opis":"bbsvdvsd","blok":"46145.0 20","data":"08.03.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":150,"terminPlatnosci":"09.03.2026","notatka":"","ikona":"⚡"},"a2":{"id":"a2","opis":"sbf","blok":"3 Maja 20","data":"08.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":150,"terminPlatnosci":"09.03.2026","notatka":"","ikona":"⚡"},"a3":{"id":"a3","opis":"zarowka","blok":"46145.0 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a4":{"id":"a4","opis":"jm,h/ufrof","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a5":{"id":"a5","opis":"gkk","blok":"3 Maja 20","data":"11.03.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a6":{"id":"a6","opis":"jjh","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a7":{"id":"a7","opis":"jg","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a8":{"id":"a8","opis":"fsfsg","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a9":{"id":"a9","opis":"hde","blok":"46145.0 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a10":{"id":"a10","opis":"aesgds","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a11":{"id":"a11","opis":"vgsfdgs","blok":"3 Maja 20","data":"25.04.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a12":{"id":"a12","opis":"Pescantina 8/78 mruga swiatlo Przed wejsciem","blok":"Pescantina 8","data":"17.06.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":295,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"· Materiał: Lampa x 2","ikona":"⚡"},"a13":{"id":"a13","opis":"Maczka 10 klatka 7 brak swiatla parter przy windzie ,2 pietro przy schodach i swieci caly czas przy windzie to swiatlo k","blok":"Maczka 10","data":"27.06.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"}},"wydatki":{"e1":{"id":"e1","opis":"Materiał — Mariusz","kwota":9667.55,"typ":"Materiały","data":"","proj":"p1","terminPlatnosci":""},"e2":{"id":"e2","opis":"Materiał — Mariusz","kwota":98.91,"typ":"Materiały","data":"","proj":"p1","terminPlatnosci":""},"e3":{"id":"e3","opis":"Materiał — Mariusz","kwota":1129.24,"typ":"Materiały","data":"","proj":"p1","terminPlatnosci":""},"e4":{"id":"e4","opis":"Materiał — Mariusz","kwota":98.31,"typ":"Materiały","data":"","proj":"p1","terminPlatnosci":""},"e5":{"id":"e5","opis":"Paliwo iveco — Skwara warszawa","kwota":151.35,"typ":"Paliwo","data":"","proj":"p5","terminPlatnosci":""},"e6":{"id":"e6","opis":"Paliwo ford — Skwara warszawa","kwota":202.12,"typ":"Paliwo","data":"","proj":"p5","terminPlatnosci":""},"e7":{"id":"e7","opis":"Paliwo ford — Skwara warszawa","kwota":198.14,"typ":"Paliwo","data":"","proj":"p5","terminPlatnosci":""},"e8":{"id":"e8","opis":"Paliwo ford — Skwara warszawa","kwota":203.18,"typ":"Paliwo","data":"","proj":"p5","terminPlatnosci":""},"e9":{"id":"e9","opis":"Uchwyty i peszel — Szkoła Dąbrowska stany","kwota":562.11,"typ":"Materiały","data":"","proj":"p6","terminPlatnosci":""},"e10":{"id":"e10","opis":"Opaski tulejki — Szkoła Dąbrowska stany","kwota":76.63,"typ":"Materiały","data":"","proj":"p6","terminPlatnosci":""},"e11":{"id":"e11","opis":"Kolki — Szkoła Dąbrowska stany","kwota":224.8,"typ":"Materiały","data":"","proj":"p6","terminPlatnosci":""},"e12":{"id":"e12","opis":"Paliwo ford — Skwara warszawa","kwota":131.88,"typ":"Paliwo","data":"","proj":"p5","terminPlatnosci":""},"e13":{"id":"e13","opis":"Paliwo ford — Skwara warszawa","kwota":200.04,"typ":"Paliwo","data":"","proj":"p5","terminPlatnosci":""},"e14":{"id":"e14","opis":"Paliwo ford — Skwara warszawa","kwota":184.38,"typ":"Paliwo","data":"","proj":"p5","terminPlatnosci":""},"e15":{"id":"e15","opis":"Rozdzielnica I zawartosc — Borki kosy 29","kwota":583.6,"typ":"Materiały","data":"","proj":"p9","terminPlatnosci":""},"e16":{"id":"e16","opis":"Kable — Borki kosy 29","kwota":896,"typ":"Inne","data":"","proj":"p9","terminPlatnosci":""},"e17":{"id":"e17","opis":"Paliwo — Borki kosy 29","kwota":72,"typ":"Paliwo","data":"","proj":"p9","terminPlatnosci":""}},"czasPracyWlasne":{"w1":{},"w2":{},"w3":{},"w4":{},"w5":{},"w6":{}},"paski":{"w1":[],"w2":[],"w3":[],"w4":[],"w5":[],"w6":[]},"zaliczki":{"w1":[],"w2":[],"w3":[],"w4":[],"w5":[],"w6":[]}};
 Object.assign(DATA, MIGRACJA_APPSHEET);
 
+// Unikatowe ID (Date.now potrafi się powtórzyć przy szybkim dodawaniu — stąd licznik)
+let _idSeq = 0;
+function uid(prefix) { return prefix + Date.now().toString(36) + '_' + (_idSeq++).toString(36); }
+
 // Klucz daty YYYY-MM-DD (miesiąc 0-based, jak w Date)
 function dk(rok, mIdx, dzien) {
   return `${rok}-${String(mIdx + 1).padStart(2, '0')}-${String(dzien).padStart(2, '0')}`;
@@ -852,6 +902,7 @@ function switchTab(tab, opts = {}) {
   if (tab === 'pracownicy') renderPracList();
   if (tab === 'dashboard') renderPrzypomnienia();
   if (tab === 'samochody') renderSamochodyList();
+  if (tab === 'zakupy') renderZakupy();
 }
 
 // Wywołaj PRZED przejściem do nowego detalu/zakładki, żeby zapamiętać skąd wracać
@@ -1464,7 +1515,7 @@ function saveProjekt() {
       buildProjDetail(editId, currentProjTab);
     }
   } else {
-    const id = 'p_' + Date.now().toString(36);
+    const id = uid('p_');
     const c = assignProjectColor();
     DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, postep:0, start, koniec:terminWykonania, terminWykonania, kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, planLudzie:0, planMaterial:0, planZysk:0, opis:'', zaplacono:false, dataZaplaty:null, zadania:[] };
     showToast('✅ Projekt dodany!');
@@ -1566,7 +1617,7 @@ function saveWydatek() {
     Object.assign(DATA.wydatki[editId], { opis, kwota, typ, data: dataLabel, proj, terminPlatnosci });
     showToast('✅ Zapisano zmiany');
   } else {
-    const id = 'e_' + Date.now().toString(36);
+    const id = uid('e_');
     DATA.wydatki[id] = { id, opis, kwota, typ, data: dataLabel, proj, terminPlatnosci };
     showToast('✅ Wydatek zapisany!');
   }
@@ -1642,9 +1693,9 @@ function savePracownik() {
     const kolory = ['#1565c0','#2e7d32','#e65100','#6a1b9a','#00838f','#c62828','#37474f','#ad1457','#4527a0','#9e9d24'];
     DATA.pracownicy[wid] = { id: wid, imie, nazwisko, rola, stawka, tel, status, aktywny, inicjaly, kolor: kolory[Object.keys(DATA.pracownicy).length % kolory.length], projekty: [] };
     // utwórz konto logowania z losowym PIN-em
-    const uid = 'uw_' + Date.now().toString(36);
+    const uidKonto = 'uw_' + Date.now().toString(36) + _idSeq++;
     const pin = String(Math.floor(1000 + Math.random() * 9000));
-    DATA.uzytkownicy[uid] = { id: uid, nazwa: `${imie} ${nazwisko}`.trim(), rola, pin, pracownik: wid, inicjaly, kolor: DATA.pracownicy[wid].kolor, admin: false, uprawnienia: { godziny:true, paski:true, kody:true, awarie:true, projekty:false, narzedzia:false } };
+    DATA.uzytkownicy[uidKonto] = { id: uidKonto, nazwa: `${imie} ${nazwisko}`.trim(), rola, pin, pracownik: wid, inicjaly, kolor: DATA.pracownicy[wid].kolor, admin: false, uprawnienia: { godziny:true, paski:true, kody:true, awarie:true, projekty:false, narzedzia:false } };
     if (!DATA.czasPracyWlasne[wid]) DATA.czasPracyWlasne[wid] = {};
     if (!DATA.paski[wid]) DATA.paski[wid] = [];
     if (!DATA.zaliczki) DATA.zaliczki = {};
@@ -1694,7 +1745,7 @@ function saveZaliczka() {
   if (!DATA.zaliczki) DATA.zaliczki = {};
   if (!DATA.zaliczki[pracId]) DATA.zaliczki[pracId] = [];
   DATA.zaliczki[pracId].push({
-    id: 'z_' + Date.now().toString(36),
+    id: uid('z_'),
     kwota, data: dataVal ? dataVal.split('-').reverse().join('.') : '', dataISO: dataVal, notatka,
     rozliczona: false,
   });
@@ -2032,7 +2083,7 @@ function wyplacPasek(pracId, idx) {
   pasek.wyplacono = new Date().toLocaleDateString('pl-PL');
   // Rejestracja PEŁNEGO kosztu wynagrodzenia (brutto) jako wydatek firmy — zaliczka to
   // tylko wcześniejsza część tej samej kwoty, więc nie księgujemy jej osobno (brak podwójnego liczenia).
-  const wid = 'e_' + Date.now().toString(36);
+  const wid = uid('e_');
   DATA.wydatki[wid] = { id: wid, opis: `Wynagrodzenie — ${w.imie} ${w.nazwisko} (${pasek.miesiac})`, kwota: gross, typ: 'Wynagrodzenia', data: pasek.wyplacono, proj: null, terminPlatnosci: '' };
   renderWydatkiList();
   showToast(`💸 Do wypłaty ${doWyplaty.toLocaleString('pl-PL')} zł${zalSum ? ` (po odliczeniu ${zalSum.toLocaleString('pl-PL')} zł zaliczek)` : ''}`);
@@ -2399,7 +2450,7 @@ function saveAwaria() {
   if (!opis) { showToast('⚠️ Opisz awarię'); return; }
   const blokId = document.getElementById('na-blok').value;
   const blok = DATA.bloki[blokId];
-  const id = 'a_' + Date.now().toString(36);
+  const id = uid('a_');
   DATA.awarie[id] = {
     id, opis, blok: blok ? blok.nazwa : '', data: new Date().toLocaleDateString('pl-PL'),
     status: 'Zgłoszona', priorytet: document.getElementById('na-priorytet').value,
@@ -3246,7 +3297,7 @@ function saveAuto() {
   const marka = document.getElementById('na-marka').value.trim();
   const model = document.getElementById('na-model').value.trim();
   if (!marka && !model) { showToast('⚠️ Podaj markę i model'); return; }
-  const id = 'v_' + Date.now().toString(36);
+  const id = uid('v_');
   const g = AUTO_GRADIENTY[Object.keys(DATA.samochody || {}).length % AUTO_GRADIENTY.length];
   if (!DATA.samochody) DATA.samochody = {};
   DATA.samochody[id] = {
@@ -3465,14 +3516,14 @@ function logout() {
 const TAB_DEFS = {
   dashboard:{i:'⚡',l:'Pulpit'}, projekty:{i:'📋',l:'Projekty'}, pracownicy:{i:'👷',l:'Ludzie'},
   awarie:{i:'🚨',l:'Awarie'}, narzedzia:{i:'🔧',l:'Narzędzia'}, wydatki:{i:'💰',l:'Wydatki'},
-  kody:{i:'🔑',l:'Kody'}, samochody:{i:'🚐',l:'Auta'}, ustawienia:{i:'⚙️',l:'Firma'},
+  kody:{i:'🔑',l:'Kody'}, samochody:{i:'🚐',l:'Auta'}, zakupy:{i:'🚚',l:'Zakupy'}, ustawienia:{i:'⚙️',l:'Firma'},
   mojegodziny:{i:'⏱️',l:'Godziny'}, paski:{i:'🧾',l:'Paski'},
 };
 
 function renderTabbar() {
   let tabs;
   if (currentUser && currentUser.admin) {
-    tabs = ['dashboard','projekty','pracownicy','awarie','narzedzia','wydatki','kody','samochody','ustawienia'];
+    tabs = ['dashboard','projekty','pracownicy','awarie','narzedzia','wydatki','zakupy','kody','samochody','ustawienia'];
   } else {
     tabs = ['mojegodziny','paski'];
     if (can('kody')) tabs.push('kody');
@@ -3741,6 +3792,221 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
+// ═══════ ZAKUPY: DOSTAWCY · WZ · FAKTURY ZAKUPOWE ═══════
+// WZ = towar wzięty "na WZ" (nieopłacony), liczy się od razu do kosztów materiału.
+// Na koniec miesiąca podpinasz kilka WZ pod fakturę zakupową z terminem płatności.
+function celLabel(wz) {
+  if (wz.celTyp === 'projekt' && DATA.projekty[wz.cel]) return '📋 ' + DATA.projekty[wz.cel].nazwa;
+  if (wz.celTyp === 'awaria' && DATA.awarie[wz.cel]) return '🚨 ' + DATA.awarie[wz.cel].opis.slice(0, 30);
+  return '— ogólne —';
+}
+function dostawcaSaldo(dostId) {
+  // niezafakturowane WZ + nieopłacone faktury tego dostawcy
+  const wzOtwarte = Object.values(DATA.wz).filter(w => w.dostawca === dostId && !w.fakturaId).reduce((s, w) => s + w.kwota, 0);
+  const fakturyNieopl = Object.values(DATA.fakturyZakupowe).filter(f => f.dostawca === dostId && !f.zaplacono).reduce((s, f) => s + f.kwota, 0);
+  return { wzOtwarte, fakturyNieopl, razem: wzOtwarte + fakturyNieopl };
+}
+
+function renderZakupy() {
+  const el = document.getElementById('zakupy-content');
+  if (!el) return;
+  const dostawcy = Object.values(DATA.dostawcy);
+  const sumaWZ = Object.values(DATA.wz).filter(w => !w.fakturaId).reduce((s, w) => s + w.kwota, 0);
+  const sumaFakt = Object.values(DATA.fakturyZakupowe).filter(f => !f.zaplacono).reduce((s, f) => s + f.kwota, 0);
+  el.innerHTML = `
+    <div class="kpi-scroll">
+      <div class="kpi-sm" style="border-top-color:#795548"><div class="v" style="color:#795548">${dostawcy.length}</div><div class="l">Dostawcy</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">${Math.round(sumaWZ).toLocaleString('pl-PL')} zł</div><div class="l">WZ niezafakt.</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">${Math.round(sumaFakt).toLocaleString('pl-PL')} zł</div><div class="l">Faktury do zapłaty</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn-s" style="flex:1" onclick="openNowyDostawca()">＋ Dostawca</button>
+      <button class="btn-g" style="flex:1" onclick="openNoweWZ()">📄 Dodaj WZ</button>
+    </div>
+    <div class="sec-hdr"><h3>Dostawcy</h3></div>
+    <div class="card" style="padding:0 14px">
+      ${dostawcy.map(d => {
+        const s = dostawcaSaldo(d.id);
+        return `<div class="li" onclick="openDostawca('${d.id}')"><div class="li-icon" style="background:#efebe9;font-size:18px">🚚</div><div class="li-body"><div class="li-title">${d.nazwa}</div><div class="li-sub">${d.kontakt || 'brak kontaktu'}</div></div><div class="li-right"><div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'}">${s.razem > 0 ? s.razem.toLocaleString('pl-PL') + ' zł' : 'OK'}</div><div style="font-size:9px;color:var(--muted)">do rozliczenia</div></div></div>`;
+      }).join('') || '<div style="padding:20px 0;text-align:center;color:var(--muted);font-size:12px">Brak dostawców — dodaj przyciskiem ＋</div>'}
+    </div>`;
+}
+
+function openNowyDostawca() {
+  document.getElementById('nd-dost-id').value = '';
+  document.getElementById('nd-dost-heading').textContent = '🚚 Nowy dostawca';
+  document.getElementById('nd-dost-nazwa').value = '';
+  document.getElementById('nd-dost-kontakt').value = '';
+  document.getElementById('nd-dost-delete').style.display = 'none';
+  openModal('modal-dostawca');
+}
+function openEditDostawca(id) {
+  const d = DATA.dostawcy[id]; if (!d) return;
+  document.getElementById('nd-dost-id').value = id;
+  document.getElementById('nd-dost-heading').textContent = '✏️ Edytuj dostawcę';
+  document.getElementById('nd-dost-nazwa').value = d.nazwa;
+  document.getElementById('nd-dost-kontakt').value = d.kontakt || '';
+  document.getElementById('nd-dost-delete').style.display = 'block';
+  openModal('modal-dostawca');
+}
+function saveDostawca() {
+  const id = document.getElementById('nd-dost-id').value;
+  const nazwa = document.getElementById('nd-dost-nazwa').value.trim();
+  if (!nazwa) { showToast('⚠️ Podaj nazwę dostawcy'); return; }
+  const kontakt = document.getElementById('nd-dost-kontakt').value.trim();
+  if (id && DATA.dostawcy[id]) { Object.assign(DATA.dostawcy[id], { nazwa, kontakt }); }
+  else { const nid = uid('d_'); DATA.dostawcy[nid] = { id: nid, nazwa, kontakt }; }
+  saveState(); renderZakupy(); closeModal('modal-dostawca'); showToast('✅ Zapisano dostawcę');
+}
+function deleteDostawca() {
+  const id = document.getElementById('nd-dost-id').value;
+  const d = DATA.dostawcy[id]; if (!d) return;
+  const maWZ = Object.values(DATA.wz).some(w => w.dostawca === id);
+  if (maWZ) { showToast('⚠️ Dostawca ma powiązane WZ — najpierw je usuń'); return; }
+  if (!confirm(`Usunąć dostawcę ${d.nazwa}?`)) return;
+  delete DATA.dostawcy[id];
+  saveState(); renderZakupy(); closeModal('modal-dostawca');
+  if (document.getElementById('det-dostawca').classList.contains('open')) goBack();
+  showToast('🗑️ Dostawca usunięty');
+}
+
+function fillCelSelect(sel) {
+  sel.innerHTML = '<option value="">— ogólne (bez projektu) —</option>' +
+    '<optgroup label="Projekty">' + Object.values(DATA.projekty).map(p => `<option value="projekt:${p.id}">${p.nazwa}</option>`).join('') + '</optgroup>' +
+    '<optgroup label="Awarie">' + Object.values(DATA.awarie).map(a => `<option value="awaria:${a.id}">${a.opis.slice(0, 30)} (${a.blok})</option>`).join('') + '</optgroup>';
+}
+function openNoweWZ(presetDost) {
+  const dSel = document.getElementById('nwz-dostawca');
+  dSel.innerHTML = Object.values(DATA.dostawcy).map(d => `<option value="${d.id}">${d.nazwa}</option>`).join('');
+  if (Object.keys(DATA.dostawcy).length === 0) { showToast('⚠️ Najpierw dodaj dostawcę'); openNowyDostawca(); return; }
+  if (presetDost) dSel.value = presetDost;
+  fillCelSelect(document.getElementById('nwz-cel'));
+  document.getElementById('nwz-nr').value = '';
+  document.getElementById('nwz-kwota').value = '';
+  document.getElementById('nwz-data').value = new Date().toISOString().slice(0, 10);
+  openModal('modal-wz');
+}
+function saveWZ() {
+  const nr = document.getElementById('nwz-nr').value.trim();
+  const kwota = Math.round((Number(document.getElementById('nwz-kwota').value) || 0) * 100) / 100;
+  if (kwota <= 0) { showToast('⚠️ Podaj kwotę WZ'); return; }
+  const dostawca = document.getElementById('nwz-dostawca').value;
+  const celRaw = document.getElementById('nwz-cel').value;
+  const [celTyp, cel] = celRaw ? celRaw.split(':') : ['', ''];
+  const dataVal = document.getElementById('nwz-data').value;
+  const id = uid('wz_');
+  DATA.wz[id] = { id, nr, kwota, dostawca, celTyp, cel, data: dataVal ? dataVal.split('-').reverse().join('.') : '', fakturaId: null };
+  // WZ liczy się od razu do kosztów materiału celu
+  if (celTyp === 'projekt' && DATA.projekty[cel]) { DATA.projekty[cel].kosztyMaterialy = (DATA.projekty[cel].kosztyMaterialy || 0) + Math.round(kwota); }
+  if (celTyp === 'awaria' && DATA.awarie[cel]) { DATA.awarie[cel].koszt = (DATA.awarie[cel].koszt || 0) + Math.round(kwota); }
+  saveState(); renderZakupy();
+  if (document.getElementById('det-dostawca').classList.contains('open')) openDostawca(dostawca);
+  closeModal('modal-wz'); showToast('✅ WZ zapisane');
+}
+function deleteWZ(id) {
+  const wz = DATA.wz[id]; if (!wz) return;
+  if (wz.fakturaId) { showToast('⚠️ WZ jest już na fakturze — odepnij ją najpierw'); return; }
+  if (!confirm(`Usunąć WZ ${wz.nr || ''} (${wz.kwota} zł)?`)) return;
+  if (wz.celTyp === 'projekt' && DATA.projekty[wz.cel]) DATA.projekty[wz.cel].kosztyMaterialy = Math.max(0, (DATA.projekty[wz.cel].kosztyMaterialy || 0) - Math.round(wz.kwota));
+  if (wz.celTyp === 'awaria' && DATA.awarie[wz.cel]) DATA.awarie[wz.cel].koszt = Math.max(0, (DATA.awarie[wz.cel].koszt || 0) - Math.round(wz.kwota));
+  const dostawca = wz.dostawca;
+  delete DATA.wz[id];
+  saveState(); renderZakupy(); openDostawca(dostawca); showToast('🗑️ WZ usunięte');
+}
+
+function openDostawca(id) {
+  const d = DATA.dostawcy[id]; if (!d) return;
+  pushNav();
+  switchTab('zakupy', { keepStack: true });
+  document.getElementById('ddost-title').textContent = '🚚 ' + d.nazwa;
+  buildDostawcaDetail(id);
+  openDet('det-dostawca');
+  lastReopen['det-dostawca'] = () => { switchTab('zakupy', { keepStack: true }); buildDostawcaDetail(id); openDet('det-dostawca'); };
+}
+function buildDostawcaDetail(id) {
+  const d = DATA.dostawcy[id];
+  const wzOtwarte = Object.values(DATA.wz).filter(w => w.dostawca === id && !w.fakturaId);
+  const faktury = Object.values(DATA.fakturyZakupowe).filter(f => f.dostawca === id);
+  const s = dostawcaSaldo(id);
+  document.getElementById('ddost-content').innerHTML = `
+    <div style="background:#efebe9;padding:14px">
+      <div style="font-size:16px;font-weight:800">${d.nazwa}</div>
+      <div style="font-size:12px;color:#666">${d.kontakt || 'brak kontaktu'}</div>
+      <div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'};margin-top:6px">Do rozliczenia: ${s.razem.toLocaleString('pl-PL')} zł</div>
+      <button onclick="openEditDostawca('${id}')" class="btn-s" style="margin-top:8px">✏️ Edytuj</button>
+    </div>
+    <div style="padding:14px">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn-g" style="flex:1" onclick="openNoweWZ('${id}')">📄 Dodaj WZ</button>
+        <button class="btn-p" style="flex:1;margin-top:0" onclick="openNowaFakturaZak('${id}')">🧾 Nowa faktura</button>
+      </div>
+      <div class="sec-hdr"><h3 style="font-size:12px">📄 WZ niezafakturowane (${wzOtwarte.length})</h3></div>
+      ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0">
+        <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:#888">${w.data} · ${celLabel(w)}</div></div>
+        <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:#ccc;font-size:14px;cursor:pointer">✕</button>
+      </div>`).join('') || '<div style="color:#aaa;font-size:12px;padding:6px 0">Brak — wszystko zafakturowane ✅</div>'}
+      <div class="sec-hdr" style="margin-top:14px"><h3 style="font-size:12px">🧾 Faktury zakupowe (${faktury.length})</h3></div>
+      ${faktury.map(f => {
+        const dni = dniDo(f.terminPlatnosci);
+        const wzTej = Object.values(DATA.wz).filter(w => w.fakturaId === f.id);
+        return `<div class="card" style="padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1"><div style="font-size:13px;font-weight:800">${f.nr || '(bez nr)'}</div><div style="font-size:10px;color:#888">${wzTej.length} WZ · termin ${f.terminPlatnosci || '—'}${!f.zaplacono && dni !== null ? (dni < 0 ? ' · <span style="color:var(--red)">PO TERMINIE</span>' : ' · za ' + dni + ' dni') : ''}</div></div>
+            <div style="font-size:14px;font-weight:900;color:${f.zaplacono ? 'var(--green)' : 'var(--red)'}">${f.kwota.toLocaleString('pl-PL')} zł</div>
+          </div>
+          ${f.zaplacono ? `<div style="font-size:10px;color:var(--green);margin-top:4px">✅ Zapłacono ${f.dataZaplaty || ''}</div>` : `<button onclick="oznaczFakturaZakZaplacona('${f.id}')" class="btn-g" style="width:100%;margin-top:8px">💸 Oznacz jako zapłaconą</button>`}
+        </div>`;
+      }).join('') || '<div style="color:#aaa;font-size:12px;padding:6px 0">Brak faktur</div>'}
+    </div>`;
+}
+
+let _fzWZwybrane = new Set();
+function openNowaFakturaZak(dostId) {
+  const wzOtwarte = Object.values(DATA.wz).filter(w => w.dostawca === dostId && !w.fakturaId);
+  if (wzOtwarte.length === 0) { showToast('⚠️ Brak niezafakturowanych WZ tego dostawcy'); return; }
+  document.getElementById('nfz-dostawca').value = dostId;
+  document.getElementById('nfz-nr').value = '';
+  document.getElementById('nfz-termin').value = '';
+  _fzWZwybrane = new Set();
+  const el = document.getElementById('nfz-wz-lista');
+  el.innerHTML = wzOtwarte.map(w => `
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;cursor:pointer">
+      <input type="checkbox" onchange="toggleFZwz('${w.id}',this.checked)" style="accent-color:var(--blue)">
+      <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:#888">${w.data} · ${celLabel(w)}</div></div>
+    </label>`).join('');
+  document.getElementById('nfz-suma').textContent = '0 zł';
+  openModal('modal-faktura-zak');
+}
+function toggleFZwz(wzId, checked) {
+  if (checked) _fzWZwybrane.add(wzId); else _fzWZwybrane.delete(wzId);
+  const suma = [..._fzWZwybrane].reduce((s, id) => s + (DATA.wz[id] ? DATA.wz[id].kwota : 0), 0);
+  document.getElementById('nfz-suma').textContent = suma.toLocaleString('pl-PL') + ' zł';
+}
+function saveFakturaZak() {
+  if (_fzWZwybrane.size === 0) { showToast('⚠️ Zaznacz co najmniej jedno WZ'); return; }
+  const dostId = document.getElementById('nfz-dostawca').value;
+  const nr = document.getElementById('nfz-nr').value.trim();
+  const terminIso = document.getElementById('nfz-termin').value;
+  const wzIds = [..._fzWZwybrane];
+  const kwota = wzIds.reduce((s, id) => s + (DATA.wz[id] ? DATA.wz[id].kwota : 0), 0);
+  const fid = uid('fz_');
+  DATA.fakturyZakupowe[fid] = { id: fid, nr, dostawca: dostId, terminPlatnosci: terminIso ? terminIso.split('-').reverse().join('.') : '', wzIds, kwota, zaplacono: false, dataZaplaty: null };
+  wzIds.forEach(id => { if (DATA.wz[id]) DATA.wz[id].fakturaId = fid; });
+  saveState(); renderZakupy(); renderPrzypomnienia();
+  if (document.getElementById('det-dostawca').classList.contains('open')) buildDostawcaDetail(dostId);
+  closeModal('modal-faktura-zak'); showToast(`✅ Faktura na ${kwota.toLocaleString('pl-PL')} zł (${wzIds.length} WZ)`);
+}
+function oznaczFakturaZakZaplacona(fid) {
+  const f = DATA.fakturyZakupowe[fid]; if (!f) return;
+  const dzis = new Date().toLocaleDateString('pl-PL');
+  const wpis = prompt('Data zapłaty (DD.MM.RRRR):', dzis);
+  if (wpis === null) return;
+  f.zaplacono = true; f.dataZaplaty = wpis.trim() || dzis;
+  saveState(); renderPrzypomnienia();
+  if (document.getElementById('det-dostawca').classList.contains('open')) buildDostawcaDetail(f.dostawca);
+  showToast('✅ Faktura oznaczona jako zapłacona');
+}
+
 // ═══════ PRZYPOMNIENIA — system pilnuje terminów za Ciebie ═══════
 function parseDataPL(s) { if (!s) return null; const [d, m, y] = s.split('.').map(Number); if (!d || !m || !y) return null; return new Date(y, m - 1, d); }
 function dniDo(dataStr) { const dt = parseDataPL(dataStr); if (!dt) return null; return Math.ceil((dt - new Date(new Date().toDateString())) / 86400000); }
@@ -3792,6 +4058,16 @@ function zbierzPrzypomnienia() {
     }
   });
 
+  // WZ — faktury zakupowe z terminem płatności
+  Object.values(DATA.fakturyZakupowe || {}).forEach(f => {
+    if (f.zaplacono || !f.terminPlatnosci) return;
+    const dni = dniDo(f.terminPlatnosci);
+    if (dni !== null && dni <= 14) {
+      const dost = DATA.dostawcy[f.dostawca];
+      push(dni < 0 ? 4 : 3, '🚚', `${dni < 0 ? 'PO TERMINIE' : 'Zapłać za ' + dni + ' dni'}: faktura ${f.nr || ''} ${dost ? dost.nazwa : ''} — ${f.kwota.toLocaleString('pl-PL')} zł`, () => { if (dost) openDostawca(f.dostawca); });
+    }
+  });
+
   // 26 — awarie zgłoszone bez przypisania / wiszące
   Object.values(DATA.awarie).forEach(a => {
     if (a.status === 'Zgłoszona' && !a.pracownik) {
@@ -3838,6 +4114,10 @@ function wykonajPrzyp(i) { if (_przypCache[i] && _przypCache[i].akcja) _przypCac
 // ═══════ INIT ═══════
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
+  // Rejestry zakupów (WZ / faktury / dostawcy) — inicjalizacja jeśli brak
+  if (!DATA.dostawcy) DATA.dostawcy = {};
+  if (!DATA.wz) DATA.wz = {};
+  if (!DATA.fakturyZakupowe) DATA.fakturyZakupowe = {};
   augmentPaskiMock();
   renderLoginTiles();
   renderTabbar();
