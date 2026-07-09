@@ -671,6 +671,7 @@ body.employee .admin-only{display:none!important}
     <div style="color:#fff;font-size:14px;font-weight:700" id="pin-user-label"></div>
     <div class="pin-dots" id="pin-dots"></div>
     <div class="pin-pad" id="pin-pad"></div>
+    <button id="pin-bio-btn" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;padding:9px 18px;border-radius:22px">👆 Zaloguj odciskiem</button>
     <button onclick="pinCancel()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;margin-top:6px">← Wybierz inne konto</button>
   </div>
 </div>
@@ -2798,12 +2799,15 @@ function can(perm) {
 }
 
 function renderLoginTiles() {
-  document.getElementById('login-tiles').innerHTML = Object.values(DATA.uzytkownicy).map(u => `
-    <div class="login-tile" onclick="pinStart('${u.id}')">
+  document.getElementById('login-tiles').innerHTML = Object.values(DATA.uzytkownicy).map(u => {
+    const bio = bioRegistered(u.id);
+    return `
+    <div class="login-tile" onclick="${bio ? `bioLogin('${u.id}')` : `pinStart('${u.id}')`}">
       <div class="lt-av" style="background:${u.kolor}">${u.inicjaly}</div>
-      <div><div class="lt-n">${u.nazwa}</div><div class="lt-r">${u.rola}${u.admin ? ' · pełny dostęp' : ''}</div></div>
-      <div style="margin-left:auto;color:rgba(255,255,255,.5);font-size:16px">›</div>
-    </div>`).join('');
+      <div><div class="lt-n">${u.nazwa}</div><div class="lt-r">${u.rola}${u.admin ? ' · pełny dostęp' : ''}${bio ? ' · 👆 odcisk' : ''}</div></div>
+      <div style="margin-left:auto;color:rgba(255,255,255,.5);font-size:16px">${bio ? '👆' : '›'}</div>
+    </div>`;
+  }).join('');
 }
 
 function pinStart(uid) {
@@ -2814,6 +2818,9 @@ function pinStart(uid) {
   document.getElementById('pin-user-label').textContent = `${pinTarget.nazwa} — podaj PIN`;
   document.getElementById('pin-pad').innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k =>
     k === '' ? '<div></div>' : `<button class="pin-key" onclick="pinKey('${k}')">${k}</button>`).join('');
+  const bioBtn = document.getElementById('pin-bio-btn');
+  if (bioRegistered(uid)) { bioBtn.style.display = 'block'; bioBtn.onclick = () => bioLogin(uid); }
+  else bioBtn.style.display = 'none';
   renderPinDots();
 }
 
@@ -2831,6 +2838,75 @@ function pinKey(k) {
     if (pinBuffer === pinTarget.pin) { setUser(pinTarget); }
     else { pinBuffer = ''; renderPinDots(); showToast('❌ Błędny PIN'); }
   }
+}
+
+// ═══════ BIOMETRIA — odcisk palca / Face ID (WebAuthn, per urządzenie) ═══════
+// Rejestracja zapisuje ID poświadczenia w localStorage TEGO urządzenia;
+// odcisk nigdy nie opuszcza telefonu (weryfikuje go system operacyjny).
+const BIO_PREFIX = 'elektroapp_bio_';
+
+function bioAvailable() {
+  return !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext);
+}
+function bioRegistered(uid) {
+  try { return !!localStorage.getItem(BIO_PREFIX + uid); } catch (e) { return false; }
+}
+function bufToB64(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function b64ToBuf(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+
+async function bioRegister(uid) {
+  const u = DATA.uzytkownicy[uid];
+  if (!u || !bioAvailable()) { showToast('⚠️ To urządzenie nie wspiera biometrii'); return; }
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: { name: 'ElektroApp' },
+      user: { id: new TextEncoder().encode(uid), name: u.nazwa, displayName: u.nazwa },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+      timeout: 60000,
+    }});
+    localStorage.setItem(BIO_PREFIX + uid, bufToB64(cred.rawId));
+    showToast('✅ Odcisk włączony na tym urządzeniu');
+    renderLoginTiles();
+    if (currentTab === 'ustawienia') buildUstawienia();
+    if (currentTab === 'mojegodziny') buildMojeGodziny();
+  } catch (e) {
+    showToast('⚠️ Nie udało się włączyć odcisku');
+  }
+}
+
+async function bioLogin(uid) {
+  const raw = (() => { try { return localStorage.getItem(BIO_PREFIX + uid); } catch (e) { return null; } })();
+  if (!raw) { pinStart(uid); return; }
+  try {
+    await navigator.credentials.get({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: [{ type: 'public-key', id: b64ToBuf(raw) }],
+      userVerification: 'required',
+      timeout: 60000,
+    }});
+    setUser(DATA.uzytkownicy[uid]);
+  } catch (e) {
+    showToast('Odcisk nie rozpoznany — wpisz PIN');
+    pinStart(uid);
+  }
+}
+
+function bioDisable(uid) {
+  try { localStorage.removeItem(BIO_PREFIX + uid); } catch (e) {}
+  showToast('🔕 Wyłączono logowanie odciskiem');
+  renderLoginTiles();
+  if (currentTab === 'ustawienia') buildUstawienia();
+  if (currentTab === 'mojegodziny') buildMojeGodziny();
+}
+
+// Przycisk włącz/wyłącz odcisk dla aktualnie zalogowanego użytkownika
+function bioToggleHtml(uid) {
+  if (!bioAvailable()) return '';
+  return bioRegistered(uid)
+    ? `<button class="btn-s" style="width:100%;margin-top:8px" onclick="bioDisable('${uid}')">👆 Wyłącz logowanie odciskiem (to urządzenie)</button>`
+    : `<button class="btn-s" style="width:100%;margin-top:8px" onclick="bioRegister('${uid}')">👆 Włącz logowanie odciskiem na tym urządzeniu</button>`;
 }
 
 function pinCancel() {
@@ -3022,7 +3098,8 @@ function buildMojeGodziny() {
       </div>
       ${calHtml}
       <button class="btn-p" style="margin-top:12px" onclick="openGodzinyModal('${id}')">＋ Wpisz godziny</button>
-    </div>`;
+    </div>
+    ${bioAvailable() ? `<div class="card" style="padding:12px 14px">${bioToggleHtml(currentUser.id)}</div>` : ''}`;
 }
 
 // ═══════ PASKI WYNAGRODZEŃ (pracownik) ═══════
@@ -3082,6 +3159,7 @@ function buildUstawienia() {
       <div style="flex:1"><div style="font-size:13px;font-weight:800">${admin.nazwa}</div><div style="font-size:11px;color:var(--muted)">${admin.rola} · PIN: ${admin.pin}</div></div>
       <button onclick="zmienPin('${admin.id}')" class="btn-s" style="flex-shrink:0;padding:5px 10px;font-size:11px">🔑 Zmień PIN</button>
     </div>
+    ${bioAvailable() ? `<div class="card" style="padding:12px 14px">${bioToggleHtml(admin.id)}<div style="font-size:10px;color:var(--muted);margin-top:6px">Odcisk działa tylko na tym urządzeniu i nigdzie nie jest wysyłany — weryfikuje go telefon.</div></div>` : ''}
     <div class="sec-hdr" style="margin-top:14px"><h3>👥 Uprawnienia pracowników</h3></div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Zaznacz, co widzi każdy pracownik po zalogowaniu. Finanse firmy są zawsze ukryte przed pracownikami.</div>
     ${pracownicy.map(u => `
