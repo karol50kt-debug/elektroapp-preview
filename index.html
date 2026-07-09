@@ -220,7 +220,7 @@ body.employee .admin-only{display:none!important}
   </div>
   <div class="kpi-grid">
     <div class="kpi" style="border-color:var(--blue)" onclick="switchTab('projekty')"><div class="kpi-icon" style="background:var(--blue-l)">📋</div><div><div class="kpi-val" style="color:var(--blue)" id="dash-kpi-projekty">3</div><div class="kpi-lbl">Aktywne projekty</div></div></div>
-    <div class="kpi" style="border-color:var(--green)" onclick="switchTab('pracownicy')"><div class="kpi-icon" style="background:var(--green-l)">👷</div><div><div class="kpi-val" style="color:var(--green)">3</div><div class="kpi-lbl">Pracownicy</div></div></div>
+    <div class="kpi" style="border-color:var(--green)" onclick="switchTab('pracownicy')"><div class="kpi-icon" style="background:var(--green-l)">👷</div><div><div class="kpi-val" style="color:var(--green)" id="dash-kpi-pracownicy">0</div><div class="kpi-lbl">Pracownicy</div></div></div>
     <div class="kpi" style="border-color:var(--red)" onclick="switchTab('awarie')"><div class="kpi-icon" style="background:var(--red-l)">🚨</div><div><div class="kpi-val" style="color:var(--red)" id="dash-kpi-awarie">2</div><div class="kpi-lbl">Otwarte awarie</div></div></div>
     <div class="kpi" style="border-color:var(--green)"><div class="kpi-icon" style="background:var(--green-l)">💰</div><div><div class="kpi-val" style="color:var(--green)" id="dash-kpi-przychody">0 zł</div><div class="kpi-lbl">Przychody</div></div></div>
     <div class="kpi" style="border-color:var(--orange)" onclick="switchTab('wydatki')"><div class="kpi-icon" style="background:var(--orange-l)">📊</div><div><div class="kpi-val" style="color:var(--orange)" id="dash-kpi-wydatki">0 zł</div><div class="kpi-lbl">Wydatki</div></div></div>
@@ -308,18 +308,8 @@ body.employee .admin-only{display:none!important}
   </div>
 
   <div id="prac-lista-section">
-    <div class="kpi-grid2">
-      <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">4</div><div class="l">Łącznie</div></div>
-      <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">3</div><div class="l">Aktywni</div></div>
-      <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">1</div><div class="l">L4</div></div>
-      <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">147 zł/h</div><div class="l">Stawki</div></div>
-    </div>
-    <div class="card" style="padding:0 14px">
-      <div class="li" onclick="openPrac('w1')"><div class="li-icon" style="background:var(--blue-l);font-size:16px;font-weight:800;color:var(--blue)">MK</div><div class="li-body"><div class="li-title">Mariusz Kowalczyk</div><div class="li-sub">Elektryk · 45 zł/h</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Aktywny</span><div style="font-size:10px;color:var(--muted);margin-top:4px">2 projekty</div></div></div>
-      <div class="li" onclick="openPrac('w2')"><div class="li-icon" style="background:var(--green-l);font-size:16px;font-weight:800;color:var(--green)">TW</div><div class="li-body"><div class="li-title">Tomasz Wiśniewski</div><div class="li-sub">Elektryk · 42 zł/h</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Aktywny</span><div style="font-size:10px;color:var(--muted);margin-top:4px">2 projekty</div></div></div>
-      <div class="li" onclick="openPrac('w3')"><div class="li-icon" style="background:var(--red-l);font-size:16px;font-weight:800;color:var(--red)">MD</div><div class="li-body"><div class="li-title">Marcin Dąbrowski</div><div class="li-sub">Monter · 35 zł/h</div></div><div class="li-right"><span class="badge" style="background:var(--red-l);color:var(--red)">L4</span></div></div>
-      <div class="li" onclick="openPrac('w4')"><div class="li-icon" style="background:var(--orange-l);font-size:16px;font-weight:800;color:var(--orange)">KZ</div><div class="li-body"><div class="li-title">Kamil Zając</div><div class="li-sub">Pomocnik · 25 zł/h</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Aktywny</span></div></div>
-    </div>
+    <div class="kpi-grid2" id="prac-kpi"></div>
+    <div class="card" style="padding:0 14px" id="prac-list"></div>
   </div>
 
   <div id="prac-kalendarz-section" style="display:none">
@@ -537,15 +527,12 @@ body.employee .admin-only{display:none!important}
 <div class="hdr"><div class="hdr-title">🔑 Kody dostępu</div><div class="hdr-right"><button class="hdr-btn admin-only" onclick="openModal('modal-kod')">＋</button><div class="avatar">K</div></div></div>
 <div class="content">
   <div class="kpi-scroll">
-    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">3</div><div class="l">Obiekty</div></div>
-    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">12</div><div class="l">Kody łącznie</div></div>
-    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">2</div><div class="l">Wizyty w tygodniu</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)" id="kody-kpi-obiekty">0</div><div class="l">Obiekty</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)" id="kody-kpi-kody">0</div><div class="l">Kody łącznie</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)" id="kody-kpi-awarie">0</div><div class="l">Otwarte awarie</div></div>
   </div>
-  <div class="card" style="padding:0 14px">
-    <div class="li" onclick="openBlok('b1')"><div class="li-icon" style="background:var(--blue-l);font-size:18px">🏢</div><div class="li-body"><div class="li-title">Wspólnota Lipowa 12–18</div><div class="li-sub">ul. Lipowa 12–18 · 5 kodów</div></div><div class="li-right"><span class="badge" style="background:var(--blue-l);color:var(--blue)">3 awarie</span></div></div>
-    <div class="li" onclick="openBlok('b2')"><div class="li-icon" style="background:var(--green-l);font-size:18px">🏠</div><div class="li-body"><div class="li-title">Spółdzielnia Różana</div><div class="li-sub">os. Różana 1–8 · 4 kody</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">OK</span></div></div>
-    <div class="li" onclick="openBlok('b3')"><div class="li-icon" style="background:var(--purple-l);font-size:18px">🏗️</div><div class="li-body"><div class="li-title">Wspólnota Bema 10–16</div><div class="li-sub">ul. Bema 10–16 · 3 kody</div></div><div class="li-right"><span class="badge" style="background:var(--orange-l);color:var(--orange)">1 awaria</span></div></div>
-  </div>
+  <div class="search"><span>🔍</span><input id="search-kody" oninput="filtrujKody()" placeholder="Szukaj bloku / ulicy..."></div>
+  <div class="card" style="padding:0 14px" id="kody-list"></div>
 </div>
 <!-- Detail bloku -->
 <div class="det" id="det-blok">
@@ -793,6 +780,11 @@ const DATA = {
   },
 };
 
+
+// ═══════ DANE ZAIMPORTOWANE Z APPSHEET (zastępują dane przykładowe) ═══════
+const MIGRACJA_APPSHEET = {"uzytkownicy":{"u0":{"id":"u0","nazwa":"Karol","rola":"Właściciel","pin":"2580","pracownik":null,"inicjaly":"K","kolor":"#0d47a1","admin":true},"uw1":{"id":"uw1","nazwa":"Tomek","rola":"Elektryk","pin":"1111","pracownik":"w1","inicjaly":"TO","kolor":"#1565c0","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw2":{"id":"uw2","nazwa":"Maciek Sosna","rola":"Elektryk","pin":"2222","pracownik":"w2","inicjaly":"MS","kolor":"#2e7d32","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw3":{"id":"uw3","nazwa":"Patryk od dzyna","rola":"Elektryk","pin":"3333","pracownik":"w3","inicjaly":"PO","kolor":"#e65100","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw4":{"id":"uw4","nazwa":"Piotrek świecki","rola":"Elektryk","pin":"4444","pracownik":"w4","inicjaly":"PŚ","kolor":"#6a1b9a","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw5":{"id":"uw5","nazwa":"Michal Krolik","rola":"Elektryk","pin":"5555","pracownik":"w5","inicjaly":"MK","kolor":"#00838f","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw6":{"id":"uw6","nazwa":"Arek","rola":"Elektryk","pin":"6666","pracownik":"w6","inicjaly":"AR","kolor":"#c62828","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}}},"pracownicy":{"w1":{"id":"w1","imie":"Tomek","nazwisko":"","rola":"Elektryk","stawka":28,"tel":"48884943058","status":"Aktywny","inicjaly":"TO","kolor":"#1565c0","projekty":["p3","p2","p1","p4","p5"]},"w2":{"id":"w2","imie":"Maciek","nazwisko":"Sosna","rola":"Elektryk","stawka":32,"tel":"48576144228","status":"Aktywny","inicjaly":"MS","kolor":"#2e7d32","projekty":["p3","p2","p1","p4","p5","p6","p7","p9","p10"]},"w3":{"id":"w3","imie":"Patryk","nazwisko":"od dzyna","rola":"Elektryk","stawka":30,"tel":"","status":"Aktywny","inicjaly":"PO","kolor":"#e65100","projekty":["p5","p6","p7","p3","p9","p10","p4"]},"w4":{"id":"w4","imie":"Piotrek","nazwisko":"świecki","rola":"Elektryk","stawka":30,"tel":"","status":"Aktywny","inicjaly":"PŚ","kolor":"#6a1b9a","projekty":["p6","p5","p8","p7","p10","p4"]},"w5":{"id":"w5","imie":"Michal","nazwisko":"Krolik","rola":"Elektryk","stawka":30,"tel":"","status":"Aktywny","inicjaly":"MK","kolor":"#00838f","projekty":["p6"]},"w6":{"id":"w6","imie":"Arek","nazwisko":"","rola":"Elektryk","stawka":27,"tel":"883 449 233","status":"Aktywny","inicjaly":"AR","kolor":"#c62828","projekty":["p5","p8","p7","p3","p9","p10","p4"]}},"projekty":{"p1":{"id":"p1","nazwa":"Mariusz","klient":"Mariusz","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"20.04.2026","koniec":"30.04.2026","kolor":"#1565c0","kolorL":"#e3f2fd","pracownicy":[],"kosztyRobocizna":6720,"kosztyMaterialy":12500,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p2":{"id":"p2","nazwa":"Pieczarkami Cabaj","klient":"Pieczarkami Cabaj","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"13.04.2026","koniec":"08.05.2026","kolor":"#2e7d32","kolorL":"#e8f5e9","pracownicy":[],"kosztyRobocizna":0,"kosztyMaterialy":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p3":{"id":"p3","nazwa":"Chomka","klient":"Chomka","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"01.04.2026","koniec":"08.04.2026","kolor":"#e65100","kolorL":"#fff3e0","pracownicy":[],"kosztyRobocizna":0,"kosztyMaterialy":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p4":{"id":"p4","nazwa":"Wewnetrzny","klient":"Wewnetrzny","adres":"","status":"W realizacji","wartosc":0,"postep":0,"start":"","koniec":"","kolor":"#6a1b9a","kolorL":"#f3e5f5","pracownicy":[],"kosztyRobocizna":0,"kosztyMaterialy":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p5":{"id":"p5","nazwa":"Skwara warszawa","klient":"Skwara warszawa","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"07.05.2026","koniec":"29.05.2026","kolor":"#00838f","kolorL":"#e0f7fa","pracownicy":[],"kosztyRobocizna":22680,"kosztyMaterialy":2940,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p6":{"id":"p6","nazwa":"Szkoła Dąbrowska stany","klient":"Szkoła Dąbrowska stany","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"20.05.2026","koniec":"22.05.2026","kolor":"#c62828","kolorL":"#ffebee","pracownicy":[],"kosztyRobocizna":0,"kosztyMaterialy":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p7":{"id":"p7","nazwa":"Szkoła grala dąbrowizna","klient":"Szkoła grala dąbrowizna","adres":"","status":"W realizacji","wartosc":0,"postep":0,"start":"10.06.2026","koniec":"24.06.2026","kolor":"#37474f","kolorL":"#eceff1","pracownicy":[],"kosztyRobocizna":0,"kosztyMaterialy":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p8":{"id":"p8","nazwa":"Wspólnoty","klient":"Wspólnoty","adres":"","status":"Planowany","wartosc":0,"postep":0,"start":"","koniec":"","kolor":"#ad1457","kolorL":"#fce4ec","pracownicy":[],"kosztyRobocizna":0,"kosztyMaterialy":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p9":{"id":"p9","nazwa":"Borki kosy 29","klient":"Borki kosy 29","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"26.06.2026","koniec":"26.06.2026","kolor":"#4527a0","kolorL":"#ede7f6","pracownicy":[],"kosztyRobocizna":1800,"kosztyMaterialy":800,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p10":{"id":"p10","nazwa":"Szkoła skórzec","klient":"Szkoła skórzec","adres":"","status":"W realizacji","wartosc":0,"postep":0,"start":"25.06.2026","koniec":"","kolor":"#9e9d24","kolorL":"#f9fbe7","pracownicy":[],"kosztyRobocizna":0,"kosztyMaterialy":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]}},"czasPracy":{"2026-04-10":[{"prac":"w2","godz":8,"proj":"p3","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-13":[{"prac":"w2","godz":8,"proj":"p3","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-07":[{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-08":[{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-09":[{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-14":[{"prac":"w2","godz":8,"proj":"p3","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-15":[{"prac":"w1","godz":9.5,"proj":"p2","od":"08:00","do":"17:30"},{"prac":"w2","godz":8,"proj":"p2","od":"08:00","do":"16:00"}],"2026-04-16":[{"prac":"w1","godz":9.02,"proj":"p2","od":"08:00","do":"17:01"},{"prac":"w2","godz":9,"proj":"p2","od":"08:00","do":"17:00"}],"2026-04-17":[{"prac":"w2","godz":8,"proj":"p2","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p2","od":"08:00","do":"16:00"}],"2026-04-20":[{"prac":"w1","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"}],"2026-04-21":[{"prac":"w2","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"},{"prac":"w1","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"}],"2026-04-22":[{"prac":"w2","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"},{"prac":"w1","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"}],"2026-04-23":[{"prac":"w2","godz":8,"proj":"p2","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p2","od":"08:00","do":"16:00"}],"2026-04-24":[{"prac":"w2","godz":8.5,"proj":"p1","od":"08:00","do":"16:30"},{"prac":"w1","godz":8.5,"proj":"p1","od":"08:00","do":"16:30"}],"2026-04-27":[{"prac":"w2","godz":8,"proj":"p1","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p1","od":"08:00","do":"16:00"}],"2026-04-28":[{"prac":"w2","godz":10,"proj":"p1","od":"08:00","do":"18:00"},{"prac":"w1","godz":10,"proj":"p1","od":"08:00","do":"18:00"}],"2026-04-29":[{"prac":"w2","godz":10,"proj":"p1","od":"08:00","do":"18:00"},{"prac":"w1","godz":10,"proj":"p1","od":"08:00","do":"18:00"}],"2026-05-04":[{"prac":"w2","godz":9,"proj":"p1","od":"08:00","do":"17:00"},{"prac":"w1","godz":9,"proj":"p1","od":"08:00","do":"17:00"}],"2026-05-05":[{"prac":"w2","godz":9.5,"proj":"p1","od":"08:00","do":"17:30"},{"prac":"w1","godz":9.5,"proj":"p1","od":"08:00","do":"17:30"}],"2026-05-06":[{"prac":"w1","godz":9,"proj":"p4","od":"08:00","do":"17:00"},{"prac":"w2","godz":9,"proj":"p4","od":"08:00","do":"17:00"}],"2026-05-07":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w1","godz":4,"proj":"p4","od":"12:00","do":"16:00"}],"2026-05-08":[{"prac":"w1","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-11":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-12":[{"prac":"w2","godz":10.5,"proj":"p5","od":"07:00","do":"17:30"}],"2026-05-13":[{"prac":"w2","godz":10.5,"proj":"p5","od":"07:00","do":"17:30"}],"2026-05-14":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-18":[{"prac":"w2","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"}],"2026-05-19":[{"prac":"w3","godz":9,"proj":"p5","od":"07:00","do":"16:00"},{"prac":"w2","godz":9,"proj":"p5","od":"07:00","do":"16:00"}],"2026-05-20":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w4","godz":12,"proj":"p6","od":"07:00","do":"19:00"}],"2026-05-21":[{"prac":"w5","godz":12,"proj":"p6","od":"07:00","do":"19:00"},{"prac":"w3","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w2","godz":11,"proj":"p5","od":"07:00","do":"18:00"}],"2026-05-22":[{"prac":"w5","godz":13.5,"proj":"p6","od":"07:00","do":"20:30"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-23":[{"prac":"w3","godz":9,"proj":"p6","od":"07:00","do":"16:00"},{"prac":"w4","godz":9,"proj":"p6","od":"07:00","do":"16:00"}],"2026-05-15":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-26":[{"prac":"w4","godz":12,"proj":"p6","od":"07:00","do":"19:00"},{"prac":"w2","godz":10.5,"proj":"p5","od":"07:00","do":"17:30"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-27":[{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p6","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-25":[{"prac":"w3","godz":9.5,"proj":"p6","od":"07:00","do":"16:30"},{"prac":"w2","godz":13,"proj":"p6","od":"07:00","do":"20:00"}],"2026-05-28":[{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-11":[{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w6","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-01":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-02":[{"prac":"w6","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-03":[{"prac":"w6","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w2","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w3","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w4","godz":11,"proj":"p5","od":"07:00","do":"18:00"}],"2026-06-05":[{"prac":"w6","godz":5,"proj":"p8","od":"13:00","do":"18:00"}],"2026-06-08":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w4","godz":11,"proj":"p8","od":"07:00","do":"18:00"},{"prac":"w6","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-09":[{"prac":"w2","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"},{"prac":"w3","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"},{"prac":"w4","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"}],"2026-06-10":[{"prac":"w2","godz":10,"proj":"p7","od":"07:00","do":"17:00"},{"prac":"w6","godz":10,"proj":"p7","od":"07:00","do":"17:00"}],"2026-06-12":[{"prac":"w2","godz":9,"proj":"p7","od":"08:00","do":"17:00"},{"prac":"w6","godz":8,"proj":"p7","od":"08:00","do":"16:00"},{"prac":"w3","godz":8,"proj":"p7","od":"08:00","do":"16:00"}],"2026-06-15":[{"prac":"w6","godz":8,"proj":"p7","od":"08:30","do":"16:30"},{"prac":"w2","godz":8,"proj":"p7","od":"08:30","do":"16:30"},{"prac":"w4","godz":8,"proj":"p7","od":"08:30","do":"16:30"}],"2026-06-18":[{"prac":"w6","godz":5,"proj":"p7","od":"11:30","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-19":[{"prac":"w6","godz":9,"proj":"p7","od":"08:00","do":"17:00"},{"prac":"w2","godz":9,"proj":"p7","od":"08:00","do":"17:00"},{"prac":"w3","godz":7,"proj":"p7","od":"08:00","do":"15:00"}],"2026-06-22":[{"prac":"w3","godz":10.5,"proj":"p7","od":"07:00","do":"17:30"},{"prac":"w6","godz":13,"proj":"p7","od":"07:00","do":"20:00"},{"prac":"w2","godz":13,"proj":"p7","od":"07:00","do":"20:00"},{"prac":"w4","godz":13,"proj":"p7","od":"07:00","do":"20:00"}],"2026-06-23":[{"prac":"w6","godz":2,"proj":"p3","od":"10:00","do":"12:00"},{"prac":"w3","godz":2,"proj":"p3","od":"10:00","do":"12:00"},{"prac":"w6","godz":2,"proj":"p4","od":"08:00","do":"10:00"},{"prac":"w6","godz":4,"proj":"p7","od":"12:00","do":"16:00"},{"prac":"w3","godz":2,"proj":"p4","od":"08:00","do":"10:00"},{"prac":"w3","godz":5,"proj":"p7","od":"12:00","do":"17:00"},{"prac":"w2","godz":8,"proj":"p7","od":"08:00","do":"16:00"},{"prac":"w4","godz":8,"proj":"p4","od":"08:00","do":"16:00"}],"2026-06-26":[{"prac":"w6","godz":11,"proj":"p9","od":"08:00","do":"19:00"},{"prac":"w2","godz":11,"proj":"p9","od":"08:00","do":"19:00"},{"prac":"w3","godz":11,"proj":"p9","od":"08:00","do":"19:00"}],"2026-06-29":[{"prac":"w6","godz":8,"proj":"p10","od":"08:00","do":"16:00"},{"prac":"w2","godz":8,"proj":"p10","od":"08:00","do":"16:00"},{"prac":"w3","godz":8,"proj":"p10","od":"08:00","do":"16:00"},{"prac":"w4","godz":8,"proj":"p10","od":"08:00","do":"16:00"}],"2026-06-30":[{"prac":"w6","godz":4,"proj":"p10","od":"12:00","do":"16:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p10","od":"07:00","do":"17:00"}],"2026-07-03":[{"prac":"w6","godz":9,"proj":"p10","od":"07:00","do":"16:00"},{"prac":"w6","godz":1,"proj":"p3","od":"16:00","do":"17:00"},{"prac":"w2","godz":9,"proj":"p10","od":"07:00","do":"16:00"},{"prac":"w2","godz":1,"proj":"p3","od":"16:00","do":"17:00"},{"prac":"w3","godz":9,"proj":"p10","od":"07:00","do":"16:00"}],"2026-06-16":[{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w6","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w4","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-17":[{"prac":"w6","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-24":[{"prac":"w6","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w6","godz":5.5,"proj":"p5","od":"12:00","do":"17:30"},{"prac":"w3","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w3","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w3","godz":5.5,"proj":"p5","od":"12:00","do":"17:30"},{"prac":"w2","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w2","godz":6.5,"proj":"p5","od":"12:00","do":"18:30"}],"2026-06-25":[{"prac":"w6","godz":8.5,"proj":"p10","od":"08:00","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p10","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p10","od":"08:00","do":"16:30"}],"2026-07-06":[{"prac":"w6","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p10","od":"07:00","do":"17:00"}],"2026-07-07":[{"prac":"w6","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p10","od":"07:00","do":"17:00"}],"2026-07-08":[{"prac":"w6","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w3","godz":9,"proj":"p10","od":"08:00","do":"17:00"}]},"bloki":{"b1":{"id":"b1","nazwa":"3 Maja 20","adres":"3 Maja 20, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"120 KLUCZ 2707"}],"awarie":["a2","a4","a5","a6","a7","a8","a10","a11"],"ikona":"🏢"},"b2":{"id":"b2","nazwa":"3 maja 43","adres":"3 maja 43, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"143 klucz 2707"}],"awarie":[],"ikona":"🏢"},"b3":{"id":"b3","nazwa":"3 maja 37","adres":"3 maja 37, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"Kl.1 30 Klucz 1919 Kl.2 30 Klucz 1304 Kl.3 30 Klucz 4132 Kl.4 40 Klucz 2909 Kl.5 200 Klucz 0000"}],"awarie":[],"ikona":"🏢"},"b4":{"id":"b4","nazwa":"Gospodarcza 6 A/B/C","adres":"Gospodarcza 6 A/B/C, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"Dzwonek 6128 Dzwonek"}],"awarie":[],"ikona":"🏢"},"b5":{"id":"b5","nazwa":"Maczka 10","adres":"Maczka 10, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"100 Klucz 2303 Kl.8 200 Klucz 2303"}],"awarie":["a13"],"ikona":"🏢"},"b6":{"id":"b6","nazwa":"Maczka 12","adres":"Maczka 12, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"A 100 Klucz 2301 B 200 Klucz 2301"}],"awarie":[],"ikona":"🏢"},"b7":{"id":"b7","nazwa":"Pescantina 8","adres":"Pescantina 8, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"200 Klucz 2301"}],"awarie":["a12"],"ikona":"🏢"},"b8":{"id":"b8","nazwa":"Pescantina 10","adres":"Pescantina 10, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"200 Klucz 2301"}],"awarie":[],"ikona":"🏢"},"b9":{"id":"b9","nazwa":"Sokołowska 27","adres":"Sokołowska 27, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"#1906#"}],"awarie":[],"ikona":"🏢"},"b10":{"id":"b10","nazwa":"Sokołowska 35","adres":"Sokołowska 35, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"150 Klucz 1500"}],"awarie":[],"ikona":"🏢"},"b11":{"id":"b11","nazwa":"Sokołowska 35A","adres":"Sokołowska 35A, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"196 Klucz 1906"}],"awarie":[],"ikona":"🏢"},"b12":{"id":"b12","nazwa":"Sokołowska 37A","adres":"Sokołowska 37A, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"Kl. 1 150 Klucz 1500 Kl.inne 100 Klucz 1401"}],"awarie":[],"ikona":"🏢"},"b13":{"id":"b13","nazwa":"Sokołowska 81","adres":"Sokołowska 81, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"150 Klucz 1500"}],"awarie":[],"ikona":"🏢"},"b14":{"id":"b14","nazwa":"Sokołowska 87","adres":"Sokołowska 87, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"Kl.1 200 Klucz 2002 Kl.2 200 Klucz 2002 Kl.3 150 Klucz 1500"}],"awarie":[],"ikona":"🏢"},"b15":{"id":"b15","nazwa":"Żytnia 28","adres":"Żytnia 28, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"196 Klucz 1906"}],"awarie":[],"ikona":"🏢"},"b16":{"id":"b16","nazwa":"Wiatraczna 5","adres":"Wiatraczna 5, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"100 Klucz 1401"}],"awarie":[],"ikona":"🏢"},"b17":{"id":"b17","nazwa":"Sekulska 5","adres":"Sekulska 5, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"100 Klucz 1401"}],"awarie":[],"ikona":"🏢"},"b18":{"id":"b18","nazwa":"Wyszyńskiego 21A","adres":"Wyszyńskiego 21A, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"200 Klucz 0409"}],"awarie":[],"ikona":"🏢"},"b19":{"id":"b19","nazwa":"Wyszyńskiego 23","adres":"Wyszyńskiego 23, Siedlce","lat":52.17,"lng":22.29,"kody":[{"typ":"Klatka / dostęp","kod":"100 Klucz 1401"}],"awarie":[],"ikona":"🏢"}},"awarie":{"a1":{"id":"a1","opis":"bbsvdvsd","blok":"46145.0 20","data":"08.03.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":150,"notatka":"","ikona":"⚡"},"a2":{"id":"a2","opis":"sbf","blok":"3 Maja 20","data":"08.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":150,"notatka":"","ikona":"⚡"},"a3":{"id":"a3","opis":"zarowka","blok":"46145.0 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"},"a4":{"id":"a4","opis":"jm,h/ufrof","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"},"a5":{"id":"a5","opis":"gkk","blok":"3 Maja 20","data":"11.03.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"},"a6":{"id":"a6","opis":"jjh","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"},"a7":{"id":"a7","opis":"jg","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"},"a8":{"id":"a8","opis":"fsfsg","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"},"a9":{"id":"a9","opis":"hde","blok":"46145.0 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"},"a10":{"id":"a10","opis":"aesgds","blok":"3 Maja 20","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"},"a11":{"id":"a11","opis":"vgsfdgs","blok":"3 Maja 20","data":"25.04.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"},"a12":{"id":"a12","opis":"Pescantina 8/78 mruga swiatlo Przed wejsciem","blok":"Pescantina 8","data":"17.06.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":295,"notatka":"· Materiał: Lampa x 2","ikona":"⚡"},"a13":{"id":"a13","opis":"Maczka 10 klatka 7 brak swiatla parter przy windzie ,2 pietro przy schodach i swieci caly czas przy windzie to swiatlo k","blok":"Maczka 10","data":"27.06.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"notatka":"","ikona":"⚡"}},"wydatki":{"e1":{"id":"e1","opis":"Materiał — Mariusz","kwota":9667.55,"typ":"Materiały","data":"","proj":"p1"},"e2":{"id":"e2","opis":"Materiał — Mariusz","kwota":98.91,"typ":"Materiały","data":"","proj":"p1"},"e3":{"id":"e3","opis":"Materiał — Mariusz","kwota":1129.24,"typ":"Materiały","data":"","proj":"p1"},"e4":{"id":"e4","opis":"Materiał — Mariusz","kwota":98.31,"typ":"Materiały","data":"","proj":"p1"},"e5":{"id":"e5","opis":"Paliwo iveco — Skwara warszawa","kwota":151.35,"typ":"Paliwo","data":"","proj":"p5"},"e6":{"id":"e6","opis":"Paliwo ford — Skwara warszawa","kwota":202.12,"typ":"Paliwo","data":"","proj":"p5"},"e7":{"id":"e7","opis":"Paliwo ford — Skwara warszawa","kwota":198.14,"typ":"Paliwo","data":"","proj":"p5"},"e8":{"id":"e8","opis":"Paliwo ford — Skwara warszawa","kwota":203.18,"typ":"Paliwo","data":"","proj":"p5"},"e9":{"id":"e9","opis":"Uchwyty i peszel — Szkoła Dąbrowska stany","kwota":562.11,"typ":"Materiały","data":"","proj":"p6"},"e10":{"id":"e10","opis":"Opaski tulejki — Szkoła Dąbrowska stany","kwota":76.63,"typ":"Materiały","data":"","proj":"p6"},"e11":{"id":"e11","opis":"Kolki — Szkoła Dąbrowska stany","kwota":224.8,"typ":"Materiały","data":"","proj":"p6"},"e12":{"id":"e12","opis":"Paliwo ford — Skwara warszawa","kwota":131.88,"typ":"Paliwo","data":"","proj":"p5"},"e13":{"id":"e13","opis":"Paliwo ford — Skwara warszawa","kwota":200.04,"typ":"Paliwo","data":"","proj":"p5"},"e14":{"id":"e14","opis":"Paliwo ford — Skwara warszawa","kwota":184.38,"typ":"Paliwo","data":"","proj":"p5"},"e15":{"id":"e15","opis":"Rozdzielnica I zawartosc — Borki kosy 29","kwota":583.6,"typ":"Materiały","data":"","proj":"p9"},"e16":{"id":"e16","opis":"Kable — Borki kosy 29","kwota":896,"typ":"Inne","data":"","proj":"p9"},"e17":{"id":"e17","opis":"Paliwo — Borki kosy 29","kwota":72,"typ":"Paliwo","data":"","proj":"p9"}},"czasPracyWlasne":{"w1":{},"w2":{},"w3":{},"w4":{},"w5":{},"w6":{}},"paski":{"w1":[],"w2":[],"w3":[],"w4":[],"w5":[],"w6":[]}};
+Object.assign(DATA, MIGRACJA_APPSHEET);
+
 // Klucz daty YYYY-MM-DD (miesiąc 0-based, jak w Date)
 function dk(rok, mIdx, dzien) {
   return `${rok}-${String(mIdx + 1).padStart(2, '0')}-${String(dzien).padStart(2, '0')}`;
@@ -801,7 +793,7 @@ function dk(rok, mIdx, dzien) {
 // ═══════ TRWAŁOŚĆ DANYCH (localStorage) ═══════
 // Wersja schematu — po zmianie struktury DATA stary zapis jest odrzucany,
 // żeby nie wczytać niekompatybilnych danych.
-const STORAGE_KEY = 'elektroapp_state_v1';
+const STORAGE_KEY = 'elektroapp_state_v2';
 
 function saveState() {
   try {
@@ -851,6 +843,8 @@ function switchTab(tab, opts = {}) {
   if (tab === 'mojegodziny') buildMojeGodziny();
   if (tab === 'paski') buildPaski();
   if (tab === 'ustawienia') buildUstawienia();
+  if (tab === 'kody') renderKodyList();
+  if (tab === 'pracownicy') renderPracList();
 }
 
 // Wywołaj PRZED przejściem do nowego detalu/zakładki, żeby zapamiętać skąd wracać
@@ -1504,7 +1498,36 @@ function deleteWydatek() {
 }
 
 // ═══════ PRACOWNICY ═══════ (zakładka Ludzie łączy listę pracowników i kalendarz zespołu)
+function renderPracList() {
+  const listEl = document.getElementById('prac-list');
+  const kpiEl = document.getElementById('prac-kpi');
+  if (!listEl) return;
+  const all = Object.values(DATA.pracownicy);
+  const statMeta = { 'Aktywny':['var(--green-l)','var(--green)'], 'L4':['var(--red-l)','var(--red)'], 'Urlop':['var(--orange-l)','var(--orange)'] };
+
+  listEl.innerHTML = all.map(w => {
+    const [bg, fg] = statMeta[w.status] || statMeta['Aktywny'];
+    const np = (w.projekty || []).length;
+    return `<div class="li" onclick="openPrac('${w.id}')"><div class="li-icon" style="background:${w.kolor}22;font-size:15px;font-weight:800;color:${w.kolor}">${w.inicjaly}</div><div class="li-body"><div class="li-title">${w.imie} ${w.nazwisko}</div><div class="li-sub">${w.rola} · ${w.stawka} zł/h${w.tel ? ' · 📞 ' + w.tel : ''}</div></div><div class="li-right"><span class="badge" style="background:${bg};color:${fg}">${w.status}</span>${np ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">${np} ${np === 1 ? 'projekt' : 'proj.'}</div>` : ''}</div></div>`;
+  }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px">Brak pracowników</div>`;
+
+  if (kpiEl) {
+    const aktywni = all.filter(w => w.status === 'Aktywny').length;
+    const l4 = all.filter(w => w.status === 'L4').length;
+    const srednia = all.length ? Math.round(all.reduce((s, w) => s + w.stawka, 0) / all.length) : 0;
+    kpiEl.innerHTML = `
+      <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">${all.length}</div><div class="l">Łącznie</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">${aktywni}</div><div class="l">Aktywni</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">${l4}</div><div class="l">L4</div></div>
+      <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">${srednia} zł/h</div><div class="l">Śr. stawka</div></div>`;
+  }
+  // pulpit: licznik pracowników
+  const dashP = document.getElementById('dash-kpi-pracownicy');
+  if (dashP) dashP.textContent = all.length;
+}
+
 function setPracView(view) {
+  if (view === 'lista') renderPracList();
   ['lista','kalendarz','paski'].forEach(v => {
     document.getElementById('prac-' + v + '-section').style.display = v === view ? 'block' : 'none';
     document.getElementById('prac-view-tab-' + v).classList.toggle('active', v === view);
@@ -1517,7 +1540,12 @@ function setPracView(view) {
 // Obieg: [Generuj] → roboczy (tylko właściciel widzi, może edytować premię)
 //        → [Zatwierdź] → zatwierdzony (pracownik zaczyna widzieć pasek)
 //        → [Wypłać] → wypłacony (rejestruje się wydatek "Wynagrodzenia")
-const PASEK_MIESIAC = 'Marzec 2024'; // poprzedni miesiąc (mock)
+// Poprzedni miesiąc względem dziś — to za niego generuje się paski.
+const _MIES_PL = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+const _dPasek = new Date(); _dPasek.setDate(1); _dPasek.setMonth(_dPasek.getMonth() - 1);
+const PASEK_MIDX = _dPasek.getMonth();
+const PASEK_ROK = _dPasek.getFullYear();
+const PASEK_MIESIAC = _MIES_PL[PASEK_MIDX] + ' ' + PASEK_ROK;
 
 function pasekBadge(status) {
   const map = { 'roboczy':['#fff3e0','var(--orange)','📝 Roboczy'], 'zatwierdzony':['#e3f2fd','var(--blue)','👁️ Zatwierdzony'], 'wypłacony':['#e8f5e9','var(--green)','✅ Wypłacony'] };
@@ -1528,14 +1556,30 @@ function pasekBadge(status) {
 const DNI_TYG_SHORT = ['Nd','Pn','Wt','Śr','Cz','Pt','Sb'];
 
 // Rozpis dzień po dniu z oficjalnej ewidencji właściciela (DATA.czasPracy)
+// Agreguje WSZYSTKIE wpisy pracownika w danym dniu (w AppSheet bywa kilka na dzień —
+// np. praca na dwóch projektach). Sumuje godziny, bierze najwcześniejszy start i najpóźniejszy koniec.
+function dniPrac(pracId, dayKey) {
+  const wpisy = (DATA.czasPracy[dayKey] || []).filter(x => x.prac === pracId);
+  if (wpisy.length === 0) return null;
+  const obecne = wpisy.filter(x => !x.nieobecny);
+  if (obecne.length === 0) {
+    const nb = wpisy[0];
+    return { nieobecny: true, powod: nb.powod };
+  }
+  const godz = Math.round(obecne.reduce((s, x) => s + (x.godz || 0), 0) * 100) / 100;
+  const ody = obecne.map(x => x.od).filter(Boolean).sort();
+  const doy = obecne.map(x => x.do).filter(Boolean).sort();
+  const projekty = [...new Set(obecne.map(x => x.proj).filter(Boolean))];
+  return { godz, od: ody[0], do: doy[doy.length - 1], proj: projekty[0], projekty, liczbaWpisow: obecne.length };
+}
+
 function pasekRozpisDni(pracId, mIdx, rok) {
   const daysInMonth = new Date(rok, mIdx + 1, 0).getDate();
   const dni = [];
   for (let d = 1; d <= daysInMonth; d++) {
-    const key = dk(rok, mIdx, d);
-    const wpis = (DATA.czasPracy[key] || []).find(x => x.prac === pracId);
-    if (wpis && wpis.nieobecny) dni.push({ d, nieobecny: true, powod: wpis.powod });
-    else if (wpis) dni.push({ d, od: wpis.od, do: wpis.do, godz: wpis.godz, proj: wpis.proj });
+    const agg = dniPrac(pracId, dk(rok, mIdx, d));
+    if (agg && agg.nieobecny) dni.push({ d, nieobecny: true, powod: agg.powod });
+    else if (agg) dni.push({ d, od: agg.od, do: agg.do, godz: agg.godz, proj: agg.proj });
     else dni.push({ d });
   }
   return dni;
@@ -1700,10 +1744,10 @@ function generujPaski() {
   Object.values(DATA.pracownicy).forEach(w => {
     const juz = (DATA.paski[w.id] || []).some(p => p.miesiac === PASEK_MIESIAC);
     if (juz) return;
-    const dni = pasekRozpisDni(w.id, 2, 2024); // Marzec 2024
+    const dni = pasekRozpisDni(w.id, PASEK_MIDX, PASEK_ROK);
     const godziny = dni.reduce((s, x) => s + (x.godz || 0), 0);
     if (!DATA.paski[w.id]) DATA.paski[w.id] = [];
-    DATA.paski[w.id].unshift({ miesiac: PASEK_MIESIAC, mIdx: 2, rok: 2024, godziny, dni, stawka: w.stawka, premia: 0, status: 'roboczy', zatwierdzono: null, wyplacono: null });
+    DATA.paski[w.id].unshift({ miesiac: PASEK_MIESIAC, mIdx: PASEK_MIDX, rok: PASEK_ROK, godziny, dni, stawka: w.stawka, premia: 0, status: 'roboczy', zatwierdzono: null, wyplacono: null });
     ile++;
   });
   showToast(ile ? `🧾 Wygenerowano ${ile} paski — zweryfikuj i zatwierdź` : 'Paski za ten miesiąc już istnieją');
@@ -1802,7 +1846,7 @@ function openPrac(id, opts = {}) {
   }, 50);
 }
 
-let pracCalMonth = 3, pracCalYear = 2024; // wspólny stan miesiąca dla kalendarza w detalu pracownika
+let pracCalMonth = new Date().getMonth(), pracCalYear = new Date().getFullYear(); // wspólny stan miesiąca dla kalendarza w detalu pracownika
 const MIESIACE_PL = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
 
 function pracCalPrevMonth(id) { if (pracCalMonth > 0) pracCalMonth--; else { pracCalMonth = 11; pracCalYear--; } buildPracDetail(id); }
@@ -1820,8 +1864,7 @@ function buildPracDetail(id) {
     const key = dk(pracCalYear, pracCalMonth, i);
     const dow = new Date(pracCalYear, pracCalMonth, i).getDay(); // 0=Nd...6=Sb
     const isWeekend = dow === 0 || dow === 6;
-    const wpisyDnia = DATA.czasPracy[key] || [];
-    const wpis = wpisyDnia.find(x => x.prac === id);
+    const wpis = dniPrac(id, key); // zagregowane wpisy dnia
     const proj = wpis && !wpis.nieobecny ? DATA.projekty[wpis.proj] : null;
     days.push({ day: i, key, isWeekend, proj, wpis, nieobecny: !!(wpis && wpis.nieobecny) });
   }
@@ -1856,12 +1899,13 @@ function buildPracDetail(id) {
   });
   legendHtml += `</div>`;
 
-  // Podsumowanie godzin per projekt w tym miesiącu
+  // Podsumowanie godzin per projekt w tym miesiącu (z wszystkich wpisów, nie tylko pierwszego)
   const godzPerProj = {};
-  days.forEach(d => {
-    if (d.wpis && !d.wpis.nieobecny) {
-      godzPerProj[d.wpis.proj] = (godzPerProj[d.wpis.proj] || 0) + d.wpis.godz;
-    }
+  const prefixM = `${pracCalYear}-${String(pracCalMonth + 1).padStart(2, '0')}-`;
+  Object.keys(DATA.czasPracy).filter(k => k.startsWith(prefixM)).forEach(k => {
+    (DATA.czasPracy[k] || []).forEach(x => {
+      if (x.prac === id && !x.nieobecny && x.proj) godzPerProj[x.proj] = (godzPerProj[x.proj] || 0) + x.godz;
+    });
   });
   const sumaHtml = Object.entries(godzPerProj).sort((a,b) => b[1]-a[1]).map(([pid, godz]) => {
     const p = DATA.projekty[pid];
@@ -1925,7 +1969,7 @@ function buildPorownanieHtml(pracId) {
 
   let zgodne = 0, rozne = 0;
   const rows = sorted.map(key => {
-    const moje = (DATA.czasPracy[key] || []).find(x => x.prac === pracId);
+    const moje = dniPrac(pracId, key); // zagregowane wpisy oficjalne
     const jego = wlasne[key];
     const mojeTxt = moje ? (moje.nieobecny ? '🚫' : (moje.od && moje.do ? `${moje.od}–${moje.do}` : moje.godz + 'h')) : '—';
     const jegoTxt = jego ? (jego.nieobecny ? '🚫' : (jego.od && jego.do ? `${jego.od}–${jego.do}` : jego.godz + 'h')) : '—';
@@ -1960,7 +2004,7 @@ function openPracDayModal(pracId, dayKey, src) {
   const w = DATA.pracownicy[pracId];
   const wpis = src === 'wlasne'
     ? (DATA.czasPracyWlasne[pracId] || {})[dayKey]
-    : (DATA.czasPracy[dayKey] || []).find(x => x.prac === pracId);
+    : dniPrac(pracId, dayKey);
   if (!w || !wpis) return;
 
   const dateLabel = dayKey.split('-').reverse().join('.');
@@ -2299,6 +2343,31 @@ function buildMiniQR(text) {
 }
 
 // ═══════ KODY / BLOKI ═══════
+const BLOK_KOLORY = ['var(--blue-l)','var(--green-l)','var(--purple-l)','var(--orange-l)','var(--teal-l)'];
+const BLOK_IKONY = ['🏢','🏠','🏗️'];
+
+function renderKodyList() {
+  const listEl = document.getElementById('kody-list');
+  if (!listEl) return;
+  const q = (document.getElementById('search-kody')?.value || '').trim().toLowerCase();
+  const all = Object.values(DATA.bloki);
+  const widoczne = all.filter(b => !q || (b.nazwa + ' ' + b.adres).toLowerCase().includes(q));
+
+  listEl.innerHTML = widoczne.map((b, i) => {
+    const otwarte = (b.awarie || []).filter(aid => DATA.awarie[aid] && DATA.awarie[aid].status !== 'Zakończona').length;
+    const badge = otwarte > 0
+      ? `<span class="badge" style="background:var(--orange-l);color:var(--orange)">${otwarte} ${otwarte === 1 ? 'awaria' : 'awarie'}</span>`
+      : `<span class="badge" style="background:var(--green-l);color:var(--green)">OK</span>`;
+    return `<div class="li" onclick="openBlok('${b.id}')"><div class="li-icon" style="background:${BLOK_KOLORY[i % BLOK_KOLORY.length]};font-size:18px">${BLOK_IKONY[i % BLOK_IKONY.length]}</div><div class="li-body"><div class="li-title">${b.nazwa}</div><div class="li-sub">${b.adres} · ${(b.kody || []).length} ${(b.kody || []).length === 1 ? 'kod' : 'kody'}</div></div><div class="li-right">${badge}</div></div>`;
+  }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px">Brak wyników</div>`;
+
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('kody-kpi-obiekty', all.length);
+  setTxt('kody-kpi-kody', all.reduce((s, b) => s + (b.kody || []).length, 0));
+  setTxt('kody-kpi-awarie', all.reduce((s, b) => s + (b.awarie || []).filter(aid => DATA.awarie[aid] && DATA.awarie[aid].status !== 'Zakończona').length, 0));
+}
+function filtrujKody() { renderKodyList(); }
+
 function openBlok(id, opts = {}) {
   const b = DATA.bloki[id];
   if (!b) return;
@@ -2372,8 +2441,8 @@ function openBlok(id, opts = {}) {
 }
 
 // ═══════ CZAS PRACY — Kalendarz ═══════
-let czasMonth = 3; // 0-indexed: 3 = kwiecień
-let czasYear = 2024;
+let czasMonth = new Date().getMonth();
+let czasYear = new Date().getFullYear();
 
 function buildCzasCalendar() {
   const months = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
@@ -3233,6 +3302,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderProjektyList();
   renderWydatkiList();
   renderAwarieList();
+  renderPracList();
+  renderKodyList();
   const dashDate = document.getElementById('dash-date');
   if (dashDate) dashDate.textContent = new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   pushHistoryGuard();
