@@ -2755,6 +2755,10 @@ function renderKodyList() {
 function filtrujKody() { renderKodyList(); }
 
 let _mapaLeaflet = null;
+function mapaOtworzBlok(id) {
+  closeModal('modal-mapa');
+  openBlok(id);
+}
 function pokazMapeKodow() {
   const bloki = Object.values(DATA.bloki);
   // lista pod mapą
@@ -2781,7 +2785,7 @@ function pokazMapeKodow() {
       const kolor = otwarte ? '#c62828' : '#1565c0';
       const icon = L.divIcon({ className: '', html: `<div style="background:${kolor};width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`, iconSize: [20, 20], iconAnchor: [10, 20] });
       const m = L.marker([b.lat, b.lng], { icon }).addTo(_mapaLeaflet);
-      m.bindPopup(`<strong>${b.nazwa}</strong><br>${b.adres}${otwarte ? `<br><span style="color:#c62828">${otwarte} otwarte awarie</span>` : ''}<br><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank">🧭 Nawiguj</a>`);
+      m.bindPopup(`<div onclick="mapaOtworzBlok('${b.id}')" style="cursor:pointer"><strong>${b.nazwa}</strong><br>${b.adres}${otwarte ? `<br><span style="color:#c62828">${otwarte} otwarte awarie</span>` : ''}</div><br><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank">🧭 Nawiguj</a>`);
       grupa.push([b.lat, b.lng]);
     });
     // KLUCZOWE: najpierw wymuś przeliczenie rozmiaru kontenera, DOPIERO potem dopasuj widok —
