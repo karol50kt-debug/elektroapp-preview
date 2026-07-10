@@ -1,7 +1,7 @@
 // Service worker: instalowalność PWA + praca offline.
 // Strategia stale-while-revalidate: serwujemy z cache od razu,
 // w tle dociągamy świeżą wersję na następne otwarcie.
-const CACHE = 'elektroapp-v3';
+const CACHE = 'elektroapp-v4';
 const ASSETS = ['.', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
