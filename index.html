@@ -194,9 +194,12 @@ body.employee .admin-only{display:none!important}
 .notif-item .ni-c{font-size:10px;color:var(--muted);margin-top:2px}
 /* PEŁNY EKRAN NA TELEFONIE (produkcyjnie: bez ramki telefonu) */
 @media (max-width:560px){
-  body{padding:0;background:var(--bg)}
+  /* Zablokuj przewijanie CAŁEJ strony — inaczej nagłówek i dolny pasek "uciekają".
+     Przewija się wyłącznie .content wewnątrz. */
+  html,body{height:100%;overflow:hidden;position:fixed;width:100%;top:0;left:0}
+  body{padding:0;background:var(--bg);align-items:stretch}
   .phone-label{display:none}
-  .phone{width:100%;height:100dvh;border-radius:0;box-shadow:none}
+  .phone{width:100%;height:100dvh;max-height:100dvh;border-radius:0;box-shadow:none}
 }
 /* SCAN */
 .scan-ov{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
@@ -2765,25 +2768,31 @@ function pokazMapeKodow() {
   }).join('');
   openModal('modal-mapa');
 
-  // mapa Leaflet — inicjalizacja po otwarciu (kontener musi być widoczny)
+  // mapa Leaflet — inicjalizacja po otwarciu (kontener musi mieć realną wysokość)
   setTimeout(() => {
     if (typeof L === 'undefined') { document.getElementById('mapa-leaflet').innerHTML = '<div style="padding:20px;text-align:center;color:#888;font-size:12px">Mapa wymaga internetu — offline użyj listy poniżej.</div>'; return; }
     const zPunktami = bloki.filter(b => b.lat && b.lng);
     if (_mapaLeaflet) { _mapaLeaflet.remove(); _mapaLeaflet = null; }
-    _mapaLeaflet = L.map('mapa-leaflet').setView([52.168, 22.276], 13);
+    _mapaLeaflet = L.map('mapa-leaflet', { zoomControl: true });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(_mapaLeaflet);
     const grupa = [];
     zPunktami.forEach(b => {
       const otwarte = (b.awarie || []).filter(aid => DATA.awarie[aid] && DATA.awarie[aid].status !== 'Zakończona').length;
       const kolor = otwarte ? '#c62828' : '#1565c0';
-      const icon = L.divIcon({ className: '', html: `<div style="background:${kolor};width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`, iconSize: [22, 22], iconAnchor: [11, 22] });
+      const icon = L.divIcon({ className: '', html: `<div style="background:${kolor};width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`, iconSize: [20, 20], iconAnchor: [10, 20] });
       const m = L.marker([b.lat, b.lng], { icon }).addTo(_mapaLeaflet);
       m.bindPopup(`<strong>${b.nazwa}</strong><br>${b.adres}${otwarte ? `<br><span style="color:#c62828">${otwarte} otwarte awarie</span>` : ''}<br><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank">🧭 Nawiguj</a>`);
       grupa.push([b.lat, b.lng]);
     });
-    if (grupa.length) _mapaLeaflet.fitBounds(grupa, { padding: [30, 30] });
+    // KLUCZOWE: najpierw wymuś przeliczenie rozmiaru kontenera, DOPIERO potem dopasuj widok —
+    // inaczej markery nakładają się w jednym punkcie (kontener miał wysokość 0 przy starcie).
     _mapaLeaflet.invalidateSize();
-  }, 200);
+    if (grupa.length > 1) _mapaLeaflet.fitBounds(grupa, { padding: [30, 30], maxZoom: 15 });
+    else if (grupa.length === 1) _mapaLeaflet.setView(grupa[0], 15);
+    else _mapaLeaflet.setView([52.168, 22.276], 13);
+    // druga korekta po pełnym wyrenderowaniu (animacja modala)
+    setTimeout(() => { if (_mapaLeaflet) { _mapaLeaflet.invalidateSize(); if (grupa.length > 1) _mapaLeaflet.fitBounds(grupa, { padding: [30, 30], maxZoom: 15 }); } }, 300);
+  }, 350);
 }
 
 function openBlok(id, opts = {}) {
@@ -3884,11 +3893,13 @@ function buildTerminarz() {
   for (let i = 0; i < startOffset; i++) cal += '<div></div>';
   for (let d = 1; d <= daysInMonth; d++) {
     const evsD = perDzien[d] || [];
-    const kropki = [...new Set(evsD.map(i => ev[i].kolor))].slice(0, 4).map(c => `<span style="width:5px;height:5px;border-radius:3px;background:${c}"></span>`).join('');
+    // ikony zdarzeń w dniu (unikalne, do 3) + licznik gdy więcej
+    const ikony = [...new Set(evsD.map(i => ev[i].ikona))];
+    const ikonyHtml = ikony.slice(0, 3).map(ic => `<span style="font-size:10px;line-height:1">${ic}</span>`).join('') + (ikony.length > 3 ? `<span style="font-size:8px;color:var(--muted)">+${ikony.length - 3}</span>` : '');
     const today = d === dzisD;
-    cal += `<div ${evsD.length ? `onclick="termPokazDzien(${d})" style="cursor:pointer;` : 'style="'}border-radius:6px;padding:3px 1px;text-align:center;min-height:34px;background:${today ? 'var(--blue-l)' : (evsD.length ? '#f8f9fa' : 'transparent')};border:1px solid ${today ? 'var(--blue)' : '#eee'}">
+    cal += `<div ${evsD.length ? `onclick="termPokazDzien(${d})" style="cursor:pointer;` : 'style="'}border-radius:6px;padding:3px 1px 2px;text-align:center;min-height:40px;background:${today ? 'var(--blue-l)' : (evsD.length ? '#f8f9fa' : 'transparent')};border:1px solid ${today ? 'var(--blue)' : '#eee'}">
       <div style="font-size:11px;font-weight:${today ? 800 : 600};color:${today ? 'var(--blue)' : 'var(--text)'}">${d}</div>
-      <div style="display:flex;gap:2px;justify-content:center;margin-top:2px">${kropki}</div>
+      <div style="display:flex;gap:1px;justify-content:center;flex-wrap:wrap;margin-top:1px;min-height:12px">${ikonyHtml}</div>
     </div>`;
   }
   cal += '</div>';
@@ -3918,11 +3929,20 @@ function buildTerminarz() {
     <div class="card" style="padding:0 14px">${lista}</div>`;
 }
 function termWykonaj(i) { if (_termEvCache[i] && _termEvCache[i].akcja) _termEvCache[i].akcja(); }
+
+// Kliknięcie dnia w Terminarzu → okienko ze zdarzeniami tego dnia (jak w kalendarzu ludzi)
 function termPokazDzien(d) {
   const evsD = _termEvCache.map((e, i) => ({ e, i })).filter(x => x.e.dzien === d);
-  if (evsD.length === 1) { termWykonaj(evsD[0].i); return; }
-  // kilka zdarzeń — pokaż w toaście krótką listę (scroll do listy)
-  showToast(`${d}.${String(termMonth+1).padStart(2,'0')}: ${evsD.length} zdarzeń — patrz lista poniżej`);
+  if (evsD.length === 0) return;
+  const dataLabel = `${String(d).padStart(2,'0')}.${String(termMonth+1).padStart(2,'0')}.${termYear}`;
+  document.getElementById('modal-dzien-title').textContent = '📅 ' + dataLabel;
+  document.getElementById('modal-dzien-body').innerHTML = evsD.map(({ e, i }) => `
+    <div onclick="closeModal('modal-dzien-detail');termWykonaj(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;cursor:pointer">
+      <div style="width:32px;height:32px;border-radius:8px;background:${e.kolor}22;display:flex;align-items:center;justify-content:center;font-size:16px">${e.ikona}</div>
+      <div style="flex:1;font-size:13px;color:var(--text)">${e.tytul}</div>
+      <div style="color:var(--blue)">›</div>
+    </div>`).join('');
+  openModal('modal-dzien-detail');
 }
 
 // ═══════ ZAKUPY: DOSTAWCY · WZ · FAKTURY ZAKUPOWE ═══════
