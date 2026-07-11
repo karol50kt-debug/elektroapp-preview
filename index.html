@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>ElektroApp v2.0 — Preview</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0d47a1">
+<meta name="theme-color" content="#1f262d">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -151,6 +151,7 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .sv.active{display:flex}
 /* LOGIN */
 .login-ov{position:absolute;inset:0;background:linear-gradient(160deg,#0c0e11 0%,#181f26 55%,#232b32 100%);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;overflow-y:auto}
+.login-ov::before{content:'';position:absolute;inset:0;background-image:url('logo-electrosmart.jpg');background-position:center 10%;background-repeat:no-repeat;background-size:540px auto;opacity:.14;filter:grayscale(1) sepia(1) hue-rotate(-18deg) saturate(3.5) brightness(.5) contrast(1.15);pointer-events:none}
 .login-logo{font-size:44px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
 .login-title{color:#fff;font-size:22px;font-weight:900;letter-spacing:.5px}
 .login-sub{color:rgba(255,255,255,.75);font-size:12px;margin-bottom:8px}

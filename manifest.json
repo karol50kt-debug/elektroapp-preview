@@ -4,8 +4,8 @@
   "description": "Projekty, ludzie, sprzęt, auta i finanse firmy elektrycznej w jednym miejscu.",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0d47a1",
-  "theme_color": "#0d47a1",
+  "background_color": "#14181d",
+  "theme_color": "#1f262d",
   "lang": "pl",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
