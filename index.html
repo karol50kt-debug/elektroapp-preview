@@ -400,6 +400,15 @@ body.employee .admin-only{display:none!important}
   </div>
 </div>
 </div>
+<!-- Modal: kod synchronizacji do udostepnienia pracownikom -->
+<div class="modal-ov" id="modal-sync-share" style="display:none" onclick="if(event.target===this)closeModal('modal-sync-share')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-sync-share')">✕</button><h3>☁️ Kod synchronizacji</h3>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Podaj ten kod pracownikom (np. przez WhatsApp) — po wpisaniu go na swoim telefonie ich godziny/wpisy też będą się zapisywać w tej samej chmurze. Nie udostępniaj go osobom spoza firmy — daje pełny dostęp do danych.</div>
+    <div id="sync-share-qr" style="display:flex;justify-content:center;margin-bottom:12px"></div>
+    <div id="sync-share-code" style="font-size:10px;word-break:break-all;background:#232a31;border-radius:8px;padding:10px;color:var(--sec);margin-bottom:10px"></div>
+    <button class="btn-p" onclick="copySyncCode()">📋 Kopiuj kod</button>
+  </div>
+</div>
 
 <!-- ═══════ AWARIE ═══════ -->
 <div class="sv" id="sv-awarie">
@@ -619,7 +628,7 @@ body.employee .admin-only{display:none!important}
 
 <!-- ═══════ MOJE GODZINY (widok pracownika) ═══════ -->
 <div class="sv" id="sv-mojegodziny">
-<div class="hdr"><div class="hdr-title">⏱️ Moje godziny</div><div class="hdr-right"><div class="bell-wrap"><button class="hdr-btn" onclick="toggleNotifPanel()">🔔<span class="bell-cnt" style="display:none">0</span></button></div><button class="hdr-btn" onclick="logout()" title="Wyloguj">🚪</button></div></div>
+<div class="hdr"><div class="hdr-title">⏱️ Moje godziny</div><div class="hdr-right"><button class="hdr-btn" onclick="employeeSyncTap()" title="Synchronizacja">☁️</button><div class="bell-wrap"><button class="hdr-btn" onclick="toggleNotifPanel()">🔔<span class="bell-cnt" style="display:none">0</span></button></div><button class="hdr-btn" onclick="logout()" title="Wyloguj">🚪</button></div></div>
 <div class="content" id="moje-content"></div>
 </div>
 
@@ -984,10 +993,52 @@ function syncStatusHtml() {
       <div style="width:36px;height:36px;border-radius:18px;background:var(--blue-d);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff">☁️</div>
       <div style="flex:1"><div style="font-size:13px;font-weight:800">${SYNC_USER.name || SYNC_USER.email}</div><div style="font-size:11px;color:var(--muted)">Ostatnia synchronizacja: ${when}</div></div>
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="btn-s" style="flex:1" onclick="syncNow()">🔄 Synchronizuj teraz</button>
       <button class="btn-r" style="flex:1" onclick="disconnectSync()">Odłącz</button>
-    </div>`;
+    </div>
+    <button class="btn-p" style="width:100%" onclick="openSyncShare()">👥 Pokaż kod dla pracowników</button>`;
+}
+
+function openSyncShare() {
+  if (!SYNC_TOKEN) return;
+  document.getElementById('sync-share-code').textContent = SYNC_TOKEN;
+  const qrEl = document.getElementById('sync-share-qr');
+  qrEl.innerHTML = '';
+  try { new QRCode(qrEl, { text: SYNC_TOKEN, width: 180, height: 180 }); } catch (e) {}
+  openModal('modal-sync-share');
+}
+
+function copySyncCode() {
+  if (!SYNC_TOKEN) return;
+  navigator.clipboard?.writeText(SYNC_TOKEN).then(() => showToast('📋 Skopiowano kod'))
+    .catch(() => showToast('⚠️ Nie udało się skopiować — zaznacz kod ręcznie'));
+}
+
+function employeeSyncTap() {
+  if (SYNC_TOKEN) {
+    if (confirm('Synchronizacja z chmurą jest włączona na tym telefonie.\n\nOK = odłącz\nAnuluj = zamknij')) {
+      SYNC_TOKEN = null;
+      localStorage.removeItem('elektroapp_sync_token');
+      showToast('☁️ Odłączono synchronizację');
+    }
+  } else {
+    connectSyncEmployee();
+  }
+}
+
+async function connectSyncEmployee() {
+  const code = prompt('Wklej kod synchronizacji otrzymany od właściciela:');
+  if (!code) return;
+  const prev = SYNC_TOKEN;
+  SYNC_TOKEN = code.trim();
+  showToast('☁️ Łączenie...');
+  const r = await fetch(SYNC_API + '/api/sync', { headers: { 'Authorization': 'Bearer ' + SYNC_TOKEN } }).catch(() => null);
+  if (!r || !r.ok) { SYNC_TOKEN = prev; showToast('⚠️ Nieprawidłowy kod'); return; }
+  localStorage.setItem('elektroapp_sync_token', SYNC_TOKEN);
+  await syncPull();
+  await syncPush();
+  showToast('✅ Połączono — Twoje wpisy będą się teraz synchronizować');
 }
 
 function loadState() {
