@@ -13,23 +13,23 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
-  --blue:#1565c0;--blue-d:#0d47a1;--blue-l:#e3f2fd;
-  --green:#2e7d32;--green-l:#e8f5e9;
-  --orange:#e65100;--orange-l:#fff3e0;
-  --red:#c62828;--red-l:#ffebee;
-  --purple:#6a1b9a;--purple-l:#f3e5f5;
-  --teal:#00695c;--teal-l:#e0f2f1;
-  --bg:#f5f7fa;--white:#fff;--border:#eee;
-  --text:#1a1a1a;--muted:#9e9e9e;--sec:#616161;
+  --blue:#f0a730;--blue-d:#b8720f;--blue-l:rgba(240,167,48,.16);
+  --green:#5db47c;--green-l:rgba(93,180,124,.16);
+  --orange:#e0863f;--orange-l:rgba(224,134,63,.16);
+  --red:#e2685c;--red-l:rgba(226,104,92,.16);
+  --purple:#a98ee0;--purple-l:rgba(169,142,224,.16);
+  --teal:#4fb8a8;--teal-l:rgba(79,184,168,.16);
+  --bg:#14181d;--white:#1c2227;--panel2:#1f262d;--border:#2b333a;
+  --text:#eef1f3;--muted:#7c858c;--sec:#a7b0b7;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;padding:24px 0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
-.phone-label{color:#888;font-size:12px;text-align:center;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase}
+body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;padding:24px 0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.phone-label{color:var(--muted);font-size:12px;text-align:center;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase}
 .phone{width:390px;height:820px;background:var(--bg);border-radius:40px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.08);display:flex;flex-direction:column;position:relative}
-.status-bar{background:var(--blue);height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+.status-bar{background:var(--panel2);height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
 .status-bar span{color:#fff;font-size:11px;font-weight:600}
 .screen{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;position:relative}
-.hdr{background:var(--blue);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:6}
+.hdr{background:var(--panel2);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:6}
 .hdr-title{color:#fff;font-size:17px;font-weight:800}
 .hdr-right{display:flex;gap:8px;align-items:center}
 .avatar{width:34px;height:34px;border-radius:17px;background:rgba(255,255,255,.2);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -38,24 +38,24 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 .content::-webkit-scrollbar{width:3px}
 .content::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:3px}
 /* TABBAR */
-.tabbar{height:64px;background:#fff;border-top:1px solid var(--border);display:flex;flex-shrink:0;overflow-x:auto;scrollbar-width:none;z-index:6}
+.tabbar{height:64px;background:var(--white);border-top:1px solid var(--border);display:flex;flex-shrink:0;overflow-x:auto;scrollbar-width:none;z-index:6}
 .tabbar::-webkit-scrollbar{display:none}
 .tab{flex:1 0 auto;min-width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:none;padding:0 4px}
 .tab .ti{font-size:20px;line-height:1}
 .tab .tl{font-size:9px;font-weight:600;color:var(--muted)}
 .tab.active .tl{color:var(--blue)}
 /* CARDS */
-.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.card{background:var(--white);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 /* KPI */
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.kpi{background:#fff;border-radius:14px;padding:12px;border-left:4px solid;box-shadow:0 1px 4px rgba(0,0,0,.07);display:flex;align-items:center;gap:10px;cursor:pointer}
+.kpi{background:var(--white);border-radius:14px;padding:12px;border-left:4px solid;box-shadow:0 1px 4px rgba(0,0,0,.07);display:flex;align-items:center;gap:10px;cursor:pointer}
 .kpi-icon{width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .kpi-val{font-size:20px;font-weight:800}
 .kpi-lbl{font-size:10px;color:var(--muted);margin-top:1px}
 /* KPI: mieszczą się na szerokość i zawijają do kolejnego rzędu zamiast przewijać poziomo */
 .kpi-scroll{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
 .kpi-scroll .kpi-sm{flex:1 1 calc(33.333% - 6px);min-width:88px}
-.kpi-sm{background:#fff;border-radius:10px;border-top:3px solid;padding:8px 10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.kpi-sm{background:var(--white);border-radius:10px;border-top:3px solid;padding:8px 10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .kpi-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .kpi-grid2 .kpi-sm{min-width:0}
 .kpi-sm .v{font-size:16px;font-weight:800}
@@ -78,15 +78,15 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 /* FILTER */
 .frow{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
 .frow::-webkit-scrollbar{display:none}
-.ftab{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--muted)}
-.ftab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.ftab{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--muted)}
+.ftab.active{background:var(--blue-d);color:#fff;border-color:var(--blue-d)}
 /* SEARCH */
-.search{display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;padding:0 12px;border:1px solid var(--border);margin-bottom:10px;height:40px}
+.search{display:flex;align-items:center;gap:8px;background:var(--white);border-radius:10px;padding:0 12px;border:1px solid var(--border);margin-bottom:10px;height:40px}
 .search input{flex:1;border:none;outline:none;font-size:13px;color:var(--text);background:transparent}
 /* DETAIL SCREEN */
 .det{position:absolute;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;transform:translateX(100%);transition:.25s cubic-bezier(.4,0,.2,1)}
 .det.open{transform:translateX(0)}
-.det-hdr{background:var(--blue);padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.det-hdr{background:var(--panel2);padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .back-btn{width:32px;height:32px;border-radius:16px;background:rgba(255,255,255,.2);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;flex-shrink:0}
 .det-content{flex:1;overflow-y:auto;padding:14px}
 .det-content::-webkit-scrollbar{width:3px}
@@ -96,20 +96,20 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 .dr-r{font-size:12px;font-weight:600;color:var(--text)}
 /* MODAL */
 .modal-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end}
-.modal-sh{background:#fff;border-radius:20px 20px 0 0;width:100%;padding:20px 16px 32px;max-height:85%;overflow-y:auto}
+.modal-sh{background:var(--white);border-radius:20px 20px 0 0;width:100%;padding:20px 16px 32px;max-height:85%;overflow-y:auto}
 .modal-sh h3{font-size:16px;font-weight:800;margin-bottom:14px;color:var(--text)}
 .modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);margin-top:-4px}
 .fg{margin-bottom:12px}
 .fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;display:block}
 .fi{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit;color:var(--text)}
 .fi:focus{border-color:var(--blue)}
-.fs{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;background:#fff;font-family:inherit;color:var(--text)}
-.btn-p{background:var(--blue);color:#fff;border:none;border-radius:20px;padding:11px 24px;font-size:14px;font-weight:700;width:100%;cursor:pointer;margin-top:8px}
+.fs{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;background:var(--white);font-family:inherit;color:var(--text)}
+.btn-p{background:var(--blue-d);color:#fff;border:none;border-radius:20px;padding:11px 24px;font-size:14px;font-weight:700;width:100%;cursor:pointer;margin-top:8px}
 .btn-s{background:var(--blue-l);color:var(--blue);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
 .btn-r{background:var(--red-l);color:var(--red);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
 .btn-g{background:var(--green-l);color:var(--green);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
 /* FAB */
-.fab{position:absolute;bottom:16px;right:16px;width:52px;height:52px;border-radius:26px;background:var(--blue);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(21,101,192,.5);cursor:pointer;border:none;z-index:5}
+.fab{position:absolute;bottom:16px;right:16px;width:52px;height:52px;border-radius:26px;background:var(--blue-d);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(240,167,48,.3);cursor:pointer;border:none;z-index:5}
 /* CONTENT TABS */
 .ctabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:12px;flex-shrink:0}
 .ctab{padding:8px 12px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
@@ -118,15 +118,15 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 .cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px}
 .cal-hdr span{font-size:9px;color:var(--muted);text-align:center;font-weight:600}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cd{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;cursor:pointer;background:#f5f5f5;color:var(--muted)}
-.cd.today{background:var(--blue);color:#fff}
-.cd.we{color:#ddd;background:transparent}
+.cd{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;cursor:pointer;background:#232a31;color:var(--muted)}
+.cd.today{background:var(--blue-d);color:#fff}
+.cd.we{color:var(--border);background:transparent}
 .cd.empty{background:transparent}
 /* PROGRESS */
-.ms-bar{height:5px;background:#eee;border-radius:3px;margin-top:3px}
+.ms-bar{height:5px;background:var(--border);border-radius:3px;margin-top:3px}
 .ms-fill{height:5px;border-radius:3px}
 /* MIGRATION */
-.mig{background:var(--blue);border-radius:14px;padding:14px;margin-top:8px}
+.mig{background:var(--blue-d);border-radius:14px;padding:14px;margin-top:8px}
 .mig .badge2{background:rgba(255,255,255,.2);color:#fff;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;display:inline-block;margin-bottom:8px}
 .mig h4{color:#fff;font-size:13px;font-weight:700;margin-bottom:6px}
 .pb{height:5px;background:rgba(255,255,255,.3);border-radius:3px;margin-bottom:6px}
@@ -136,7 +136,7 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 /* QR */
 .qr-box{display:flex;flex-direction:column;align-items:center;padding:12px 0}
 /* MAP */
-.map-box{background:#e8f4f8;border-radius:12px;height:120px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-bottom:10px}
+.map-box{background:#1f262d;border-radius:12px;height:120px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-bottom:10px}
 .map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
 .map-pin{font-size:32px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
 .map-addr{font-size:10px;font-weight:600;color:var(--blue);position:absolute;bottom:6px;left:0;right:0;text-align:center;z-index:1}
@@ -150,7 +150,7 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 .sv{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;position:relative}
 .sv.active{display:flex}
 /* LOGIN */
-.login-ov{position:absolute;inset:0;background:linear-gradient(160deg,#0d47a1 0%,#1565c0 55%,#1e88e5 100%);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;overflow-y:auto}
+.login-ov{position:absolute;inset:0;background:linear-gradient(160deg,#0c0e11 0%,#181f26 55%,#232b32 100%);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;overflow-y:auto}
 .login-logo{font-size:44px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
 .login-title{color:#fff;font-size:22px;font-weight:900;letter-spacing:.5px}
 .login-sub{color:rgba(255,255,255,.75);font-size:12px;margin-bottom:8px}
@@ -179,14 +179,14 @@ body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;pa
 #sv-ustawienia .hdr{background:linear-gradient(135deg,#37474f,#263238)}
 #sv-zakupy .hdr{background:linear-gradient(135deg,#5d4037,#795548)}
 #sv-terminarz .hdr{background:linear-gradient(135deg,#283593,#1565c0)}
-.det-hdr{background:linear-gradient(135deg,var(--blue),var(--blue-d))}
+.det-hdr{background:linear-gradient(135deg,var(--panel2),var(--bg))}
 /* UPRAWNIENIA: ukrywanie finansów i funkcji admina */
 body.no-fin .fin{display:none!important}
 body.employee .admin-only{display:none!important}
 /* POWIADOMIENIA */
 .bell-wrap{position:relative}
 .bell-cnt{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
-.notif-panel{position:absolute;top:96px;left:10px;right:10px;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.3);z-index:70;display:none;max-height:340px;overflow-y:auto}
+.notif-panel{position:absolute;top:96px;left:10px;right:10px;background:var(--white);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.3);z-index:70;display:none;max-height:340px;overflow-y:auto}
 .notif-panel.open{display:block}
 .notif-item{display:flex;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);align-items:flex-start}
 .notif-item .ni-i{font-size:18px;flex-shrink:0}
@@ -232,7 +232,7 @@ body.employee .admin-only{display:none!important}
     <div class="kpi" style="border-color:var(--red)" onclick="switchTab('awarie')"><div class="kpi-icon" style="background:var(--red-l)">🚨</div><div><div class="kpi-val" style="color:var(--red)" id="dash-kpi-awarie">2</div><div class="kpi-lbl">Otwarte awarie</div></div></div>
     <div class="kpi" style="border-color:var(--green)"><div class="kpi-icon" style="background:var(--green-l)">💰</div><div><div class="kpi-val" style="color:var(--green)" id="dash-kpi-przychody">0 zł</div><div class="kpi-lbl">Przychody</div></div></div>
     <div class="kpi" style="border-color:var(--orange)" onclick="switchTab('wydatki')"><div class="kpi-icon" style="background:var(--orange-l)">📊</div><div><div class="kpi-val" style="color:var(--orange)" id="dash-kpi-wydatki">0 zł</div><div class="kpi-lbl">Wydatki</div></div></div>
-    <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:#f5f5f5">✅</div><div><div class="kpi-val" style="color:var(--muted)" id="dash-kpi-zakonczone">0</div><div class="kpi-lbl">Zakończone</div></div></div>
+    <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:#232a31">✅</div><div><div class="kpi-val" style="color:var(--muted)" id="dash-kpi-zakonczone">0</div><div class="kpi-lbl">Zakończone</div></div></div>
   </div>
   <div id="dash-przypomnienia"></div>
   <div class="sec-hdr"><h3>Aktywne projekty</h3><a onclick="switchTab('projekty')">Wszystkie →</a></div>
@@ -249,10 +249,10 @@ body.employee .admin-only{display:none!important}
     <div id="nd-pracownicy" style="margin-bottom:10px"></div>
     <div class="fg"><label>Opis (opcja)</label><input class="fi" id="nd-opis" placeholder="np. Układanie kabli"></div>
     <div style="display:flex;gap:8px;margin-bottom:4px">
-      <div class="fg" style="flex:1"><label>Razem godzin</label><div class="fi" id="nd-total-h" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
-      <div class="fg" style="flex:1"><label>Koszt razem</label><div class="fi" id="nd-total-koszt" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
+      <div class="fg" style="flex:1"><label>Razem godzin</label><div class="fi" id="nd-total-h" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
+      <div class="fg" style="flex:1"><label>Koszt razem</label><div class="fi" id="nd-total-koszt" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
     </div>
-    <div style="position:sticky;bottom:-32px;background:#fff;padding:8px 0 8px;margin:0 -16px;box-shadow:0 -4px 8px rgba(0,0,0,.05)">
+    <div style="position:sticky;bottom:-32px;background:var(--white);padding:8px 0 8px;margin:0 -16px;box-shadow:0 -4px 8px rgba(0,0,0,.05)">
       <button class="btn-p" style="margin:0 16px;width:calc(100% - 32px)" onclick="saveDzien()">Zapisz dzień pracy</button>
     </div>
   </div>
@@ -374,10 +374,10 @@ body.employee .admin-only{display:none!important}
     <div class="fg"><label>Projekt</label><select class="fs" id="ng-projekt"></select></div>
     <div id="ng-pracownicy" style="margin-bottom:10px"></div>
     <div style="display:flex;gap:8px;margin-bottom:4px">
-      <div class="fg" style="flex:1"><label>Godzin</label><div class="fi" id="ng-total-h" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
-      <div class="fg" style="flex:1"><label>Koszt</label><div class="fi" id="ng-total-koszt" style="background:#f0f4ff;font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
+      <div class="fg" style="flex:1"><label>Godzin</label><div class="fi" id="ng-total-h" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
+      <div class="fg" style="flex:1"><label>Koszt</label><div class="fi" id="ng-total-koszt" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
     </div>
-    <div style="position:sticky;bottom:-32px;background:#fff;padding:8px 0 8px;margin:0 -16px;box-shadow:0 -4px 8px rgba(0,0,0,.05)">
+    <div style="position:sticky;bottom:-32px;background:var(--white);padding:8px 0 8px;margin:0 -16px;box-shadow:0 -4px 8px rgba(0,0,0,.05)">
       <button class="btn-p" style="margin:0 16px;width:calc(100% - 32px)" onclick="saveGodziny()">Zapisz</button>
     </div>
   </div>
@@ -394,7 +394,7 @@ body.employee .admin-only{display:none!important}
 <!-- Modal: mapa / lista adresów bloków z nawigacją -->
 <div class="modal-ov" id="modal-mapa" style="display:none" onclick="if(event.target===this)closeModal('modal-mapa')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-mapa')">✕</button><h3>🗺️ Obiekty na mapie</h3>
-    <div id="mapa-leaflet" style="height:44vh;border-radius:12px;overflow:hidden;margin-bottom:10px;background:#e8f0fe"></div>
+    <div id="mapa-leaflet" style="height:44vh;border-radius:12px;overflow:hidden;margin-bottom:10px;background:#1f262d"></div>
     <div id="mapa-body" style="max-height:28vh;overflow-y:auto"></div>
   </div>
 </div>
@@ -1078,7 +1078,7 @@ function donutSVG(segmenty, srodekTop, srodekBot, rozmiar = 120) {
   const suma = segmenty.reduce((s, x) => s + Math.max(0, x.wartosc), 0);
   const r = rozmiar / 2, cx = r, cy = r, promien = r - 10, gr = 20;
   if (suma <= 0) {
-    return `<svg viewBox="0 0 ${rozmiar} ${rozmiar}" width="${rozmiar}" height="${rozmiar}"><circle cx="${cx}" cy="${cy}" r="${promien}" fill="none" stroke="#eee" stroke-width="${gr}"/><text x="${cx}" y="${cy}" text-anchor="middle" font-size="11" fill="#aaa" dy="4">brak</text></svg>`;
+    return `<svg viewBox="0 0 ${rozmiar} ${rozmiar}" width="${rozmiar}" height="${rozmiar}"><circle cx="${cx}" cy="${cy}" r="${promien}" fill="none" stroke="var(--border)" stroke-width="${gr}"/><text x="${cx}" y="${cy}" text-anchor="middle" font-size="11" fill="#aaa" dy="4">brak</text></svg>`;
   }
   let kat = -90, paths = '';
   segmenty.forEach(seg => {
@@ -1093,7 +1093,7 @@ function donutSVG(segmenty, srodekTop, srodekBot, rozmiar = 120) {
   });
   return `<svg viewBox="0 0 ${rozmiar} ${rozmiar}" width="${rozmiar}" height="${rozmiar}">${paths}
     <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="15" font-weight="800" fill="#1a1a1a">${srodekTop}</text>
-    <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="9" fill="#888">${srodekBot}</text></svg>`;
+    <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="9" fill="var(--muted)">${srodekBot}</text></svg>`;
 }
 
 // Wykorzystanie planu w kategorii — półkole postępu
@@ -1107,7 +1107,7 @@ function planBar(wydano, plan, kolor) {
         <span style="font-weight:700;color:var(--text)">${kolor.label}</span>
         <span style="font-weight:700;color:${nadUzycie ? 'var(--red)' : 'var(--text)'}">${wydano.toLocaleString('pl-PL')} / ${plan ? plan.toLocaleString('pl-PL') + ' zł' : '— (brak planu)'}${plan > 0 ? ` · ${proc}%` : ''}</span>
       </div>
-      <div style="height:8px;background:#eee;border-radius:4px;overflow:hidden">
+      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
         <div style="height:8px;width:${width}%;background:${nadUzycie ? 'var(--red)' : kolor.c};border-radius:4px;transition:.4s"></div>
       </div>
       ${nadUzycie ? `<div style="font-size:10px;color:var(--red);margin-top:2px">⚠️ Przekroczono plan o ${(wydano - plan).toLocaleString('pl-PL')} zł</div>` : ''}
@@ -1127,7 +1127,7 @@ function buildBudzetHtml(p) {
   ];
   const pct = v => wartosc > 0 ? Math.round((v / wartosc) * 100) : 0;
   return `
-    <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:12px">
+    <div style="background:var(--white);border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:8px">💰 Podział wartości projektu${wartosc ? ` (${wartosc.toLocaleString('pl-PL')} zł = 100%)` : ''}</div>
       <div style="display:flex;align-items:center;gap:14px">
         <div style="flex-shrink:0">${donutSVG(segmenty, wartosc ? pct(kR + kM) + '%' : '—', 'koszty', 110)}</div>
@@ -1135,15 +1135,15 @@ function buildBudzetHtml(p) {
           <div style="display:flex;align-items:center;gap:6px;padding:3px 0"><div style="width:10px;height:10px;border-radius:3px;background:#e65100"></div>Robocizna <strong style="margin-left:auto">${pct(kR)}%</strong></div>
           <div style="display:flex;align-items:center;gap:6px;padding:3px 0"><div style="width:10px;height:10px;border-radius:3px;background:#c62828"></div>Materiały <strong style="margin-left:auto">${pct(kM)}%</strong></div>
           <div style="display:flex;align-items:center;gap:6px;padding:3px 0"><div style="width:10px;height:10px;border-radius:3px;background:#2e7d32"></div>Zysk <strong style="margin-left:auto">${pct(Math.max(0, zysk))}%</strong></div>
-          <div style="border-top:1px solid #eee;margin-top:4px;padding-top:4px;font-size:11px;color:#888">Koszty łącznie: <strong style="color:var(--red)">${koszty.toLocaleString('pl-PL')} zł</strong></div>
+          <div style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px;font-size:11px;color:var(--muted)">Koszty łącznie: <strong style="color:var(--red)">${koszty.toLocaleString('pl-PL')} zł</strong></div>
         </div>
       </div>
     </div>
-    <div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.07)">
+    <div style="background:var(--white);border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.07)">
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:12px">📊 Realizacja planu (wydano / plan)</div>
       ${planBar(kR, p.planLudzie || 0, { c: '#e65100', label: '👷 Robocizna' })}
       ${planBar(kM, p.planMaterial || 0, { c: '#c62828', label: '🔌 Materiały' })}
-      ${(p.planZysk ? `<div style="font-size:11px;color:#888;margin-top:4px">Planowany zysk: <strong>${p.planZysk.toLocaleString('pl-PL')} zł</strong> · obecny: <strong style="color:${zysk >= 0 ? 'var(--green)' : 'var(--red)'}">${zysk.toLocaleString('pl-PL')} zł</strong></div>` : '')}
+      ${(p.planZysk ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">Planowany zysk: <strong>${p.planZysk.toLocaleString('pl-PL')} zł</strong> · obecny: <strong style="color:${zysk >= 0 ? 'var(--green)' : 'var(--red)'}">${zysk.toLocaleString('pl-PL')} zł</strong></div>` : '')}
     </div>`;
 }
 
@@ -1168,11 +1168,11 @@ function buildProjDetail(id, tab) {
     </div>
     <div style="display:flex;gap:6px;padding:10px 14px 0;flex-wrap:wrap">
       ${['W realizacji','Planowany','Zakończony','Wstrzymany'].map(s => `
-        <button onclick="updateProjektStatus('${id}','${s}')" style="flex:1;min-width:72px;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:700;border:2px solid ${s===p.status?statusColors[s]:'#e0e0e0'};background:${s===p.status?statusBg[s]:'#fff'};color:${s===p.status?statusColors[s]:'#888'};cursor:pointer">${s}</button>`).join('')}
+        <button onclick="updateProjektStatus('${id}','${s}')" style="flex:1;min-width:72px;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:700;border:2px solid ${s===p.status?statusColors[s]:'var(--border)'};background:${s===p.status?statusBg[s]:'var(--white)'};color:${s===p.status?statusColors[s]:'var(--muted)'};cursor:pointer">${s}</button>`).join('')}
     </div>
-    <div style="display:flex;gap:2px;padding:12px 14px 0;border-bottom:1px solid #e0e0e0;margin:0 0 14px 0">
+    <div style="display:flex;gap:2px;padding:12px 14px 0;border-bottom:1px solid var(--border);margin:0 0 14px 0">
       ${['ogolne','pracownicy','wydatki','rentownosc'].map(t => `
-        <div onclick="buildProjDetail('${id}','${t}')" style="padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;border-bottom:3px solid ${currentProjTab===t?p.kolor:'transparent'};color:${currentProjTab===t?p.kolor:'#888'};transition:.2s">
+        <div onclick="buildProjDetail('${id}','${t}')" style="padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;border-bottom:3px solid ${currentProjTab===t?p.kolor:'transparent'};color:${currentProjTab===t?p.kolor:"var(--muted)"};transition:.2s">
           ${{'ogolne':'Ogólne','pracownicy':'Pracownicy','wydatki':'Wydatki','rentownosc':'Rentowność'}[t]}
         </div>`).join('')}
     </div>`;
@@ -1182,32 +1182,32 @@ function buildProjDetail(id, tab) {
     const leafStats = zadaniaLeafStats(zadania);
     html += `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 14px">
-        <div style="background:#fff;border-radius:8px;padding:10px;border-top:3px solid ${p.kolor};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <div style="background:var(--white);border-radius:8px;padding:10px;border-top:3px solid ${p.kolor};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
           <div style="font-size:16px;font-weight:800;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div>
-          <div style="font-size:9px;color:#888;margin-top:2px">Wartość</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">Wartość</div>
         </div>
-        <div style="background:#fff;border-radius:8px;padding:10px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <div style="background:var(--white);border-radius:8px;padding:10px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
           <div style="font-size:16px;font-weight:800;color:var(--blue)">${p.postep}%</div>
-          <div style="font-size:9px;color:#888;margin-top:2px">Postęp${leafStats.total ? ` (${leafStats.done}/${leafStats.total})` : ''}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">Postęp${leafStats.total ? ` (${leafStats.done}/${leafStats.total})` : ''}</div>
         </div>
       </div>
       <div style="padding:0 14px">
-        <div style="background:#f8f9fa;border-radius:8px;overflow:hidden;margin-bottom:12px">
+        <div style="background:#232a31;border-radius:8px;overflow:hidden;margin-bottom:12px">
           <div style="background:${p.kolor};height:6px;width:${p.postep}%;transition:.6s ease"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:14px">
-          <div><span style="color:#888">Start:</span> <strong>${p.start}</strong></div>
-          <div><span style="color:#888">Koniec:</span> <strong>${p.koniec}</strong></div>
+          <div><span style="color:var(--muted)">Start:</span> <strong>${p.start}</strong></div>
+          <div><span style="color:var(--muted)">Koniec:</span> <strong>${p.koniec}</strong></div>
         </div>
-        <div style="font-size:13px;color:#555;line-height:1.5;margin-bottom:14px">${p.opis}</div>
+        <div style="font-size:13px;color:var(--sec);line-height:1.5;margin-bottom:14px">${p.opis}</div>
 
-        <div style="background:${p.zaplacono ? 'var(--green-l)' : '#f8f9fa'};border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <div style="font-size:12px;font-weight:700;color:${p.zaplacono ? 'var(--green)' : '#888'}">${p.zaplacono ? `✅ Zapłacono${p.dataZaplaty ? ' — ' + p.dataZaplaty : ''}` : '⏳ Nie zapłacono'}</div>
+        <div style="background:${p.zaplacono ? 'var(--green-l)' : '#232a31'};border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="font-size:12px;font-weight:700;color:${p.zaplacono ? "var(--green)" : "var(--muted)"}">${p.zaplacono ? `✅ Zapłacono${p.dataZaplaty ? ' — ' + p.dataZaplaty : ''}` : '⏳ Nie zapłacono'}</div>
           <button onclick="toggleZaplacono('${id}')" class="btn-s" style="flex-shrink:0">${p.zaplacono ? 'Cofnij' : 'Oznacz jako zapłacone'}</button>
         </div>
 
         <div class="sec-hdr" style="margin-bottom:8px"><h3 style="font-size:12px">✅ Zadania</h3><span style="font-size:11px;color:var(--muted);font-weight:700">${leafStats.done}/${leafStats.total}</span></div>
-        ${zadania.map((z, i) => buildZadanieHtml(p, i)).join('') || `<div style="color:#aaa;font-size:12px;padding:8px 0">Brak zadań — dodaj poniżej.</div>`}
+        ${zadania.map((z, i) => buildZadanieHtml(p, i)).join('') || `<div style="color:var(--muted);font-size:12px;padding:8px 0">Brak zadań — dodaj poniżej.</div>`}
         <div style="display:flex;gap:6px;margin-top:10px">
           <input class="fi" id="nz-${id}" placeholder="＋ Dodaj zadanie..." style="flex:1;padding:9px 10px;font-size:12px" onkeydown="if(event.key==='Enter')addZadanie('${id}')">
           <button onclick="addZadanie('${id}')" class="btn-s">Dodaj</button>
@@ -1219,9 +1219,9 @@ function buildProjDetail(id, tab) {
     p.pracownicy.forEach(wid => {
       const w = DATA.pracownicy[wid];
       if (!w) return;
-      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0" onclick="openPrac('${wid}')">
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #2b333a" onclick="openPrac('${wid}')">
         <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor}22;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:${w.kolor}">${w.inicjaly}</div>
-        <div style="flex:1"><div style="font-weight:700;font-size:13px">${w.imie} ${w.nazwisko}</div><div style="font-size:11px;color:#888">${w.rola} · ${w.stawka} zł/h</div></div>
+        <div style="flex:1"><div style="font-weight:700;font-size:13px">${w.imie} ${w.nazwisko}</div><div style="font-size:11px;color:var(--muted)">${w.rola} · ${w.stawka} zł/h</div></div>
         <div style="font-size:12px;color:var(--blue)">›</div>
       </div>`;
     });
@@ -1238,13 +1238,13 @@ function buildProjDetail(id, tab) {
         <div style="font-size:32px;font-weight:900;color:${marginColor}">${margin}%</div>
         <div style="font-size:12px;color:${marginColor};font-weight:700">Marża projektu</div>
       </div>
-      <div style="background:#f8f9fa;border-radius:8px;padding:12px">
+      <div style="background:#232a31;border-radius:8px;padding:12px">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Wartość projektu</span><span style="font-weight:700;color:var(--green)">+${p.wartosc.toLocaleString('pl-PL')} zł</span></div>
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Koszty łącznie</span><span style="font-weight:700;color:var(--red)">-${koszty.toLocaleString('pl-PL')} zł</span></div>
-        <div style="height:1px;background:#ddd;margin:8px 0"></div>
+        <div style="height:1px;background:var(--border);margin:8px 0"></div>
         <div style="display:flex;justify-content:space-between;font-size:15px"><span style="font-weight:800">Zysk</span><span style="font-weight:900;color:${marginColor}">${zysk >= 0 ? '+' : ''}${zysk.toLocaleString('pl-PL')} zł</span></div>
       </div>
-      <div style="margin-top:12px;padding:10px;background:#fff;border-radius:8px;font-size:12px;color:#666">
+      <div style="margin-top:12px;padding:10px;background:var(--white);border-radius:8px;font-size:12px;color:var(--sec)">
         ${margin >= 30 ? '✅ Projekt bardzo rentowny' : margin >= 15 ? '🟡 Rentowność akceptowalna' : '⚠️ Niska rentowność — sprawdź koszty'}
       </div>
     </div>`;
@@ -1258,7 +1258,7 @@ function buildProjDetail(id, tab) {
     tabEls.forEach(el => {
       const t = el.getAttribute('onclick').match(/'([^']+)'\)$/)[1];
       el.style.borderBottomColor = t === tab ? p.kolor : 'transparent';
-      el.style.color = t === tab ? p.kolor : '#888';
+      el.style.color = t === tab ? p.kolor : "var(--muted)";
     });
   }, 10);
 }
@@ -1292,21 +1292,21 @@ function buildZadanieHtml(p, i) {
   const subDone = hasSubs ? z.sub.filter(s => s.done).length : 0;
   const zDone = hasSubs ? subDone === z.sub.length : z.done;
   return `
-  <div style="background:#fff;border:1px solid ${zDone ? p.kolor + '55' : 'var(--border)'};border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)">
+  <div style="background:var(--white);border:1px solid ${zDone ? p.kolor + '55' : 'var(--border)'};border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)">
     <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer" onclick="toggleZadanieOpen('${p.id}',${i})">
       <input type="checkbox" ${zDone ? 'checked' : ''} onclick="event.stopPropagation();toggleZadanie('${p.id}',${i})" style="accent-color:${p.kolor};width:18px;height:18px;flex-shrink:0;cursor:pointer">
-      <span style="flex:1;font-size:13px;font-weight:700;${zDone ? 'color:#aaa;text-decoration:line-through' : 'color:var(--text)'}">${z.nazwa}</span>
+      <span style="flex:1;font-size:13px;font-weight:700;${zDone ? 'color:var(--muted);text-decoration:line-through' : 'color:var(--text)'}">${z.nazwa}</span>
       ${hasSubs ? `<span style="font-size:10px;font-weight:800;background:${p.kolorL};color:${p.kolor};padding:2px 8px;border-radius:12px">${subDone}/${z.sub.length}</span>` : ''}
       <span style="font-size:11px;color:var(--muted);transform:rotate(${z.open ? 90 : 0}deg);transition:.2s">›</span>
-      <button onclick="event.stopPropagation();removeZadanie('${p.id}',${i})" style="background:none;border:none;color:#ccc;font-size:13px;cursor:pointer;flex-shrink:0;padding:2px">✕</button>
+      <button onclick="event.stopPropagation();removeZadanie('${p.id}',${i})" style="background:none;border:none;color:#4a545c;font-size:13px;cursor:pointer;flex-shrink:0;padding:2px">✕</button>
     </div>
     ${z.open ? `
-    <div style="border-top:1px solid var(--border);padding:4px 12px 8px 22px;background:#fafbfc">
+    <div style="border-top:1px solid var(--border);padding:4px 12px 8px 22px;background:#232a31">
       ${z.sub.map((s, j) => `
         <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
           <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleSub('${p.id}',${i},${j})" style="accent-color:${p.kolor};width:15px;height:15px;flex-shrink:0">
-          <span style="flex:1;font-size:12px;${s.done ? 'color:#bbb;text-decoration:line-through' : 'color:#444'}">${s.nazwa}</span>
-          <button onclick="event.preventDefault();removeSub('${p.id}',${i},${j})" style="background:none;border:none;color:#ddd;font-size:12px;cursor:pointer;padding:2px">✕</button>
+          <span style="flex:1;font-size:12px;${s.done ? 'color:#4a545c;text-decoration:line-through' : 'color:var(--sec)'}">${s.nazwa}</span>
+          <button onclick="event.preventDefault();removeSub('${p.id}',${i},${j})" style="background:none;border:none;color:var(--border);font-size:12px;cursor:pointer;padding:2px">✕</button>
         </label>`).join('')}
       <div style="display:flex;gap:6px;margin-top:4px">
         <input class="fi" id="ns-${p.id}-${i}" placeholder="＋ pod-zadanie..." style="flex:1;padding:6px 9px;font-size:11px" onkeydown="if(event.key==='Enter')addSub('${p.id}',${i})">
@@ -1433,7 +1433,7 @@ function assignProjectColor(excludeId) {
 const PROJ_STATUS_BADGE = {
   'W realizacji': { bg:'var(--green-l)', fg:'var(--green)' },
   'Planowany':    { bg:'var(--blue-l)',  fg:'var(--blue)' },
-  'Zakończony':   { bg:'#f5f5f5',        fg:'var(--muted)' },
+  'Zakończony':   { bg:'#232a31',        fg:'var(--muted)' },
   'Wstrzymany':   { bg:'var(--orange-l)',fg:'var(--orange)' },
 };
 
@@ -1444,13 +1444,13 @@ function renderProjektyList() {
   if (listEl) {
     listEl.querySelectorAll(':scope > .li').forEach(li => li.remove());
     all.forEach(p => {
-      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#f5f5f5', fg:'var(--muted)' };
+      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#232a31', fg:'var(--muted)' };
       const li = document.createElement('div');
       li.className = 'li';
       li.dataset.status = p.status;
       li.dataset.text = `${p.nazwa} ${p.klient} ${p.adres || ''}`.toLowerCase();
       li.onclick = () => openProjekt(p.id);
-      li.innerHTML = `<div class="li-icon" style="background:${p.kolorL}">📋</div><div class="li-body"><div class="li-title">${p.nazwa}</div><div class="li-sub">📍 ${p.adres || p.klient}</div><div style="height:4px;background:#eef2f7;border-radius:2px;margin-top:5px;overflow:hidden"><div style="height:4px;width:${p.postep}%;background:${p.kolor};border-radius:2px"></div></div></div><div class="li-right"><div style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg};margin-top:4px;display:block">${p.status}</span></div>`;
+      li.innerHTML = `<div class="li-icon" style="background:${p.kolorL}">📋</div><div class="li-body"><div class="li-title">${p.nazwa}</div><div class="li-sub">📍 ${p.adres || p.klient}</div><div style="height:4px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden"><div style="height:4px;width:${p.postep}%;background:${p.kolor};border-radius:2px"></div></div></div><div class="li-right"><div style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg};margin-top:4px;display:block">${p.status}</span></div>`;
       listEl.insertBefore(li, emptyEl);
     });
     applyFilter('projekty');
@@ -1460,7 +1460,7 @@ function renderProjektyList() {
   if (dashEl) {
     const aktywne = all.filter(p => p.status === 'W realizacji').slice(0, 3);
     dashEl.innerHTML = aktywne.map(p => {
-      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#f5f5f5', fg:'var(--muted)' };
+      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#232a31', fg:'var(--muted)' };
       return `<div class="li" onclick="openProjekt('${p.id}')"><div style="width:10px;height:10px;border-radius:5px;background:${p.kolor};flex-shrink:0"></div><div class="li-body"><div class="li-title">${p.nazwa}</div><div class="li-sub">${p.klient}</div></div><div class="li-right"><div style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg}">${p.status}</span></div></div>`;
     }).join('') || `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak aktywnych projektów</div>`;
   }
@@ -1550,7 +1550,7 @@ const WYD_TYP_META = {
   'Narzędzia': { ikona:'🔧', bg:'var(--purple-l)' },
   'Przychód':  { ikona:'💵', bg:'var(--green-l)' },
   'Wynagrodzenia': { ikona:'💸', bg:'var(--teal-l)' },
-  'Inne':      { ikona:'📄', bg:'#f5f5f5' },
+  'Inne':      { ikona:'📄', bg:'#232a31' },
 };
 
 function renderWydatkiList() {
@@ -1790,9 +1790,9 @@ function buildZaliczkiSekcja(pracId) {
     <div style="padding:0 14px 14px">
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">💵 Zaliczki${sumaNieroz ? ` · nierozliczone: <span style="color:var(--orange)">${sumaNieroz.toLocaleString('pl-PL')} zł</span>` : ''}</div>
       ${list.slice().reverse().map(z => `
-        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f0f0f0">
-          <div style="flex:1"><div style="font-size:13px;font-weight:700">${z.kwota.toLocaleString('pl-PL')} zł ${z.rozliczona ? '<span style="font-size:10px;color:var(--green)">✅ rozliczona</span>' : '<span style="font-size:10px;color:var(--orange)">⏳ do rozliczenia</span>'}</div><div style="font-size:11px;color:#888">${z.data}${z.notatka ? ' · ' + z.notatka : ''}</div></div>
-          ${z.rozliczona ? '' : `<button onclick="deleteZaliczka('${pracId}','${z.id}')" style="background:none;border:none;color:#ccc;font-size:14px;cursor:pointer">✕</button>`}
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #2b333a">
+          <div style="flex:1"><div style="font-size:13px;font-weight:700">${z.kwota.toLocaleString('pl-PL')} zł ${z.rozliczona ? '<span style="font-size:10px;color:var(--green)">✅ rozliczona</span>' : '<span style="font-size:10px;color:var(--orange)">⏳ do rozliczenia</span>'}</div><div style="font-size:11px;color:var(--muted)">${z.data}${z.notatka ? ' · ' + z.notatka : ''}</div></div>
+          ${z.rozliczona ? '' : `<button onclick="deleteZaliczka('${pracId}','${z.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>`}
         </div>`).join('')}
     </div>`;
 }
@@ -1850,7 +1850,7 @@ const PASEK_MIESIAC = _MIES_PL[PASEK_MIDX] + ' ' + PASEK_ROK;
 
 function pasekBadge(status) {
   const map = { 'roboczy':['#fff3e0','var(--orange)','📝 Roboczy'], 'zatwierdzony':['#e3f2fd','var(--blue)','👁️ Zatwierdzony'], 'wypłacony':['#e8f5e9','var(--green)','✅ Wypłacony'] };
-  const [bg, fg, label] = map[status] || ['#f5f5f5','#888',status];
+  const [bg, fg, label] = map[status] || ["#232a31","var(--muted)",status];
   return `<span style="background:${bg};color:${fg};padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">${label}</span>`;
 }
 
@@ -1895,12 +1895,12 @@ function buildPasekDniHtml(pasek, pracId, idx, editable) {
     let tresc, kolor;
     if (x.nieobecny) { tresc = `🚫 Nieobecny${x.powod ? ' (' + x.powod + ')' : ''}`; kolor = 'var(--red)'; }
     else if (x.godz) { tresc = `${x.od && x.do ? x.od + '–' + x.do : ''} · ${x.godz}h`; kolor = 'var(--text)'; }
-    else { tresc = '—'; kolor = '#ccc'; }
+    else { tresc = '—'; kolor = '#4a545c'; }
     const editAttr = editable ? `onclick="openPasekDzienEdit('${pracId}',${idx},${di})" style="cursor:pointer"` : '';
-    return `<div ${editAttr} style="display:grid;grid-template-columns:64px 1fr ${editable ? '20px' : ''};gap:8px;padding:4px 8px;font-size:11px;${isWeekend ? 'background:#f8f9fa;' : ''}border-bottom:1px solid #f3f3f3;align-items:center">
-      <span style="color:${isWeekend ? '#bbb' : 'var(--muted)'};font-weight:700">${dataTxt}</span>
+    return `<div ${editAttr} style="display:grid;grid-template-columns:64px 1fr ${editable ? '20px' : ''};gap:8px;padding:4px 8px;font-size:11px;${isWeekend ? 'background:#232a31;' : ''}border-bottom:1px solid #f3f3f3;align-items:center">
+      <span style="color:${isWeekend ? '#4a545c' : 'var(--muted)'};font-weight:700">${dataTxt}</span>
       <span style="color:${kolor};font-weight:${x.godz ? 700 : 400}">${tresc}</span>
-      ${editable ? '<span style="color:#ccc;font-size:10px">✏️</span>' : ''}
+      ${editable ? '<span style="color:#4a545c;font-size:10px">✏️</span>' : ''}
     </div>`;
   }).join('');
   return `<details style="margin-top:8px">
@@ -1983,16 +1983,16 @@ function drukujPasek(pracId, idx) {
     body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a1a;max-width:640px;margin:0 auto;padding:28px 20px;font-size:13px}
     .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0d47a1;padding-bottom:12px;margin-bottom:16px}
     h1{font-size:19px;margin:0;color:#0d47a1}
-    h2{font-size:14px;margin:2px 0 0;font-weight:600;color:#555}
+    h2{font-size:14px;margin:2px 0 0;font-weight:600;color:#616161}
     table{width:100%;border-collapse:collapse;margin:12px 0}
     th{background:#0d47a1;color:#fff;text-align:left;padding:6px 8px;font-size:11px}
-    td{padding:4px 8px;border-bottom:1px solid #e0e0e0;font-size:11.5px}
-    tr.wk td{background:#f5f5f5;color:#999}
+    td{padding:4px 8px;border-bottom:1px solid #eee;font-size:11.5px}
+    tr.wk td{background:#f5f5f5;color:#9e9e9e}
     .sums td{font-size:13px;font-weight:700;border-top:2px solid #0d47a1;border-bottom:none}
     .total{font-size:16px;font-weight:900;color:#2e7d32}
     .sig{display:flex;justify-content:space-between;margin-top:52px}
-    .sig div{width:42%;border-top:1px solid #888;padding-top:5px;font-size:10.5px;color:#666;text-align:center}
-    .meta{font-size:11px;color:#666}
+    .sig div{width:42%;border-top:1px solid #888;padding-top:5px;font-size:10.5px;color:#616161;text-align:center}
+    .meta{font-size:11px;color:#616161}
     @media print { body{padding:0} }
   </style></head><body>
   <div class="head">
@@ -2118,8 +2118,8 @@ function buildPasekZaliczkiHtml(pracId, pasek) {
   return `
     <div style="margin-top:8px;border-top:1px dashed var(--border);padding-top:8px">
       <div style="font-size:11px;font-weight:800;color:var(--orange);margin-bottom:4px">➖ Zaliczki pobrane w tym okresie</div>
-      ${zal.map(z => `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:#666">${z.data}${z.notatka ? ' · ' + z.notatka : ''}</span><span style="font-weight:700;color:var(--orange)">-${z.kwota.toLocaleString('pl-PL')} zł</span></div>`).join('')}
-      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;border-top:1px solid #f0f0f0;margin-top:3px;padding-top:3px"><span>Razem zaliczki</span><span style="color:var(--orange)">-${suma.toLocaleString('pl-PL')} zł</span></div>
+      ${zal.map(z => `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:var(--sec)">${z.data}${z.notatka ? ' · ' + z.notatka : ''}</span><span style="font-weight:700;color:var(--orange)">-${z.kwota.toLocaleString('pl-PL')} zł</span></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;border-top:1px solid #2b333a;margin-top:3px;padding-top:3px"><span>Razem zaliczki</span><span style="color:var(--orange)">-${suma.toLocaleString('pl-PL')} zł</span></div>
     </div>`;
 }
 function zaliczkiSumaPaska(pracId, pasek) {
@@ -2137,7 +2137,7 @@ function buildPaskiAdmin() {
       <div style="font-size:17px;font-weight:900;margin-bottom:8px">${PASEK_MIESIAC}</div>
       ${wygenerowane
         ? `<div style="font-size:11px;opacity:.9">✅ Paski wygenerowane — zweryfikuj, zatwierdź i wypłać poniżej.</div>`
-        : `<button onclick="generujPaski()" style="background:#fff;color:#2e7d32;border:none;border-radius:20px;padding:9px 18px;font-size:12px;font-weight:800;cursor:pointer;width:100%">🧾 Generuj paski za ${PASEK_MIESIAC}</button>`}
+        : `<button onclick="generujPaski()" style="background:var(--white);color:#2e7d32;border:none;border-radius:20px;padding:9px 18px;font-size:12px;font-weight:800;cursor:pointer;width:100%">🧾 Generuj paski za ${PASEK_MIESIAC}</button>`}
     </div>`;
 
   Object.values(DATA.pracownicy).forEach(w => {
@@ -2154,12 +2154,12 @@ function buildPaskiAdmin() {
           ${pasekBadge(pasek.status)}
           <button onclick="drukujPasek('${w.id}',${idx})" title="Drukuj / PDF" style="background:var(--blue-l);border:none;border-radius:8px;padding:5px 8px;font-size:13px;cursor:pointer">🖨️</button>
         </div>
-        <div style="font-size:12px;color:#555">
+        <div style="font-size:12px;color:var(--sec)">
           <div style="display:flex;justify-content:space-between;padding:2px 0"><span>⏱️ ${pasek.godziny}h × ${pasek.stawka} zł</span><strong>${podstawa.toLocaleString('pl-PL')} zł</strong></div>
           ${pasek.status !== 'roboczy' ? `<div style="display:flex;justify-content:space-between;padding:2px 0"><span>🎁 Premia</span><strong>${(pasek.premia||0).toLocaleString('pl-PL')} zł</strong></div>` : ''}
         </div>
         ${buildPasekZaliczkiHtml(w.id, pasek)}
-        <div style="display:flex;justify-content:space-between;align-items:center;border-top:2px solid #eee;margin-top:6px;padding-top:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:2px solid var(--border);margin-top:6px;padding-top:6px">
           <span style="font-size:12px;font-weight:800">Do wypłaty</span>
           <span style="font-size:15px;font-weight:900;color:var(--green)">${doWyplaty.toLocaleString('pl-PL')} zł</span>
         </div>
@@ -2204,7 +2204,7 @@ function pracCalNextMonth(id) { if (pracCalMonth < 11) pracCalMonth++; else { pr
 function buildPracDetail(id) {
   const w = DATA.pracownicy[id];
   const statusColor = w.status === 'Aktywny' ? 'var(--green)' : w.status === 'L4' ? 'var(--red)' : w.status === 'Nieaktywny' ? 'var(--muted)' : 'var(--orange)';
-  const statusBg = w.status === 'Aktywny' ? 'var(--green-l)' : w.status === 'L4' ? 'var(--red-l)' : w.status === 'Nieaktywny' ? '#f0f0f0' : 'var(--orange-l)';
+  const statusBg = w.status === 'Aktywny' ? 'var(--green-l)' : w.status === 'L4' ? 'var(--red-l)' : w.status === 'Nieaktywny' ? '#2b333a' : 'var(--orange-l)';
 
   // Kalendarz budowany z prawdziwych wpisów DATA.czasPracy (klucze = pełne daty)
   const daysInMonth = new Date(pracCalYear, pracCalMonth + 1, 0).getDate();
@@ -2221,18 +2221,18 @@ function buildPracDetail(id) {
 
   let calHtml = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">`;
   ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'].forEach(d => {
-    calHtml += `<div style="text-align:center;font-size:8px;font-weight:700;color:#999;padding:2px 0">${d}</div>`;
+    calHtml += `<div style="text-align:center;font-size:8px;font-weight:700;color:var(--muted);padding:2px 0">${d}</div>`;
   });
   calHtml += `</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
   for (let i = 0; i < startOffset; i++) calHtml += `<div></div>`;
   days.forEach(d => {
     if (d.nieobecny) {
-      calHtml += `<div onclick="openPracDayModal('${id}','${d.key}')" title="Nieobecny" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,#eee,#eee 3px,#e0e0e0 3px,#e0e0e0 6px);border:2px dashed #bbb;color:#c62828">🚫</div>`;
+      calHtml += `<div onclick="openPracDayModal('${id}','${d.key}')" title="Nieobecny" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed #4a545c;color:#c62828">🚫</div>`;
       return;
     }
-    let bg = d.isWeekend ? '#f5f5f5' : (d.proj ? d.proj.kolor + '33' : '#eef2f7');
-    let border = d.proj ? `2px solid ${d.proj.kolor}` : (d.isWeekend ? '1px solid #e0e0e0' : '1px solid #dde3ea');
-    let color = d.proj ? d.proj.kolor : (d.isWeekend ? '#ccc' : '#aaa');
+    let bg = d.isWeekend ? '#232a31' : (d.proj ? d.proj.kolor + '33' : 'var(--border)');
+    let border = d.proj ? `2px solid ${d.proj.kolor}` : (d.isWeekend ? '1px solid var(--border)' : '1px solid #dde3ea');
+    let color = d.proj ? d.proj.kolor : (d.isWeekend ? '#4a545c' : '#aaa');
     let clickAttr = d.proj ? `onclick="openPracDayModal('${id}','${d.key}')" title="${d.proj.nazwa}" style="cursor:pointer"` : '';
     calHtml += `<div ${clickAttr} style="border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:${bg};border:${border};color:${color}">${d.day}</div>`;
   });
@@ -2241,10 +2241,10 @@ function buildPracDetail(id) {
   // Legenda projektów (tylko te faktycznie przepracowane w tym miesiącu przez tego pracownika)
   const activeProjIds = [...new Set(days.filter(d => d.proj).map(d => d.proj.id))];
   let legendHtml = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
-    <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;border:2px dashed #bbb;background:#eee"></div><span style="color:#555">🚫 Nieobecny</span></div>`;
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;border:2px dashed #4a545c;background:var(--border)"></div><span style="color:var(--sec)">🚫 Nieobecny</span></div>`;
   activeProjIds.forEach(pid => {
     const p = DATA.projekty[pid];
-    if (p) legendHtml += `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:#555">${p.nazwa.split(' — ')[0].substring(0,15)}</span></div>`;
+    if (p) legendHtml += `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:var(--sec)">${p.nazwa.split(' — ')[0].substring(0,15)}</span></div>`;
   });
   legendHtml += `</div>`;
 
@@ -2259,19 +2259,19 @@ function buildPracDetail(id) {
   const sumaHtml = Object.entries(godzPerProj).sort((a,b) => b[1]-a[1]).map(([pid, godz]) => {
     const p = DATA.projekty[pid];
     if (!p) return '';
-    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0;cursor:pointer">
+    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #2b333a;cursor:pointer">
       <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
       <div style="flex:1;font-size:12px;color:var(--text)">${p.nazwa.split(' — ')[0]}</div>
       <div style="font-size:12px;font-weight:800;color:${p.kolor}">${godz}h</div>
     </div>`;
-  }).join('') || `<div style="color:#aaa;font-size:12px;padding:6px 0">Brak godzin w tym miesiącu</div>`;
+  }).join('') || `<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak godzin w tym miesiącu</div>`;
 
   // Projekty lista
   let projListHtml = w.projekty.map(pid => {
     const p = DATA.projekty[pid];
-    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer">
+    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2b333a;cursor:pointer">
       <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
-      <div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--text)">${p.nazwa.split(' — ')[0]}</div><div style="font-size:10px;color:#888">${p.klient}</div></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--text)">${p.nazwa.split(' — ')[0]}</div><div style="font-size:10px;color:var(--muted)">${p.klient}</div></div>
       <span style="font-size:9px;font-weight:700;background:${p.kolorL};color:${p.kolor};padding:2px 8px;border-radius:20px">${p.postep}%</span>
     </div>`;
   }).join('');
@@ -2279,7 +2279,7 @@ function buildPracDetail(id) {
   document.getElementById('dprac-content').innerHTML = `
     <div style="background:${w.kolor}22;padding:14px;display:flex;align-items:center;gap:12px">
       <div style="width:50px;height:50px;border-radius:25px;background:${w.kolor};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff">${w.inicjaly}</div>
-      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;color:var(--text)">${w.imie} ${w.nazwisko}</div><div style="font-size:12px;color:#555;margin-top:2px">${w.rola} · ${w.stawka} zł/h</div>${w.tel ? `<div style="font-size:11px;color:#888">📞 ${w.tel}</div>` : ''}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;color:var(--text)">${w.imie} ${w.nazwisko}</div><div style="font-size:12px;color:var(--sec);margin-top:2px">${w.rola} · ${w.stawka} zł/h</div>${w.tel ? `<div style="font-size:11px;color:var(--muted)">📞 ${w.tel}</div>` : ''}</div>
       <span style="background:${statusBg};color:${statusColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;flex-shrink:0">${w.status}</span>
     </div>
     <div style="padding:12px 14px 0;display:flex;gap:8px">
@@ -2303,7 +2303,7 @@ function buildPracDetail(id) {
     ${buildPorownanieHtml(id)}
     <div style="padding:0 14px 14px">
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">📋 Projekty (kliknij → szczegóły)</div>
-      ${projListHtml || '<div style="color:#aaa;font-size:12px">Brak projektów</div>'}
+      ${projListHtml || '<div style="color:var(--muted);font-size:12px">Brak projektów</div>'}
     </div>`;
 }
 
@@ -2335,8 +2335,8 @@ function buildPorownanieHtml(pracId) {
     const ikona = zgoda ? '✅' : '⚠️';
     return `<div style="display:grid;grid-template-columns:38px 1fr 1fr 24px;gap:6px;align-items:center;padding:6px 8px;background:${bg};border-radius:8px;margin-bottom:4px;font-size:11px">
       <strong>${key.slice(8)}.${key.slice(5,7)}</strong>
-      <span>${mojeTxt}${mojeH ? ` <span style="color:#888">(${mojeH}h)</span>` : ''}</span>
-      <span>${jegoTxt}${jegoH ? ` <span style="color:#888">(${jegoH}h)</span>` : ''}</span>
+      <span>${mojeTxt}${mojeH ? ` <span style="color:var(--muted)">(${mojeH}h)</span>` : ''}</span>
+      <span>${jegoTxt}${jegoH ? ` <span style="color:var(--muted)">(${jegoH}h)</span>` : ''}</span>
       <span style="text-align:center">${ikona}</span>
     </div>`;
   }).join('');
@@ -2366,26 +2366,26 @@ function openPracDayModal(pracId, dayKey, src) {
 
   let html;
   if (wpis.nieobecny) {
-    html = `<div style="padding:12px;background:#f8f9fa;border-radius:8px;text-align:center;color:var(--red);font-weight:700">🚫 Nieobecny${wpis.powod ? ' — ' + wpis.powod : ''}</div>`;
+    html = `<div style="padding:12px;background:#232a31;border-radius:8px;text-align:center;color:var(--red);font-weight:700">🚫 Nieobecny${wpis.powod ? ' — ' + wpis.powod : ''}</div>`;
   } else {
     const proj = DATA.projekty[wpis.proj];
     const koszt = Math.round(w.stawka * wpis.godz);
     html = `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8f9fa;border-radius:8px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#232a31;border-radius:8px">
         <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${w.inicjaly}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700">${w.imie} ${w.nazwisko}</div>
-          <div style="font-size:11px;color:#888">${proj ? proj.nazwa : ''}</div>
+          <div style="font-size:11px;color:var(--muted)">${proj ? proj.nazwa : ''}</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
         <div style="background:var(--blue-l);border-radius:8px;padding:10px;text-align:center">
           <div style="font-size:16px;font-weight:800;color:var(--blue)">${wpis.od && wpis.do ? `${wpis.od}–${wpis.do}` : wpis.godz + 'h'}</div>
-          <div style="font-size:10px;color:#888">Godziny${wpis.od && wpis.do ? ` (${wpis.godz}h)` : ''}</div>
+          <div style="font-size:10px;color:var(--muted)">Godziny${wpis.od && wpis.do ? ` (${wpis.godz}h)` : ''}</div>
         </div>
         <div style="background:var(--green-l);border-radius:8px;padding:10px;text-align:center">
           <div style="font-size:16px;font-weight:800;color:var(--green)">${koszt} zł</div>
-          <div style="font-size:10px;color:#888">Wynagrodzenie</div>
+          <div style="font-size:10px;color:var(--muted)">Wynagrodzenie</div>
         </div>
       </div>`;
   }
@@ -2429,7 +2429,7 @@ function renderAwarieList() {
       li.dataset.status = a.status;
       li.dataset.text = `${a.opis} ${a.blok}`.toLowerCase();
       li.onclick = () => openAwaria(a.id);
-      li.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:${m.dot}"></div><div class="li-icon" style="background:${zak ? '#f5f5f5' : m.bg}">${a.ikona || '⚡'}</div></div><div class="li-body"><div class="li-title">${a.opis}</div><div class="li-sub">${a.blok.split(' ').slice(1).join(' ') || a.blok} · ${a.data}</div></div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${a.status}</span>${zak && a.koszt ? `<div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">${a.koszt} zł</div>` : `<div style="font-size:10px;color:${m.fg};font-weight:700;margin-top:2px">${PRIORYTET_META[a.priorytet] || ''} ${zak ? '' : a.priorytet}</div>`}</div>`;
+      li.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:${m.dot}"></div><div class="li-icon" style="background:${zak ? '#232a31' : m.bg}">${a.ikona || '⚡'}</div></div><div class="li-body"><div class="li-title">${a.opis}</div><div class="li-sub">${a.blok.split(' ').slice(1).join(' ') || a.blok} · ${a.data}</div></div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${a.status}</span>${zak && a.koszt ? `<div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">${a.koszt} zł</div>` : `<div style="font-size:10px;color:${m.fg};font-weight:700;margin-top:2px">${PRIORYTET_META[a.priorytet] || ''} ${zak ? '' : a.priorytet}</div>`}</div>`;
       listEl.insertBefore(li, emptyEl);
     });
     applyFilter('awarie');
@@ -2504,23 +2504,23 @@ function buildAwariaDetail(id) {
   const priColors = { 'Wysoki':'var(--red)', 'Średni':'var(--orange)', 'Niski':'var(--green)', 'Krytyczny':'var(--purple)' };
 
   document.getElementById('dawaria-content').innerHTML = `
-    <div style="background:${statusBg[a.status]||'#f5f5f5'};padding:14px;border-left:4px solid ${statusColors[a.status]||'#888'}">
+    <div style="background:${statusBg[a.status]||"#232a31"};padding:14px;border-left:4px solid ${statusColors[a.status]||"var(--muted)"}">
       <div style="font-size:20px;margin-bottom:4px">${a.ikona}</div>
       <div style="font-size:14px;font-weight:800;color:var(--text)">${a.opis}</div>
-      <div style="font-size:12px;color:#555;margin-top:2px">📍 ${a.blok} · 📅 ${a.data}</div>
+      <div style="font-size:12px;color:var(--sec);margin-top:2px">📍 ${a.blok} · 📅 ${a.data}</div>
     </div>
 
     <div style="padding:14px">
       <div style="font-size:12px;font-weight:800;margin-bottom:8px;color:var(--text)">Status awarii</div>
       <div style="display:flex;gap:6px;margin-bottom:16px">
         ${['Zgłoszona','W realizacji','Zakończona'].map(s => `
-          <button onclick="updateAwariaStatus('${id}','${s}',this)" style="flex:1;padding:8px 4px;border-radius:8px;border:2px solid ${s===a.status?statusColors[s]:'#e0e0e0'};background:${s===a.status?statusBg[s]:'#fff'};color:${s===a.status?statusColors[s]:'#888'};font-size:10px;font-weight:700;cursor:pointer;transition:.2s">${s}</button>
+          <button onclick="updateAwariaStatus('${id}','${s}',this)" style="flex:1;padding:8px 4px;border-radius:8px;border:2px solid ${s===a.status?statusColors[s]:'var(--border)'};background:${s===a.status?statusBg[s]:'var(--white)'};color:${s===a.status?statusColors[s]:'var(--muted)'};font-size:10px;font-weight:700;cursor:pointer;transition:.2s">${s}</button>
         `).join('')}
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
         <div class="fg" style="margin-bottom:0"><label>Priorytet</label>
-          <select class="fs" id="aw-priorytet" style="border-color:${priColors[a.priorytet]||'#ddd'}">
+          <select class="fs" id="aw-priorytet" style="border-color:${priColors[a.priorytet]||'var(--border)'}">
             ${['Niski','Średni','Wysoki','Krytyczny'].map(p => `<option${p===a.priorytet?' selected':''}>${p}</option>`).join('')}
           </select>
         </div>
@@ -2538,7 +2538,7 @@ function buildAwariaDetail(id) {
       ${a.status === 'Zakończona' ? `
       <div class="fin" style="background:var(--green-l);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;margin-top:4px">
         <span style="font-size:18px">✅</span>
-        <div><div style="font-size:12px;font-weight:700;color:var(--green)">Awaria zakończona</div><div style="font-size:11px;color:#555">Koszt: ${a.koszt} zł${prac ? ' · '+prac.imie+' '+prac.nazwisko : ''}</div></div>
+        <div><div style="font-size:12px;font-weight:700;color:var(--green)">Awaria zakończona</div><div style="font-size:11px;color:var(--sec)">Koszt: ${a.koszt} zł${prac ? ' · '+prac.imie+' '+prac.nazwisko : ''}</div></div>
       </div>` : ''}
       <button class="btn-r admin-only" style="width:100%;margin-top:14px" onclick="deleteAwaria('${id}')">🗑️ Usuń awarię</button>
     </div>`;
@@ -2621,55 +2621,55 @@ function openNarz(id, opts = {}) {
   const qrIsExisting = !!n.nr_ser;
 
   document.getElementById('dnarz-content').innerHTML = `
-    <div style="background:#f8f9fa;padding:14px;display:flex;justify-content:space-between;align-items:flex-start">
-      <div><div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase">${n.marka}</div>
+    <div style="background:#232a31;padding:14px;display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">${n.marka}</div>
       <div style="font-size:18px;font-weight:800;color:var(--text)">${n.model}</div>
-      ${n.nr_ser ? `<div style="font-size:11px;color:#888;margin-top:2px;font-family:monospace">S/N: ${n.nr_ser}</div>` : ''}
+      ${n.nr_ser ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:monospace">S/N: ${n.nr_ser}</div>` : ''}
       ${n.komu ? `<div style="font-size:11px;color:var(--orange);margin-top:2px">👤 ${n.komu}</div>` : ''}
       </div>
       <span style="background:${statusBg[n.status]};color:${statusColor[n.status]};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700">${n.status}</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 14px">
-      <div style="background:#fff;border-radius:8px;padding:8px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="background:var(--white);border-radius:8px;padding:8px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <div style="font-size:11px;font-weight:800;color:var(--blue)">${n.wartosc.toLocaleString('pl-PL')}</div>
-        <div style="font-size:8px;color:#888;margin-top:1px">Wartość zł</div>
+        <div style="font-size:8px;color:var(--muted);margin-top:1px">Wartość zł</div>
       </div>
-      <div style="background:#fff;border-radius:8px;padding:8px;border-top:3px solid var(--red);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="background:var(--white);border-radius:8px;padding:8px;border-top:3px solid var(--red);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <div style="font-size:11px;font-weight:800;color:var(--red)">${tco.toLocaleString('pl-PL')}</div>
-        <div style="font-size:8px;color:#888;margin-top:1px">TCO zł</div>
+        <div style="font-size:8px;color:var(--muted);margin-top:1px">TCO zł</div>
       </div>
-      <div style="background:#fff;border-radius:8px;padding:8px;border-top:3px solid ${gwarOk?'var(--green)':'var(--red)'};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="background:var(--white);border-radius:8px;padding:8px;border-top:3px solid ${gwarOk?'var(--green)':'var(--red)'};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <div style="font-size:11px;font-weight:800;color:${gwarOk?'var(--green)':'var(--red)'}">${gwarDni !== null ? (gwarOk ? gwarDni+'d' : 'Wygasła') : '—'}</div>
-        <div style="font-size:8px;color:#888;margin-top:1px">Gwarancja</div>
+        <div style="font-size:8px;color:var(--muted);margin-top:1px">Gwarancja</div>
       </div>
-      <div style="background:#fff;border-radius:8px;padding:8px;border-top:3px solid var(--purple);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="background:var(--white);border-radius:8px;padding:8px;border-top:3px solid var(--purple);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <div style="font-size:11px;font-weight:800;color:var(--purple)">${wiekLat}l</div>
-        <div style="font-size:8px;color:#888;margin-top:1px">Wiek</div>
+        <div style="font-size:8px;color:var(--muted);margin-top:1px">Wiek</div>
       </div>
     </div>
     <div style="padding:0 14px 14px">
-      <div style="background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:12px">
+      <div style="background:var(--white);border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:12px">
         <div style="font-size:12px;font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
           📱 Kod QR
           <span style="font-size:10px;background:${qrIsExisting?'var(--green-l)':'var(--blue-l)'};color:${qrIsExisting?'var(--green)':'var(--blue)'};padding:2px 8px;border-radius:20px;font-weight:700">${qrIsExisting?'✅ Z nr ser.':'🆕 Wygenerowany'}</span>
         </div>
-        <div style="text-align:center;padding:10px;background:#f8f9fa;border-radius:8px">
+        <div style="text-align:center;padding:10px;background:#232a31;border-radius:8px">
           <div id="qr-${id}" style="display:inline-block;margin-bottom:6px"></div>
-          <div style="font-size:9px;color:#888;font-family:monospace;word-break:break-all">${qrValue}</div>
-          <div style="font-size:10px;color:#aaa;margin-top:4px">${qrIsExisting ? 'Skanuj naklejkę producenta' : 'Wydrukuj i nakleij na narzędziu'}</div>
+          <div style="font-size:9px;color:var(--muted);font-family:monospace;word-break:break-all">${qrValue}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">${qrIsExisting ? 'Skanuj naklejkę producenta' : 'Wydrukuj i nakleij na narzędziu'}</div>
         </div>
       </div>
       <button onclick="openModal('modal-naprawa')" style="width:100%;padding:10px;background:var(--orange-l);color:var(--orange);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">🔨 Zgłoś naprawę</button>
       <div style="font-size:12px;font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between">
         🔨 Historia napraw
-        <span style="color:#888;font-weight:500">${naprawy.length} serwis${naprawy.length===1?'':'ów'} · ${naprawyCost} zł</span>
+        <span style="color:var(--muted);font-weight:500">${naprawy.length} serwis${naprawy.length===1?'':'ów'} · ${naprawyCost} zł</span>
       </div>
-      ${naprawy.length === 0 ? '<div style="color:#aaa;font-size:12px;text-align:center;padding:16px">Brak historii napraw ✅</div>' :
-        naprawy.map(r => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;align-items:flex-start">
+      ${naprawy.length === 0 ? '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">Brak historii napraw ✅</div>' :
+        naprawy.map(r => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;align-items:flex-start">
           <div style="background:var(--blue-l);border-radius:6px;padding:4px 8px;min-width:70px;text-align:center">
             <div style="font-size:10px;font-weight:700;color:var(--blue)">${r.data}</div>
           </div>
-          <div style="flex:1"><div style="font-size:12px;font-weight:600">${r.opis}</div><div style="font-size:10px;color:#888">🏪 ${r.serwis}</div></div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600">${r.opis}</div><div style="font-size:10px;color:var(--muted)">🏪 ${r.serwis}</div></div>
           <div style="font-size:12px;font-weight:800;color:var(--red)">${r.koszt} zł</div>
         </div>`).join('')}
     </div>`;
@@ -2764,9 +2764,9 @@ function pokazMapeKodow() {
   // lista pod mapą
   document.getElementById('mapa-body').innerHTML = bloki.map(b => {
     const otwarte = (b.awarie || []).filter(aid => DATA.awarie[aid] && DATA.awarie[aid].status !== 'Zakończona').length;
-    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0">
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2b333a">
       <div style="font-size:16px">${otwarte ? '🔴' : '📍'}</div>
-      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700">${b.nazwa}</div><div style="font-size:10px;color:#888">${b.adres}${otwarte ? ` · <span style="color:var(--orange)">${otwarte} awarie</span>` : ''}</div></div>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700">${b.nazwa}</div><div style="font-size:10px;color:var(--muted)">${b.adres}${otwarte ? ` · <span style="color:var(--orange)">${otwarte} awarie</span>` : ''}</div></div>
       <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank" rel="noopener" class="btn-s" style="flex-shrink:0;text-decoration:none;padding:5px 10px;font-size:11px">🧭</a>
     </div>`;
   }).join('');
@@ -2774,7 +2774,7 @@ function pokazMapeKodow() {
 
   // mapa Leaflet — inicjalizacja po otwarciu (kontener musi mieć realną wysokość)
   setTimeout(() => {
-    if (typeof L === 'undefined') { document.getElementById('mapa-leaflet').innerHTML = '<div style="padding:20px;text-align:center;color:#888;font-size:12px">Mapa wymaga internetu — offline użyj listy poniżej.</div>'; return; }
+    if (typeof L === 'undefined') { document.getElementById('mapa-leaflet').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Mapa wymaga internetu — offline użyj listy poniżej.</div>'; return; }
     const zPunktami = bloki.filter(b => b.lat && b.lng);
     if (_mapaLeaflet) { _mapaLeaflet.remove(); _mapaLeaflet = null; }
     _mapaLeaflet = L.map('mapa-leaflet', { zoomControl: true });
@@ -2809,27 +2809,27 @@ function openBlok(id, opts = {}) {
   const awarieHtml = b.awarie.map(aid => {
     const a = DATA.awarie[aid];
     const scol = { 'Zgłoszona':'var(--red)', 'W realizacji':'var(--orange)', 'Zakończona':'var(--green)' };
-    return `<div onclick="openAwaria('${aid}')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0;cursor:pointer">
+    return `<div onclick="openAwaria('${aid}')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;cursor:pointer">
       <span>${a.ikona}</span>
-      <div style="flex:1"><div style="font-size:12px;font-weight:600">${a.opis}</div><div style="font-size:10px;color:#888">${a.data}</div></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${a.opis}</div><div style="font-size:10px;color:var(--muted)">${a.data}</div></div>
       <span style="font-size:10px;font-weight:700;color:${scol[a.status]}">${a.status}</span>
     </div>`;
   }).join('');
 
   const kodyHtml = b.kody.map(k => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px">
+    <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px">
       <span style="font-size:16px">🔑</span>
-      <div style="flex:1"><div style="font-size:11px;color:#888">${k.typ}</div><div style="font-size:15px;font-weight:800;letter-spacing:3px;color:var(--text)">${k.kod}</div></div>
+      <div style="flex:1"><div style="font-size:11px;color:var(--muted)">${k.typ}</div><div style="font-size:15px;font-weight:800;letter-spacing:3px;color:var(--text)">${k.kod}</div></div>
       <button onclick="showToast('📋 Skopiowano: ${k.kod}')" style="background:var(--blue-l);color:var(--blue);border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer">Kopiuj</button>
     </div>`).join('');
 
   document.getElementById('dblok-content').innerHTML = `
     <div style="background:#1565c020;padding:14px;border-left:4px solid var(--blue)">
       <div style="font-size:14px;font-weight:800;color:var(--text)">${b.nazwa}</div>
-      <div style="font-size:12px;color:#555;margin-top:2px">📍 ${b.adres}</div>
+      <div style="font-size:12px;color:var(--sec);margin-top:2px">📍 ${b.adres}</div>
     </div>
     <!-- Mapa placeholder -->
-    <div style="margin:14px 14px 0;background:#e8f0fe;border-radius:10px;overflow:hidden;border:2px solid var(--blue-l)">
+    <div style="margin:14px 14px 0;background:#1f262d;border-radius:10px;overflow:hidden;border:2px solid var(--blue-l)">
       <div style="height:140px;position:relative;background:linear-gradient(135deg,#c8d8f0 0%,#dde8f8 50%,#c8d8f0 100%)">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <!-- Siatka ulic -->
@@ -2853,10 +2853,10 @@ function openBlok(id, opts = {}) {
           <!-- Pulsowanie -->
           <circle cx="145" cy="70" r="20" fill="none" stroke="#1565c0" stroke-width="2" opacity="0.3"/>
         </svg>
-        <div style="position:absolute;bottom:6px;right:8px;background:white;border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:#555;box-shadow:0 1px 3px rgba(0,0,0,.15)">📍 ${b.adres}</div>
+        <div style="position:absolute;bottom:6px;right:8px;background:white;border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:var(--sec);box-shadow:0 1px 3px rgba(0,0,0,.15)">📍 ${b.adres}</div>
       </div>
       <div style="display:flex;gap:8px;padding:8px 10px;background:white">
-        <button onclick="showToast('🗺️ Otwieranie nawigacji...')" style="flex:1;padding:7px;background:var(--blue);color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🧭 Nawiguj</button>
+        <button onclick="showToast('🗺️ Otwieranie nawigacji...')" style="flex:1;padding:7px;background:var(--blue-d);color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🧭 Nawiguj</button>
         <button onclick="showToast('📋 Kopiowanie adresu...')" style="flex:1;padding:7px;background:var(--blue-l);color:var(--blue);border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">📋 Kopiuj adres</button>
       </div>
     </div>
@@ -2864,7 +2864,7 @@ function openBlok(id, opts = {}) {
       <div style="font-size:12px;font-weight:800;margin-bottom:8px;color:var(--text)">🔑 Kody dostępu (${b.kody.length})</div>
       ${kodyHtml}
       <div style="font-size:12px;font-weight:800;margin:14px 0 8px;color:var(--text)">🚨 Awarie (${b.awarie.length})</div>
-      ${awarieHtml || '<div style="color:#aaa;font-size:12px;padding:10px 0">Brak awarii ✅</div>'}
+      ${awarieHtml || '<div style="color:var(--muted);font-size:12px;padding:10px 0">Brak awarii ✅</div>'}
     </div>`;
 
   openDet('det-blok');
@@ -2910,9 +2910,9 @@ function buildCzasCalendar() {
       bg = buildStripeBackground(colors); col = '#fff'; top = `<div style="font-size:7px;font-weight:700;opacity:.9">${totalH}h</div>`;
     } else if (wpisy.length > 0) {
       // tylko nieobecności tego dnia, brak realnej pracy nad projektem
-      bg = 'repeating-linear-gradient(45deg,#eee,#eee 3px,#e0e0e0 3px,#e0e0e0 6px)'; col = '#c62828'; top = `<div style="font-size:8px">🚫</div>`;
+      bg = 'repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px)'; col = '#c62828'; top = `<div style="font-size:8px">🚫</div>`;
     } else {
-      bg = isWeekend ? '#f0f0f0' : '#f8f9fa'; col = isWeekend ? '#ccc' : '#aaa'; top = '';
+      bg = isWeekend ? '#2b333a' : '#232a31'; col = isWeekend ? '#4a545c' : '#aaa'; top = '';
     }
     const cursor = wpisy.length > 0 ? 'cursor:pointer' : '';
 
@@ -2929,7 +2929,7 @@ function buildCzasCalendar() {
     legendEl.innerHTML = [...monthProjIds].map(pid => {
       const p = DATA.projekty[pid];
       if (!p) return '';
-      return `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:#555">${p.nazwa.split(' — ')[0].substring(0,18)}</span></div>`;
+      return `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:var(--sec)">${p.nazwa.split(' — ')[0].substring(0,18)}</span></div>`;
     }).join('');
   }
 
@@ -3010,15 +3010,15 @@ function openCzasDayModal(dayKey) {
   }, 0);
 
   let html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-    <div style="background:var(--blue-l);border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--blue)">${totalH}h</div><div style="font-size:10px;color:#888">Łącznie</div></div>
-    <div style="background:var(--green-l);border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--green)">${totalKoszt} zł</div><div style="font-size:10px;color:#888">Wynagrodzenia</div></div>
+    <div style="background:var(--blue-l);border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--blue)">${totalH}h</div><div style="font-size:10px;color:var(--muted)">Łącznie</div></div>
+    <div style="background:var(--green-l);border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--green)">${totalKoszt} zł</div><div style="font-size:10px;color:var(--muted)">Wynagrodzenia</div></div>
   </div>`;
 
   wpisy.forEach(w => {
     const prac = DATA.pracownicy[w.prac];
     if (w.nieobecny) {
-      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;opacity:.75">
-        <div style="width:32px;height:32px;border-radius:16px;background:#ccc;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px;opacity:.75">
+        <div style="width:32px;height:32px;border-radius:16px;background:#4a545c;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
         <div style="flex:1">
           <div style="font-size:12px;font-weight:700">${prac?prac.imie+' '+prac.nazwisko.charAt(0)+'.':'?'}</div>
           <div style="font-size:10px;color:var(--red)">🚫 Nieobecny${w.powod ? ' — ' + w.powod : ''}</div>
@@ -3028,15 +3028,15 @@ function openCzasDayModal(dayKey) {
     }
     const proj = DATA.projekty[w.proj];
     const koszt = prac ? prac.stawka * w.godz : 0;
-    html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px">
-      <div style="width:32px;height:32px;border-radius:16px;background:${prac?prac.kolor:'#ccc'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px">
+      <div style="width:32px;height:32px;border-radius:16px;background:${prac?prac.kolor:'#4a545c'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
       <div style="flex:1">
         <div style="font-size:12px;font-weight:700">${prac?prac.imie+' '+prac.nazwisko.charAt(0)+'.':'?'}</div>
-        <div style="font-size:10px;color:#888">${proj?proj.nazwa.split(' — ')[0]:''}</div>
+        <div style="font-size:10px;color:var(--muted)">${proj?proj.nazwa.split(' — ')[0]:''}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:13px;font-weight:800;color:var(--blue)">${w.od && w.do ? `${w.od}–${w.do}` : w.godz + 'h'}</div>
-        <div style="font-size:10px;color:#888">${w.od && w.do ? w.godz + 'h · ' : ''}<span style="color:var(--green);font-weight:700">${koszt} zł</span></div>
+        <div style="font-size:10px;color:var(--muted)">${w.od && w.do ? w.godz + 'h · ' : ''}<span style="color:var(--green);font-weight:700">${koszt} zł</span></div>
       </div>
     </div>`;
   });
@@ -3048,7 +3048,7 @@ function openCzasDayModal(dayKey) {
 // ═══════ WSPÓLNY KOMPONENT: wiersz pracownika (Obecny z godz./autem, Nieobecny z powodem, lub nic) ═══════
 function buildPracownikRow(w, prefix) {
   return `
-    <div style="background:#f8f9fa;border-radius:8px;padding:10px;margin-bottom:8px">
+    <div style="background:#232a31;border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700;flex:1">${w.imie} ${w.nazwisko}</span>
         <span style="font-size:11px;color:var(--muted)">${w.stawka} zł/h</span>
@@ -3072,7 +3072,7 @@ function buildPracownikRow(w, prefix) {
           <input type="number" class="fi" id="${prefix}-licznik-od-${w.id}" placeholder="licznik rano" min="0" oninput="recalcKm('${prefix}','${w.id}')" style="flex:1;padding:6px 8px;font-size:12px">
           <span style="font-size:11px;color:var(--muted)">→</span>
           <input type="number" class="fi" id="${prefix}-licznik-do-${w.id}" placeholder="po południu" min="0" oninput="recalcKm('${prefix}','${w.id}')" style="flex:1;padding:6px 8px;font-size:12px">
-          <div id="${prefix}-km-out-${w.id}" style="width:64px;text-align:center;font-size:12px;font-weight:800;color:var(--blue);background:#f0f4ff;border-radius:8px;padding:6px 4px">0 km</div>
+          <div id="${prefix}-km-out-${w.id}" style="width:64px;text-align:center;font-size:12px;font-weight:800;color:var(--blue);background:var(--blue-l);border-radius:8px;padding:6px 4px">0 km</div>
         </div>
         <input type="hidden" id="${prefix}-km-${w.id}" value="0">
       </div>
@@ -3664,7 +3664,7 @@ function buildMojeGodziny() {
 
   let sumaH = 0, sumaZl = 0;
   let calHtml = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">` +
-    ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'].map(d => `<div style="text-align:center;font-size:8px;font-weight:700;color:#999;padding:2px 0">${d}</div>`).join('') +
+    ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'].map(d => `<div style="text-align:center;font-size:8px;font-weight:700;color:var(--muted);padding:2px 0">${d}</div>`).join('') +
     `</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
   for (let i = 0; i < startOffset; i++) calHtml += `<div></div>`;
   for (let i = 1; i <= daysInMonth; i++) {
@@ -3673,14 +3673,14 @@ function buildMojeGodziny() {
     const isWeekend = dow === 0 || dow === 6;
     const wpis = wlasne[key];
     if (wpis && wpis.nieobecny) {
-      calHtml += `<div onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,#eee,#eee 3px,#e0e0e0 3px,#e0e0e0 6px);border:2px dashed #bbb;color:#c62828">🚫</div>`;
+      calHtml += `<div onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed #4a545c;color:#c62828">🚫</div>`;
       continue;
     }
     const proj = wpis ? DATA.projekty[wpis.proj] : null;
     if (wpis) { sumaH += wpis.godz; sumaZl += wpis.godz * w.stawka; }
-    const bg = proj ? proj.kolor + '33' : (isWeekend ? '#f5f5f5' : '#eef2f7');
+    const bg = proj ? proj.kolor + '33' : (isWeekend ? '#232a31' : 'var(--border)');
     const border = proj ? `2px solid ${proj.kolor}` : '1px solid #dde3ea';
-    const color = proj ? proj.kolor : (isWeekend ? '#ccc' : '#aaa');
+    const color = proj ? proj.kolor : (isWeekend ? '#4a545c' : '#aaa');
     const click = wpis ? `onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer"` : '';
     calHtml += `<div ${click} style="border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:${bg};border:${border};color:${color}">${i}</div>`;
   }
@@ -3782,7 +3782,7 @@ function buildUstawienia() {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           ${Object.keys(PERM_LABELS).map(perm => `
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;background:#f8f9fa;border-radius:8px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;background:#232a31;border-radius:8px">
               <input type="checkbox" ${u.uprawnienia[perm] ? 'checked' : ''} onchange="togglePerm('${u.id}','${perm}')" style="accent-color:var(--blue)">
               ${PERM_LABELS[perm]}
             </label>`).join('')}
@@ -3793,7 +3793,7 @@ function buildUstawienia() {
       <button class="btn-s" style="width:100%" onclick="enablePush()">${pushEnabled ? '✅ Push włączone na tym urządzeniu' : 'Włącz powiadomienia push na tym urządzeniu'}</button>
       <div style="font-size:11px;font-weight:800;color:var(--text);margin:12px 0 6px">Czego mają dotyczyć:</div>
       ${Object.keys(NOTIF_PREF_LABELS).map(k => `
-        <label style="display:flex;align-items:flex-start;gap:8px;font-size:11px;cursor:pointer;padding:7px 8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:11px;cursor:pointer;padding:7px 8px;background:#232a31;border-radius:8px;margin-bottom:6px">
           <input type="checkbox" ${NOTIF_PREFS[k] ? 'checked' : ''} onchange="toggleNotifPref('${k}')" style="accent-color:var(--blue);margin-top:1px">
           <span><strong>${NOTIF_PREF_LABELS[k].t}</strong><br><span style="color:var(--muted)">${NOTIF_PREF_LABELS[k].d}</span></span>
         </label>`).join('')}
@@ -3901,7 +3901,7 @@ function buildTerminarz() {
     const ikony = [...new Set(evsD.map(i => ev[i].ikona))];
     const ikonyHtml = ikony.slice(0, 3).map(ic => `<span style="font-size:10px;line-height:1">${ic}</span>`).join('') + (ikony.length > 3 ? `<span style="font-size:8px;color:var(--muted)">+${ikony.length - 3}</span>` : '');
     const today = d === dzisD;
-    cal += `<div ${evsD.length ? `onclick="termPokazDzien(${d})" style="cursor:pointer;` : 'style="'}border-radius:6px;padding:3px 1px 2px;text-align:center;min-height:40px;background:${today ? 'var(--blue-l)' : (evsD.length ? '#f8f9fa' : 'transparent')};border:1px solid ${today ? 'var(--blue)' : '#eee'}">
+    cal += `<div ${evsD.length ? `onclick="termPokazDzien(${d})" style="cursor:pointer;` : 'style="'}border-radius:6px;padding:3px 1px 2px;text-align:center;min-height:40px;background:${today ? 'var(--blue-l)' : (evsD.length ? '#232a31' : 'transparent')};border:1px solid ${today ? 'var(--blue)' : 'var(--border)'}">
       <div style="font-size:11px;font-weight:${today ? 800 : 600};color:${today ? 'var(--blue)' : 'var(--text)'}">${d}</div>
       <div style="display:flex;gap:1px;justify-content:center;flex-wrap:wrap;margin-top:1px;min-height:12px">${ikonyHtml}</div>
     </div>`;
@@ -3925,7 +3925,7 @@ function buildTerminarz() {
         <button onclick="termNext()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--blue)">›</button>
       </div>
       ${cal}
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:9px;color:#666">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:9px;color:var(--sec)">
         <span>👷 praca</span><span>🚩 start</span><span>🏁 termin</span><span class="fin">🧾 wpłata</span><span class="fin">🚚/💳 płatność</span><span>🚐 OC/przegląd</span>
       </div>
     </div>
@@ -3941,7 +3941,7 @@ function termPokazDzien(d) {
   const dataLabel = `${String(d).padStart(2,'0')}.${String(termMonth+1).padStart(2,'0')}.${termYear}`;
   document.getElementById('modal-dzien-title').textContent = '📅 ' + dataLabel;
   document.getElementById('modal-dzien-body').innerHTML = evsD.map(({ e, i }) => `
-    <div onclick="closeModal('modal-dzien-detail');termWykonaj(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;cursor:pointer">
+    <div onclick="closeModal('modal-dzien-detail');termWykonaj(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 8px;background:#232a31;border-radius:8px;margin-bottom:6px;cursor:pointer">
       <div style="width:32px;height:32px;border-radius:8px;background:${e.kolor}22;display:flex;align-items:center;justify-content:center;font-size:16px">${e.ikona}</div>
       <div style="flex:1;font-size:13px;color:var(--text)">${e.tytul}</div>
       <div style="color:var(--blue)">›</div>
@@ -3984,7 +3984,7 @@ function renderZakupy() {
     <div class="card" style="padding:0 14px">
       ${dostawcy.map(d => {
         const s = dostawcaSaldo(d.id);
-        return `<div class="li" onclick="openDostawca('${d.id}')"><div class="li-icon" style="background:#efebe9;font-size:18px">🚚</div><div class="li-body"><div class="li-title">${d.nazwa}</div><div class="li-sub">${d.kontakt || 'brak kontaktu'}</div></div><div class="li-right"><div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'}">${s.razem > 0 ? s.razem.toLocaleString('pl-PL') + ' zł' : 'OK'}</div><div style="font-size:9px;color:var(--muted)">do rozliczenia</div></div></div>`;
+        return `<div class="li" onclick="openDostawca('${d.id}')"><div class="li-icon" style="background:#232a31;font-size:18px">🚚</div><div class="li-body"><div class="li-title">${d.nazwa}</div><div class="li-sub">${d.kontakt || 'brak kontaktu'}</div></div><div class="li-right"><div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'}">${s.razem > 0 ? s.razem.toLocaleString('pl-PL') + ' zł' : 'OK'}</div><div style="font-size:9px;color:var(--muted)">do rozliczenia</div></div></div>`;
       }).join('') || '<div style="padding:20px 0;text-align:center;color:var(--muted);font-size:12px">Brak dostawców — dodaj przyciskiem ＋</div>'}
     </div>`;
 }
@@ -4086,9 +4086,9 @@ function buildDostawcaDetail(id) {
   const faktury = Object.values(DATA.fakturyZakupowe).filter(f => f.dostawca === id);
   const s = dostawcaSaldo(id);
   document.getElementById('ddost-content').innerHTML = `
-    <div style="background:#efebe9;padding:14px">
+    <div style="background:#232a31;padding:14px">
       <div style="font-size:16px;font-weight:800">${d.nazwa}</div>
-      <div style="font-size:12px;color:#666">${d.kontakt || 'brak kontaktu'}</div>
+      <div style="font-size:12px;color:var(--sec)">${d.kontakt || 'brak kontaktu'}</div>
       <div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'};margin-top:6px">Do rozliczenia: ${s.razem.toLocaleString('pl-PL')} zł</div>
       <button onclick="openEditDostawca('${id}')" class="btn-s" style="margin-top:8px">✏️ Edytuj</button>
     </div>
@@ -4098,22 +4098,22 @@ function buildDostawcaDetail(id) {
         <button class="btn-p" style="flex:1;margin-top:0" onclick="openNowaFakturaZak('${id}')">🧾 Nowa faktura</button>
       </div>
       <div class="sec-hdr"><h3 style="font-size:12px">📄 WZ niezafakturowane (${wzOtwarte.length})</h3></div>
-      ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0">
-        <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:#888">${w.data} · ${celLabel(w)}</div></div>
-        <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:#ccc;font-size:14px;cursor:pointer">✕</button>
-      </div>`).join('') || '<div style="color:#aaa;font-size:12px;padding:6px 0">Brak — wszystko zafakturowane ✅</div>'}
+      ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a">
+        <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)}</div></div>
+        <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>
+      </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak — wszystko zafakturowane ✅</div>'}
       <div class="sec-hdr" style="margin-top:14px"><h3 style="font-size:12px">🧾 Faktury zakupowe (${faktury.length})</h3></div>
       ${faktury.map(f => {
         const dni = dniDo(f.terminPlatnosci);
         const wzTej = Object.values(DATA.wz).filter(w => w.fakturaId === f.id);
         return `<div class="card" style="padding:10px 12px">
           <div style="display:flex;align-items:center;gap:8px">
-            <div style="flex:1"><div style="font-size:13px;font-weight:800">${f.nr || '(bez nr)'}</div><div style="font-size:10px;color:#888">${wzTej.length} WZ · termin ${f.terminPlatnosci || '—'}${!f.zaplacono && dni !== null ? (dni < 0 ? ' · <span style="color:var(--red)">PO TERMINIE</span>' : ' · za ' + dni + ' dni') : ''}</div></div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:800">${f.nr || '(bez nr)'}</div><div style="font-size:10px;color:var(--muted)">${wzTej.length} WZ · termin ${f.terminPlatnosci || '—'}${!f.zaplacono && dni !== null ? (dni < 0 ? ' · <span style="color:var(--red)">PO TERMINIE</span>' : ' · za ' + dni + ' dni') : ''}</div></div>
             <div style="font-size:14px;font-weight:900;color:${f.zaplacono ? 'var(--green)' : 'var(--red)'}">${f.kwota.toLocaleString('pl-PL')} zł</div>
           </div>
           ${f.zaplacono ? `<div style="font-size:10px;color:var(--green);margin-top:4px">✅ Zapłacono ${f.dataZaplaty || ''}</div>` : `<button onclick="oznaczFakturaZakZaplacona('${f.id}')" class="btn-g" style="width:100%;margin-top:8px">💸 Oznacz jako zapłaconą</button>`}
         </div>`;
-      }).join('') || '<div style="color:#aaa;font-size:12px;padding:6px 0">Brak faktur</div>'}
+      }).join('') || '<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak faktur</div>'}
     </div>`;
 }
 
@@ -4127,9 +4127,9 @@ function openNowaFakturaZak(dostId) {
   _fzWZwybrane = new Set();
   const el = document.getElementById('nfz-wz-lista');
   el.innerHTML = wzOtwarte.map(w => `
-    <label style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;cursor:pointer">
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:#232a31;border-radius:8px;margin-bottom:6px;cursor:pointer">
       <input type="checkbox" onchange="toggleFZwz('${w.id}',this.checked)" style="accent-color:var(--blue)">
-      <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:#888">${w.data} · ${celLabel(w)}</div></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)}</div></div>
     </label>`).join('');
   document.getElementById('nfz-suma').textContent = '0 zł';
   openModal('modal-faktura-zak');
@@ -4253,7 +4253,7 @@ function renderPrzypomnienia() {
   _przypCache = lista;
   if (lista.length === 0) { el.innerHTML = ''; return; }
   const wagaKolor = w => w >= 4 ? 'var(--red)' : w === 3 ? 'var(--orange)' : w === 2 ? 'var(--blue)' : 'var(--muted)';
-  const wagaBg = w => w >= 4 ? 'var(--red-l)' : w === 3 ? 'var(--orange-l)' : w === 2 ? 'var(--blue-l)' : '#f5f5f5';
+  const wagaBg = w => w >= 4 ? 'var(--red-l)' : w === 3 ? 'var(--orange-l)' : w === 2 ? 'var(--blue-l)' : '#232a31';
   el.innerHTML = `
     <div class="sec-hdr" style="margin-top:4px"><h3>🔔 Do pilnowania (${lista.length})</h3></div>
     <div class="card" style="padding:8px 10px">
