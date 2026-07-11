@@ -1,8 +1,8 @@
 // Service worker: instalowalność PWA + praca offline.
 // Strategia stale-while-revalidate: serwujemy z cache od razu,
 // w tle dociągamy świeżą wersję na następne otwarcie.
-const CACHE = 'elektroapp-v6';
-const ASSETS = ['.', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'logo-electrosmart.jpg'];
+const CACHE = 'elektroapp-v7';
+const ASSETS = ['.', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'logo-watermark.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
