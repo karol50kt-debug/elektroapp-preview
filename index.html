@@ -683,7 +683,10 @@ body.employee .admin-only{display:none!important}
 <!-- Modal: nowe WZ -->
 <div class="modal-ov" id="modal-wz" style="display:none" onclick="if(event.target===this)closeModal('modal-wz')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-wz')">✕</button><h3>📄 Nowe WZ (towar na WZ)</h3>
-    <div class="fg"><label>Numer WZ</label><div style="display:flex;gap:6px"><input class="fi" id="nwz-nr" placeholder="np. WZ/2026/123" style="flex:1"><button class="btn-s" onclick="showToast('📷 OCR numeru WZ — w planach (na razie wpisz ręcznie)')" title="Skanuj (wkrótce)">📷</button></div></div>
+    <div class="fg"><label>Numer WZ</label><div style="display:flex;gap:6px"><input class="fi" id="nwz-nr" placeholder="np. WZ/2026/123" style="flex:1"><button class="btn-s" onclick="document.getElementById('ocr-wz-file').click()" title="Zeskanuj numer WZ ze zdjęcia">📷</button></div>
+      <input type="file" id="ocr-wz-file" accept="image/*" capture="environment" style="display:none" onchange="ocrSkanujWZ(this)">
+      <div id="ocr-wz-status" style="display:none;font-size:11px;color:var(--blue);margin-top:6px"></div>
+    </div>
     <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Kwota (zł)</label><input class="fi" id="nwz-kwota" type="number" placeholder="0.00"></div><div class="fg" style="flex:1"><label>Data</label><input class="fi" id="nwz-data" type="date"></div></div>
     <div class="fg"><label>Dostawca</label><select class="fs" id="nwz-dostawca"></select></div>
     <div class="fg"><label>Przypisz do</label><select class="fs" id="nwz-cel"></select></div>
@@ -4246,6 +4249,62 @@ function openNoweWZ(presetDost) {
   document.getElementById('nwz-data').value = new Date().toISOString().slice(0, 10);
   openModal('modal-wz');
 }
+// ═══════ OCR NUMERU WZ (Tesseract.js — działa w przeglądarce, bez serwera) ═══════
+let _tesseractLoading = null;
+function loadTesseract() {
+  if (window.Tesseract) return Promise.resolve();
+  if (_tesseractLoading) return _tesseractLoading;
+  _tesseractLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Nie udało się pobrać modułu OCR (brak internetu?)'));
+    document.head.appendChild(s);
+  });
+  return _tesseractLoading;
+}
+
+// Wyłuskaj najbardziej prawdopodobny numer WZ z rozpoznanego tekstu.
+function wyodrebnijNrWZ(text) {
+  const t = text.replace(/\r/g, '\n');
+  // 1) linia z "WZ" i numerem, np. "WZ/005050/7701/06/2026" albo "WZ 123/2026"
+  const wzLine = t.match(/WZ[\s:/-]*[0-9][0-9A-Za-z/\-]{2,}/i);
+  if (wzLine) return wzLine[0].replace(/^WZ[\s:]*/i, 'WZ/').replace(/\s+/g, '').replace(/\/+/g, '/');
+  // 2) ciąg wyglądający jak numer dokumentu z ukośnikami
+  const slashNum = t.match(/[0-9]{3,}(?:\/[0-9A-Za-z]{1,6}){1,4}/);
+  if (slashNum) return slashNum[0];
+  return '';
+}
+
+async function ocrSkanujWZ(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const status = document.getElementById('ocr-wz-status');
+  status.style.display = 'block';
+  status.style.color = 'var(--blue)';
+  status.textContent = '⏳ Wczytywanie modułu OCR...';
+  try {
+    await loadTesseract();
+    status.textContent = '🔍 Rozpoznawanie numeru ze zdjęcia...';
+    const { data } = await Tesseract.recognize(file, 'pol+eng', {
+      logger: m => { if (m.status === 'recognizing text') status.textContent = `🔍 Rozpoznawanie... ${Math.round(m.progress * 100)}%`; },
+    });
+    const nr = wyodrebnijNrWZ(data.text || '');
+    if (nr) {
+      document.getElementById('nwz-nr').value = nr;
+      status.style.color = 'var(--green)';
+      status.textContent = '✅ Rozpoznano: ' + nr + ' — sprawdź i popraw jeśli trzeba';
+    } else {
+      status.style.color = 'var(--orange)';
+      status.textContent = '⚠️ Nie znaleziono numeru WZ — wpisz ręcznie (zdjęcie mogło być nieczytelne)';
+    }
+  } catch (e) {
+    status.style.color = 'var(--orange)';
+    status.textContent = '⚠️ ' + (e.message || 'Błąd OCR') + ' — wpisz numer ręcznie';
+  }
+  input.value = '';
+}
+
 function saveWZ() {
   const nr = document.getElementById('nwz-nr').value.trim();
   const kwota = Math.round((Number(document.getElementById('nwz-kwota').value) || 0) * 100) / 100;
