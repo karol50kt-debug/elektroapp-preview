@@ -400,6 +400,14 @@ body.employee .admin-only{display:none!important}
   </div>
 </div>
 </div>
+<!-- Modal: kod QR do instalacji aplikacji -->
+<div class="modal-ov" id="modal-install-qr" style="display:none" onclick="if(event.target===this)closeModal('modal-install-qr')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-install-qr')">✕</button><h3>📱 Instalacja aplikacji</h3>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Zeskanuj aparatem telefonu (Android i iPhone). Otworzy się strona — dodaj ją do ekranu głównego (Android: menu ⋮ → „Dodaj do ekranu głównego"; iPhone: Udostępnij → „Do ekranu początkowego").</div>
+    <div id="install-qr-box" style="display:flex;justify-content:center;margin-bottom:12px"></div>
+    <div style="font-size:11px;text-align:center;color:var(--sec);word-break:break-all">https://karol50kt-debug.github.io/elektroapp-preview/</div>
+  </div>
+</div>
 <!-- Modal: kod synchronizacji do udostepnienia pracownikom -->
 <div class="modal-ov" id="modal-sync-share" style="display:none" onclick="if(event.target===this)closeModal('modal-sync-share')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-sync-share')">✕</button><h3>☁️ Kod synchronizacji</h3>
@@ -998,6 +1006,13 @@ function syncStatusHtml() {
       <button class="btn-r" style="flex:1" onclick="disconnectSync()">Odłącz</button>
     </div>
     <button class="btn-p" style="width:100%" onclick="openSyncShare()">👥 Pokaż kod dla pracowników</button>`;
+}
+
+function openInstallQr() {
+  const box = document.getElementById('install-qr-box');
+  box.innerHTML = '';
+  try { new QRCode(box, { text: 'https://karol50kt-debug.github.io/elektroapp-preview/', width: 200, height: 200 }); } catch (e) {}
+  openModal('modal-install-qr');
 }
 
 function openSyncShare() {
@@ -3969,6 +3984,11 @@ function buildUstawienia() {
     </div>
     <div class="sec-hdr" style="margin-top:14px"><h3>☁️ Synchronizacja w chmurze</h3></div>
     <div class="card" style="padding:12px 14px" id="sync-card">${syncStatusHtml()}</div>
+    <div class="sec-hdr" style="margin-top:14px"><h3>📲 Zaproś pracownika</h3></div>
+    <div class="card" style="padding:12px 14px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Pokaż ten kod QR pracownikowi — zeskanuje aparatem telefonu, otworzy aplikację i doda ją do ekranu głównego (Android i iOS).</div>
+      <button class="btn-p" style="width:100%" onclick="openInstallQr()">📱 Pokaż kod instalacji</button>
+    </div>
     <div class="sec-hdr" style="margin-top:14px"><h3>ℹ️ Aplikacja</h3></div>
     <div class="card" style="padding:12px 14px;font-size:11px;color:var(--muted);line-height:1.6">
       ElektroApp v2.0 — zarządzanie firmą elektryczną.<br>
