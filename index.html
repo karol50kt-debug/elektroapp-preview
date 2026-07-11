@@ -871,6 +871,18 @@ Object.assign(DATA, MIGRACJA_APPSHEET);
 const BLOK_GEO = {"b1":{"lat":52.1638371,"lng":22.280917},"b2":{"lat":52.1636748,"lng":22.2743569},"b3":{"lat":52.1634801,"lng":22.2766994},"b4":{"lat":52.1757857,"lng":22.297913},"b5":{"lat":52.1580771,"lng":22.2512554},"b6":{"lat":52.1583473,"lng":22.2497839},"b7":{"lat":52.1583862,"lng":22.2415429},"b8":{"lat":52.1579968,"lng":22.2421236},"b9":{"lat":52.1729673,"lng":22.2719438},"b10":{"lat":52.1730203,"lng":22.2715782},"b11":{"lat":52.1727717,"lng":22.2714189},"b12":{"lat":52.1735086,"lng":22.2715488},"b13":{"lat":52.1791065,"lng":22.2692321},"b14":{"lat":52.1792382,"lng":22.2684434},"b15":{"lat":52.1783276,"lng":22.2681508},"b16":{"lat":52.1670815,"lng":22.2842835},"b17":{"lat":52.1625893,"lng":22.2826852},"b18":{"lat":52.1635314,"lng":22.2889916},"b19":{"lat":52.1627378,"lng":22.2897734}};
 Object.keys(BLOK_GEO).forEach(id => { if (DATA.bloki[id] && BLOK_GEO[id]) { DATA.bloki[id].lat = BLOK_GEO[id].lat; DATA.bloki[id].lng = BLOK_GEO[id].lng; } });
 
+// ═══════ START OD CZYSTEJ KARTY (miesiąc próbny) — czyścimy historię, zostają pracownicy/konta/kody/projekty ═══════
+DATA.czasPracy = {};
+DATA.awarie = {};
+DATA.wydatki = {};
+DATA.narzedzia = {};
+DATA.samochody = {};
+DATA.dostawcy = {};
+DATA.wz = {};
+DATA.fakturyZakupowe = {};
+Object.values(DATA.bloki).forEach(b => { b.awarie = []; });
+Object.keys(DATA.pracownicy).forEach(w => { DATA.czasPracyWlasne[w] = {}; DATA.paski[w] = []; DATA.zaliczki[w] = []; });
+
 // Unikatowe ID (Date.now potrafi się powtórzyć przy szybkim dodawaniu — stąd licznik)
 let _idSeq = 0;
 function uid(prefix) { return prefix + Date.now().toString(36) + '_' + (_idSeq++).toString(36); }
@@ -883,7 +895,7 @@ function dk(rok, mIdx, dzien) {
 // ═══════ TRWAŁOŚĆ DANYCH (localStorage) ═══════
 // Wersja schematu — po zmianie struktury DATA stary zapis jest odrzucany,
 // żeby nie wczytać niekompatybilnych danych.
-const STORAGE_KEY = 'elektroapp_state_v3';
+const STORAGE_KEY = 'elektroapp_state_v4';
 
 function saveState() {
   try {
