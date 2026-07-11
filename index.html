@@ -279,7 +279,7 @@ body.employee .admin-only{display:none!important}
     <div class="ftab" onclick="setFtab(this,'projekty')">Wstrzymany</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-projekty">
-    <div class="li-empty" id="empty-projekty" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
+    <div class="li-empty" id="empty-projekty" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
 </div>
 <!-- Detail projekt -->
@@ -439,7 +439,7 @@ body.employee .admin-only{display:none!important}
     <select class="fs" id="aw-miesiac-filtr" onchange="renderAwarieList()" style="flex:1;font-size:12px;padding:7px 10px"></select>
   </div>
   <div class="card" style="padding:0 14px" id="list-awarie">
-    <div class="li-empty" id="empty-awarie" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
+    <div class="li-empty" id="empty-awarie" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
   <button class="fab" onclick="openNewAwaria()">＋</button>
 </div>
@@ -487,7 +487,7 @@ body.employee .admin-only{display:none!important}
     <div class="li" data-status="W użyciu" data-text="knipex zestaw szczypiec" onclick="openNarz('t4')"><div class="li-icon" style="background:var(--blue-l)">🪛</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Knipex</div><div class="li-title">Zestaw szczypiec</div><div class="li-sub">👤 Maciek Sosna</div></div><div class="li-right"><span class="badge" style="background:var(--blue-l);color:var(--blue)">W użyciu</span><div style="font-size:12px;font-weight:700;margin-top:2px">450 zł</div></div></div>
     <div class="li" data-status="Dostępne" data-text="stanley poziomnica 60cm" onclick="openNarz('t5')"><div class="li-icon" style="background:var(--green-l)">📐</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Stanley</div><div class="li-title">Poziomnica 60cm</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">120 zł</div></div></div>
     <div class="li" data-status="Dostępne" data-text="milwaukee m18 fuel" onclick="openNarz('t6')"><div class="li-icon" style="background:var(--red-l)">🔋</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Milwaukee</div><div class="li-title">M18 FUEL</div><div class="li-sub">🔨 1 naprawa</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">1 450 zł</div></div></div>
-    <div class="li-empty" id="empty-narz" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
+    <div class="li-empty" id="empty-narz" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
   <!-- Scanner overlay -->
   <div class="scan-ov" id="scan-ov" style="display:none">
@@ -557,7 +557,7 @@ body.employee .admin-only{display:none!important}
     <div class="ftab" onclick="setFtab(this,'wyd')">Inne</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-wyd">
-    <div class="li-empty" id="empty-wyd" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px">Brak wyników</div>
+    <div class="li-empty" id="empty-wyd" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
   <button class="fab" onclick="openNewWydatek()">＋</button>
 </div>
@@ -2940,7 +2940,7 @@ function renderKodyList() {
       ? `<span class="badge" style="background:var(--orange-l);color:var(--orange)">${otwarte} ${otwarte === 1 ? 'awaria' : 'awarie'}</span>`
       : `<span class="badge" style="background:var(--green-l);color:var(--green)">OK</span>`;
     return `<div class="li" onclick="openBlok('${b.id}')"><div class="li-icon" style="background:${BLOK_KOLORY[i % BLOK_KOLORY.length]};font-size:18px">${BLOK_IKONY[i % BLOK_IKONY.length]}</div><div class="li-body"><div class="li-title">${b.nazwa}</div><div class="li-sub">${b.adres} · ${(b.kody || []).length} ${(b.kody || []).length === 1 ? 'kod' : 'kody'}</div></div><div class="li-right">${badge}</div></div>`;
-  }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px">Brak wyników</div>`;
+  }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>`;
 
   const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   setTxt('kody-kpi-obiekty', all.length);
@@ -3059,7 +3059,7 @@ function openBlok(id, opts = {}) {
       <div style="font-size:12px;font-weight:800;margin-bottom:8px;color:var(--text)">🔑 Kody dostępu (${b.kody.length})</div>
       ${kodyHtml}
       <div style="font-size:12px;font-weight:800;margin:14px 0 8px;color:var(--text)">🚨 Awarie (${b.awarie.length})</div>
-      ${awarieHtml || '<div style="color:var(--muted);font-size:12px;padding:10px 0">Brak awarii ✅</div>'}
+      ${awarieHtml || '<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center"><img src="empty-ok.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak awarii — wszystko OK</div>'}
     </div>`;
 
   openDet('det-blok');
@@ -3168,7 +3168,7 @@ function renderCzasList() {
     .sort((a, b) => b.localeCompare(a));
 
   if (keys.length === 0) {
-    listEl.innerHTML = `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px">Brak wpisów w tym miesiącu</div>`;
+    listEl.innerHTML = `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów w tym miesiącu</div>`;
     return;
   }
 
@@ -3497,7 +3497,7 @@ function buildAutoDetail(id) {
     <div class="card" style="padding:0 14px">`;
 
   if (a.historia.length === 0) {
-    html += `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px">Brak wpisów</div>`;
+    html += `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów</div>`;
   } else {
     a.historia.forEach((h, hi) => {
       const meta = AUTO_TYP_META[h.typ] || { ikona:'📄', label:h.typ };
