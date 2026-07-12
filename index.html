@@ -187,6 +187,8 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 /* UPRAWNIENIA: ukrywanie finansów i funkcji admina */
 body.no-fin .fin{display:none!important}
 body.employee .admin-only{display:none!important}
+.kier-only{display:none!important}
+body.kier .kier-only{display:flex!important}
 /* POWIADOMIENIA */
 .bell-wrap{position:relative}
 .bell-cnt{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
@@ -264,7 +266,7 @@ body.employee .admin-only{display:none!important}
 </div>
 <!-- ═══════ PROJEKTY ═══════ -->
 <div class="sv" id="sv-projekty">
-<div class="hdr"><div class="hdr-title">📋 Projekty</div><div class="hdr-right"><button class="hdr-btn" onclick="openNewProjekt()">＋</button><div class="avatar">K</div></div></div>
+<div class="hdr"><div class="hdr-title">📋 Projekty</div><div class="hdr-right"><button class="hdr-btn kier-only" onclick="openMaterialKierownik()" title="Dodaj materiał">📦</button><button class="hdr-btn admin-only" onclick="openNewProjekt()">＋</button><div class="avatar">K</div></div></div>
 <div class="content">
   <div class="kpi-scroll">
     <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">5</div><div class="l">Łącznie</div></div>
@@ -642,6 +644,17 @@ body.employee .admin-only{display:none!important}
   <div class="det-hdr"><button class="back-btn" onclick="goBack()">←</button><div style="color:#fff;font-size:14px;font-weight:700" id="dauto-title">Pojazd</div></div>
   <div class="det-content" id="dauto-content"></div>
 </div>
+<!-- Modal: wpis do historii pojazdu (tankowanie / serwis / km) -->
+<div class="modal-ov" id="modal-auto-wpis" style="display:none" onclick="if(event.target===this)closeModal('modal-auto-wpis')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-auto-wpis')">✕</button><h3>⛽ Wpis do pojazdu</h3>
+    <input type="hidden" id="naw-auto-id" value="">
+    <div class="fg"><label>Rodzaj</label><select class="fs" id="naw-typ" onchange="autoWpisTypChange()"><option value="tankowanie">⛽ Tankowanie</option><option value="serwis">🔧 Serwis / naprawa</option><option value="km">🚗 Przebieg (km)</option></select></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Data</label><input class="fi" id="naw-data" type="date"></div><div class="fg" style="flex:1" id="naw-koszt-wrap"><label>Koszt (zł)</label><input class="fi" id="naw-koszt" type="number" placeholder="0"></div></div>
+    <div class="fg" id="naw-km-wrap" style="display:none"><label>Stan licznika (km)</label><input class="fi" id="naw-km" type="number" placeholder="np. 125000"></div>
+    <div class="fg"><label>Opis (opcjonalnie)</label><input class="fi" id="naw-opis" placeholder="np. 60L / wymiana oleju"></div>
+    <button class="btn-p" onclick="saveAutoWpis()">Zapisz wpis</button>
+  </div>
+</div>
 </div>
 
 <!-- ═══════ MOJE GODZINY (widok pracownika) ═══════ -->
@@ -913,6 +926,7 @@ DATA.wz = {};
 DATA.fakturyZakupowe = {};
 Object.values(DATA.bloki).forEach(b => { b.awarie = []; });
 Object.keys(DATA.pracownicy).forEach(w => { DATA.czasPracyWlasne[w] = {}; DATA.paski[w] = []; DATA.zaliczki[w] = []; });
+if (!DATA.czasPracyKierownik) DATA.czasPracyKierownik = {};
 
 // Unikatowe ID (Date.now potrafi się powtórzyć przy szybkim dodawaniu — stąd licznik)
 let _idSeq = 0;
@@ -1126,7 +1140,7 @@ async function generateEmployeeCode(uid) {
     const r = await fetch(SYNC_API + '/api/devices/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SYNC_TOKEN },
-      body: JSON.stringify({ pracId: u.pracownik, label: u.nazwa, perms: u.uprawnienia || {} }),
+      body: JSON.stringify({ pracId: u.pracownik, label: u.nazwa, perms: { ...(u.uprawnienia || {}), full: !!u.pelnyDostep, kierownik: !!u.kierownik } }),
     });
     const j = await r.json();
     if (!j.code) { showToast('⚠️ Nie udało się utworzyć kodu'); return; }
@@ -2757,45 +2771,49 @@ function buildPracDetail(id) {
 }
 
 // Porównanie ewidencji właściciela z godzinami wpisanymi przez pracownika.
-// Widoczne tylko dla właściciela w detalu pracownika.
+// Suma godzin z 3. listy (wpisy kierownika) dla pracownika w danym dniu
+function dniKier(pracId, dayKey) {
+  const arr = (DATA.czasPracyKierownik || {})[dayKey] || [];
+  const mine = arr.filter(x => x.prac === pracId);
+  if (!mine.length) return null;
+  if (mine.some(x => x.nieobecny)) return { nieobecny: true, powod: mine[0].powod };
+  return { godz: Math.round(mine.reduce((s, x) => s + (x.godz || 0), 0) * 100) / 100, od: mine[0].od, do: mine[mine.length - 1].do };
+}
+
+// Widoczne tylko dla właściciela / biura w detalu pracownika (3 kolumny: oficjalne, pracownik, kierownik).
 function buildPorownanieHtml(pracId) {
-  if (!currentUser || !currentUser.admin) return '';
+  if (!fullAccess()) return '';
   const wlasne = DATA.czasPracyWlasne[pracId] || {};
   const prefix = `${pracCalYear}-${String(pracCalMonth + 1).padStart(2, '0')}-`;
   const dni = new Set();
-  Object.keys(DATA.czasPracy).forEach(k => {
-    if (k.startsWith(prefix) && (DATA.czasPracy[k] || []).some(x => x.prac === pracId)) dni.add(k);
-  });
+  Object.keys(DATA.czasPracy).forEach(k => { if (k.startsWith(prefix) && (DATA.czasPracy[k] || []).some(x => x.prac === pracId)) dni.add(k); });
   Object.keys(wlasne).forEach(k => { if (k.startsWith(prefix)) dni.add(k); });
+  Object.keys(DATA.czasPracyKierownik || {}).forEach(k => { if (k.startsWith(prefix) && (DATA.czasPracyKierownik[k] || []).some(x => x.prac === pracId)) dni.add(k); });
   const sorted = [...dni].sort();
   if (sorted.length === 0) return '';
 
+  const fmt = w => w ? (w.nieobecny ? '🚫' : (w.od && w.do ? `${w.od}–${w.do}` : w.godz + 'h')) : '—';
+  const hh = w => w && !w.nieobecny ? w.godz : 0;
   let zgodne = 0, rozne = 0;
   const rows = sorted.map(key => {
-    const moje = dniPrac(pracId, key); // zagregowane wpisy oficjalne
-    const jego = wlasne[key];
-    const mojeTxt = moje ? (moje.nieobecny ? '🚫' : (moje.od && moje.do ? `${moje.od}–${moje.do}` : moje.godz + 'h')) : '—';
-    const jegoTxt = jego ? (jego.nieobecny ? '🚫' : (jego.od && jego.do ? `${jego.od}–${jego.do}` : jego.godz + 'h')) : '—';
-    const mojeH = moje && !moje.nieobecny ? moje.godz : 0;
-    const jegoH = jego && !jego.nieobecny ? jego.godz : 0;
-    const zgoda = moje && jego && mojeH === jegoH && !moje.nieobecny === !jego.nieobecny;
+    const moje = dniPrac(pracId, key), jego = wlasne[key], kier = dniKier(pracId, key);
+    const hs = [hh(moje), hh(jego), hh(kier)].filter((v, i) => [moje, jego, kier][i]);
+    const zgoda = hs.length >= 2 && hs.every(v => v === hs[0]);
     if (zgoda) zgodne++; else rozne++;
     const bg = zgoda ? 'var(--green-l)' : 'var(--orange-l)';
-    const ikona = zgoda ? '✅' : '⚠️';
-    return `<div style="display:grid;grid-template-columns:38px 1fr 1fr 24px;gap:6px;align-items:center;padding:6px 8px;background:${bg};border-radius:8px;margin-bottom:4px;font-size:11px">
+    return `<div style="display:grid;grid-template-columns:34px 1fr 1fr 1fr 20px;gap:4px;align-items:center;padding:6px 8px;background:${bg};border-radius:8px;margin-bottom:4px;font-size:10px">
       <strong>${key.slice(8)}.${key.slice(5,7)}</strong>
-      <span>${mojeTxt}${mojeH ? ` <span style="color:var(--muted)">(${mojeH}h)</span>` : ''}</span>
-      <span>${jegoTxt}${jegoH ? ` <span style="color:var(--muted)">(${jegoH}h)</span>` : ''}</span>
-      <span style="text-align:center">${ikona}</span>
+      <span>${fmt(moje)}</span><span>${fmt(jego)}</span><span>${fmt(kier)}</span>
+      <span style="text-align:center">${zgoda ? '✅' : '⚠️'}</span>
     </div>`;
   }).join('');
 
   return `
     <div style="padding:0 14px 14px">
-      <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:2px">🔍 Porównanie: moja ewidencja vs wpisy pracownika</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">✅ ${zgodne} zgodnych · ⚠️ ${rozne} do wyjaśnienia. Pracownik nie widzi tej sekcji.</div>
-      <div style="display:grid;grid-template-columns:34px 1fr 1fr 24px;gap:6px;padding:0 8px 4px;font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase">
-        <span>Dzień</span><span>Moje</span><span>Pracownika</span><span></span>
+      <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:2px">🔍 Porównanie ewidencji</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">✅ ${zgodne} zgodnych · ⚠️ ${rozne} do wyjaśnienia. Pracownik tego nie widzi.</div>
+      <div style="display:grid;grid-template-columns:34px 1fr 1fr 1fr 20px;gap:4px;padding:0 8px 4px;font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase">
+        <span>Dzień</span><span>Oficjalne</span><span>Pracownik</span><span>Kierownik</span><span></span>
       </div>
       ${rows}
     </div>`;
@@ -3839,19 +3857,26 @@ function saveGodziny() {
   if (wpisy.length === 0) { showToast('⚠️ Wybierz Obecny lub Nieobecny'); return; }
   const pracId = wpisy[0].prac;
 
-  if (currentUser && !currentUser.admin) {
-    // Pracownik pisze do WŁASNEGO rejestru — właściciel zobaczy to tylko w porównaniu
+  const isOwn = currentUser && currentUser.pracownik === pracId;
+  if (fullAccess()) {
+    // Właściciel / biuro prowadzą oficjalną ewidencję
+    if (!DATA.czasPracy[dayKey]) DATA.czasPracy[dayKey] = [];
+    DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x => x.prac !== pracId);
+    DATA.czasPracy[dayKey].push(...wpisy);
+    buildCzasCalendar();
+  } else if (isKierownik() && !isOwn) {
+    // Kierownik wpisuje godziny INNYCH → osobna 3. lista (widoczna dla właściciela/biura w porównaniu)
+    if (!DATA.czasPracyKierownik) DATA.czasPracyKierownik = {};
+    if (!DATA.czasPracyKierownik[dayKey]) DATA.czasPracyKierownik[dayKey] = [];
+    DATA.czasPracyKierownik[dayKey] = DATA.czasPracyKierownik[dayKey].filter(x => x.prac !== pracId);
+    DATA.czasPracyKierownik[dayKey].push(...wpisy.map(w => ({ ...w, wpisanyPrzez: currentUser.pracownik })));
+  } else {
+    // Pracownik (lub kierownik dla siebie) pisze do WŁASNEGO rejestru
     const w = wpisy[0];
     if (!DATA.czasPracyWlasne[pracId]) DATA.czasPracyWlasne[pracId] = {};
     DATA.czasPracyWlasne[pracId][dayKey] = w.nieobecny
       ? { nieobecny: true, powod: w.powod }
       : { godz: w.godz, od: w.od, do: w.do, proj: w.proj };
-  } else {
-    // Właściciel prowadzi oficjalną ewidencję
-    if (!DATA.czasPracy[dayKey]) DATA.czasPracy[dayKey] = [];
-    DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x => x.prac !== pracId);
-    DATA.czasPracy[dayKey].push(...wpisy);
-    buildCzasCalendar();
   }
 
   showToast('✅ Zapisano godziny');
@@ -3913,8 +3938,53 @@ function buildAutoDetail(id) {
   }
 
   html += `</div>
-    <button class="btn-r admin-only" style="width:100%;margin-top:14px" onclick="deleteAuto('${id}')">🗑️ Usuń pojazd</button>`;
+    <button class="btn-p" style="width:100%;margin-top:12px" onclick="openAutoWpis('${id}')">⛽ Dodaj tankowanie / serwis / km</button>
+    <button class="btn-r admin-only" style="width:100%;margin-top:8px" onclick="deleteAuto('${id}')">🗑️ Usuń pojazd</button>`;
   document.getElementById('dauto-content').innerHTML = html;
+}
+
+// Kierownik: szybkie dodanie materiału (wydatku) do projektu
+function openMaterialKierownik() {
+  openNewWydatek('');
+  const t = document.getElementById('nw-typ'); if (t) t.value = 'Materiały';
+  const h = document.getElementById('nw-heading'); if (h) h.textContent = '📦 Dodaj materiał';
+}
+
+function openAutoWpis(autoId) {
+  document.getElementById('naw-auto-id').value = autoId;
+  document.getElementById('naw-typ').value = 'tankowanie';
+  document.getElementById('naw-data').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('naw-koszt').value = '';
+  document.getElementById('naw-km').value = '';
+  document.getElementById('naw-opis').value = '';
+  autoWpisTypChange();
+  openModal('modal-auto-wpis');
+}
+function autoWpisTypChange() {
+  const typ = document.getElementById('naw-typ').value;
+  document.getElementById('naw-km-wrap').style.display = (typ === 'km') ? 'block' : 'none';
+  document.getElementById('naw-koszt-wrap').style.display = (typ === 'km') ? 'none' : 'block';
+}
+function saveAutoWpis() {
+  const id = document.getElementById('naw-auto-id').value;
+  const a = DATA.samochody[id]; if (!a) return;
+  const typ = document.getElementById('naw-typ').value;
+  const dv = document.getElementById('naw-data').value;
+  const data = dv ? dv.split('-').reverse().join('.') : new Date().toLocaleDateString('pl-PL');
+  const opis = document.getElementById('naw-opis').value.trim();
+  a.historia = a.historia || [];
+  if (typ === 'km') {
+    const km = Number(document.getElementById('naw-km').value) || 0;
+    if (km > 0) a.przebieg = km;
+    a.historia.unshift({ typ: 'jazda', data, opis, prac: (currentUser && currentUser.nazwa) || '', od: '', do: '', km });
+  } else {
+    const koszt = Math.round(Number(document.getElementById('naw-koszt').value) || 0);
+    a.historia.unshift({ typ, data, opis, koszt, serwis: '' });
+  }
+  saveState();
+  closeModal('modal-auto-wpis');
+  buildAutoDetail(id); renderSamochodyList();
+  showToast('✅ Wpis zapisany');
 }
 
 function deleteAuto(id) {
@@ -3996,9 +4066,14 @@ function openWydatekZAuta(autoId, hi) {
 let currentUser = null;
 let pinTarget = null, pinBuffer = '';
 
+// Pełny dostęp = właściciel (admin) lub pracownik biurowy (pelnyDostep)
+function fullAccess() { return !!(currentUser && (currentUser.admin || currentUser.pelnyDostep)); }
+function isKierownik() { return !!(currentUser && currentUser.kierownik && !fullAccess()); }
+
 function can(perm) {
   if (!currentUser) return false;
-  if (currentUser.admin) return true;
+  if (fullAccess()) return true;
+  if (isKierownik() && (perm === 'projekty' || perm === 'pracownicy' || perm === 'samochody')) return true;
   return !!(currentUser.uprawnienia && currentUser.uprawnienia[perm]);
 }
 
@@ -4122,12 +4197,13 @@ function pinCancel() {
 
 function setUser(u) {
   currentUser = u;
-  document.body.classList.toggle('no-fin', !can('finanse') && !u.admin);
-  document.body.classList.toggle('employee', !u.admin);
+  document.body.classList.toggle('no-fin', !fullAccess());
+  document.body.classList.toggle('employee', !fullAccess());
+  document.body.classList.toggle('kier', isKierownik());
   document.getElementById('login-ov').style.display = 'none';
   renderTabbar();
   NOTIFS.length = 0;
-  if (u.admin) {
+  if (fullAccess()) {
     // Powiadomienia = najważniejsze przypomnienia zebrane z prawdziwych danych
     zbierzPrzypomnienia().filter(r => r.waga >= 3).slice(0, 8).forEach(r => addNotif(r.ikona, r.tekst));
     switchTab('dashboard');
@@ -4158,8 +4234,13 @@ const TAB_DEFS = {
 
 function renderTabbar() {
   let tabs;
-  if (currentUser && currentUser.admin) {
-    tabs = ['dashboard','projekty','pracownicy','awarie','narzedzia','wydatki','zakupy','terminarz','kody','samochody','ustawienia'];
+  if (fullAccess()) {
+    tabs = ['dashboard','projekty','pracownicy','awarie','narzedzia','wydatki','zakupy','terminarz','kody','samochody'];
+    if (currentUser.admin) tabs.push('ustawienia');  // zarządzanie kodami/kontami tylko właściciel
+  } else if (isKierownik()) {
+    tabs = ['mojegodziny','paski','pracownicy','projekty','samochody'];
+    if (can('kody')) tabs.push('kody');
+    if (can('awarie')) tabs.push('awarie');
   } else {
     tabs = ['mojegodziny','paski'];
     if (can('kody')) tabs.push('kody');
@@ -4375,13 +4456,20 @@ function buildUstawienia() {
           <div style="flex:1"><div style="font-size:13px;font-weight:800">${u.nazwa}</div><div style="font-size:11px;color:var(--muted)">${u.rola} · PIN ustawiony 🔒</div></div>
           <button onclick="zmienPin('${u.id}')" class="btn-s" style="flex-shrink:0;padding:5px 10px;font-size:11px">🔑 Zmień PIN</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div class="fg" style="margin-bottom:8px"><label>Rola / dostęp</label>
+          <select class="fs" onchange="ustawRoleKonta('${u.id}', this.value)">
+            <option value="pracownik" ${!u.pelnyDostep && !u.kierownik ? 'selected' : ''}>Pracownik (tylko swoje dane)</option>
+            <option value="kierownik" ${u.kierownik ? 'selected' : ''}>Kierownik (wpisuje godziny innych, km, materiały)</option>
+            <option value="biuro" ${u.pelnyDostep ? 'selected' : ''}>Biuro — pełny dostęp (jak właściciel)</option>
+          </select>
+        </div>
+        ${(u.pelnyDostep || u.kierownik) ? `<div style="font-size:10px;color:var(--muted);padding:2px 0 4px">${u.pelnyDostep ? '🔓 Widzi wszystko, łącznie z finansami.' : '👷 Widzi zespół i projekty (bez kwot), dopisuje godziny/km/materiały.'}</div>` : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           ${Object.keys(PERM_LABELS).map(perm => `
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;background:#232a31;border-radius:8px">
               <input type="checkbox" ${u.uprawnienia[perm] ? 'checked' : ''} onchange="togglePerm('${u.id}','${perm}')" style="accent-color:var(--blue)">
               ${PERM_LABELS[perm]}
             </label>`).join('')}
-        </div>
+        </div>`}
       </div>`).join('')}
     <div class="sec-hdr" style="margin-top:14px"><h3>📲 Powiadomienia push</h3></div>
     <div class="card" style="padding:12px 14px">
@@ -4430,6 +4518,17 @@ function togglePerm(uid, perm) {
   u.uprawnienia[perm] = !u.uprawnienia[perm];
   saveState();
   showToast(`✅ ${u.nazwa.split(' ')[0]}: ${PERM_LABELS[perm].replace(/^\S+ /,'')} ${u.uprawnienia[perm] ? 'włączone' : 'wyłączone'}`);
+}
+
+// Ustaw rolę konta: pracownik / kierownik / biuro (pełny dostęp)
+function ustawRoleKonta(uid, rola) {
+  const u = DATA.uzytkownicy[uid];
+  if (!u || u.admin) return;
+  u.pelnyDostep = (rola === 'biuro');
+  u.kierownik = (rola === 'kierownik');
+  saveState();
+  showToast(`✅ ${u.nazwa.split(' ')[0]}: ${rola === 'biuro' ? 'pełny dostęp' : rola === 'kierownik' ? 'kierownik' : 'pracownik'}. Wygeneruj nowy kod, jeśli już go używa.`);
+  if (currentTab === 'ustawienia') buildUstawienia();
 }
 
 // ═══════ SERVICE WORKER (instalacja jako appka / PWA) ═══════
