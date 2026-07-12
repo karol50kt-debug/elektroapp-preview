@@ -947,6 +947,53 @@ let SYNC_LAST_AT = parseInt(localStorage.getItem('elektroapp_sync_last_at') || '
 let _syncPushTimer = null;
 let _syncBusy = false;
 
+// Silnik scalania po rekordach: kolekcje z _upd (nowszy wygrywa), mapa usunięć _del.
+// Zmiany wykrywamy lekkimi "odciskami" (fingerprint) rekordów — bez trzymania kopii całych danych.
+const MERGE_COLLS = ['projekty', 'pracownicy', 'uzytkownicy', 'bloki', 'awarie', 'wydatki', 'narzedzia', 'samochody', 'dostawcy', 'wz', 'fakturyZakupowe'];
+let SYNC_DEL = {}, SYNC_FP = {};
+try { SYNC_DEL = JSON.parse(localStorage.getItem('elektroapp_sync_del') || '{}'); } catch (e) { SYNC_DEL = {}; }
+try { SYNC_FP = JSON.parse(localStorage.getItem('elektroapp_sync_fp') || '{}'); } catch (e) { SYNC_FP = {}; }
+
+function stripUpd(o) { if (!o || typeof o !== 'object') return o; const c = {}; for (const k in o) if (k !== '_upd') c[k] = o[k]; return c; }
+function hashStr(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h.toString(36); }
+function recFP(rec) { return hashStr(JSON.stringify(stripUpd(rec))); }
+
+// Ostempluj (_upd) rekordy zmienione od ostatniej synchronizacji; usunięcia → SYNC_DEL
+function stampChanges() {
+  const now = Date.now();
+  for (const coll of MERGE_COLLS) {
+    const cur = DATA[coll] || {};
+    for (const id of Object.keys(cur)) {
+      const rec = cur[id];
+      if (!rec || typeof rec !== 'object') continue;
+      const key = coll + ':' + id, fp = recFP(rec);
+      if (SYNC_FP[key] !== fp) { rec._upd = now; SYNC_FP[key] = fp; }
+    }
+    for (const key of Object.keys(SYNC_FP)) {
+      if (key.startsWith(coll + ':')) { const id = key.slice(coll.length + 1); if (!(id in cur)) { SYNC_DEL[key] = now; delete SYNC_FP[key]; } }
+    }
+  }
+  const limit = now - 45 * 86400000;
+  for (const k in SYNC_DEL) if (SYNC_DEL[k] < limit) delete SYNC_DEL[k];
+  localStorage.setItem('elektroapp_sync_del', JSON.stringify(SYNC_DEL));
+  localStorage.setItem('elektroapp_sync_fp', JSON.stringify(SYNC_FP));
+}
+
+// Wchłoń stan z serwera (już scalony); odśwież odciski, żeby nie wykryć fałszywych zmian
+function adoptServerData(data, del) {
+  if (!data) return;
+  Object.keys(data).forEach(k => { DATA[k] = data[k]; });
+  if (del) for (const k in del) SYNC_DEL[k] = Math.max(SYNC_DEL[k] || 0, del[k]);
+  SYNC_FP = {};
+  for (const coll of MERGE_COLLS) {
+    const cur = DATA[coll] || {};
+    for (const id of Object.keys(cur)) { const rec = cur[id]; if (rec && typeof rec === 'object') SYNC_FP[coll + ':' + id] = recFP(rec); }
+  }
+  localStorage.setItem('elektroapp_sync_del', JSON.stringify(SYNC_DEL));
+  localStorage.setItem('elektroapp_sync_fp', JSON.stringify(SYNC_FP));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: DATA, prefs: NOTIF_PREFS })); } catch (e) {}
+}
+
 function syncSchedulePush() {
   if (!SYNC_TOKEN) return;
   clearTimeout(_syncPushTimer);
@@ -957,13 +1004,15 @@ async function syncPush() {
   if (!SYNC_TOKEN || _syncBusy) return;
   _syncBusy = true;
   try {
+    stampChanges();
     const r = await fetch(SYNC_API + '/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SYNC_TOKEN },
-      body: JSON.stringify({ data: DATA }),
+      body: JSON.stringify({ data: DATA, del: SYNC_DEL }),
     });
     if (r.ok) {
       const j = await r.json();
+      if (j.data) adoptServerData(j.data, j.del);
       SYNC_LAST_AT = j.updated_at;
       localStorage.setItem('elektroapp_sync_last_at', String(SYNC_LAST_AT));
     }
@@ -978,10 +1027,9 @@ async function syncPull() {
     if (!r.ok) return false;
     const j = await r.json();
     if (j.data) {
-      Object.keys(j.data).forEach(k => { DATA[k] = j.data[k]; });
+      adoptServerData(j.data, j.del);
       SYNC_LAST_AT = j.updated_at;
       localStorage.setItem('elektroapp_sync_last_at', String(SYNC_LAST_AT));
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: DATA, prefs: NOTIF_PREFS })); } catch (e) {}
       return true;
     }
     return false;
