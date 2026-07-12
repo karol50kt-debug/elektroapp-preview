@@ -413,8 +413,9 @@ body.employee .admin-only{display:none!important}
 </div>
 <!-- Modal: kod synchronizacji do udostepnienia pracownikom -->
 <div class="modal-ov" id="modal-sync-share" style="display:none" onclick="if(event.target===this)closeModal('modal-sync-share')">
-  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-sync-share')">✕</button><h3>☁️ Kod synchronizacji</h3>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Podaj ten kod pracownikom (np. przez WhatsApp) — po wpisaniu go na swoim telefonie ich godziny/wpisy też będą się zapisywać w tej samej chmurze. Nie udostępniaj go osobom spoza firmy — daje pełny dostęp do danych.</div>
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-sync-share')">✕</button><h3>☁️ Kod pracownika</h3>
+    <div id="sync-share-name" style="font-size:13px;font-weight:800;margin-bottom:6px"></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Pracownik skanuje ten kod (albo wpisuje) raz na swoim telefonie: ekran logowania → „Mam kod pracownika". Widzi tylko swoje dane, bez finansów. Kod możesz w każdej chwili odłączyć w liście urządzeń.</div>
     <div id="sync-share-qr" style="display:flex;justify-content:center;margin-bottom:12px"></div>
     <div id="sync-share-code" style="font-size:10px;word-break:break-all;background:#232a31;border-radius:8px;padding:10px;color:var(--sec);margin-bottom:10px"></div>
     <button class="btn-p" onclick="copySyncCode()">📋 Kopiuj kod</button>
@@ -769,6 +770,7 @@ body.employee .admin-only{display:none!important}
   <div class="login-title">ElektroApp</div>
   <div class="login-sub">ElektroSmart Instalacje · wybierz konto</div>
   <div id="login-tiles" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
+  <button id="login-emp-code" onclick="loginEmployeeCode()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;padding:9px 18px;border-radius:22px;width:100%">🔑 Mam kod pracownika</button>
   <div id="login-pin" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
     <div style="color:#fff;font-size:14px;font-weight:700" id="pin-user-label"></div>
     <div class="pin-dots" id="pin-dots"></div>
@@ -1022,35 +1024,46 @@ function initGoogleSignIn() {
   google.accounts.id.renderButton(el, { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', width: 260 });
 }
 
+function syncRole() { return !SYNC_TOKEN ? null : (SYNC_TOKEN.startsWith('dev_') ? 'employee' : 'owner'); }
+
 function syncNow() {
   if (!SYNC_TOKEN) return;
   showToast('☁️ Synchronizuję...');
-  syncPull().then(() => { syncPush(); showToast('✅ Zsynchronizowano'); buildUstawienia(); });
+  syncPull().then(() => { syncPush(); showToast('✅ Zsynchronizowano'); if (currentTab === 'ustawienia') buildUstawienia(); });
 }
 
 function disconnectSync() {
-  if (!confirm('Odłączyć synchronizację z chmurą na tym urządzeniu? Dane lokalne zostaną, ale przestaną się automatycznie wysyłać.')) return;
+  const emp = syncRole() === 'employee';
+  if (!confirm(emp ? 'Odłączyć to urządzenie od danych firmy? Będzie trzeba ponownie wpisać kod od szefa.' : 'Odłączyć synchronizację na tym urządzeniu? Dane lokalne zostaną.')) return;
   SYNC_TOKEN = null; SYNC_USER = null;
   localStorage.removeItem('elektroapp_sync_token');
   localStorage.removeItem('elektroapp_sync_user');
-  buildUstawienia();
+  showToast('☁️ Odłączono');
+  if (currentTab === 'ustawienia') buildUstawienia();
 }
 
+// Karta synchronizacji w Ustawieniach (tylko właściciel tu trafia)
 function syncStatusHtml() {
-  if (!SYNC_TOKEN || !SYNC_USER) {
-    return `<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Połącz konto Google, żeby dane (projekty, godziny, wydatki...) synchronizowały się automatycznie między Twoimi urządzeniami.</div>
+  if (!SYNC_TOKEN) {
+    return `<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Połącz konto Google, żeby dane synchronizowały się między Twoimi urządzeniami i żeby móc nadać dostęp pracownikom.</div>
       <div id="google-signin-btn"></div>`;
   }
   const when = SYNC_LAST_AT ? new Date(SYNC_LAST_AT).toLocaleString('pl-PL') : 'jeszcze nie';
+  const pracownicy = Object.values(DATA.uzytkownicy).filter(u => !u.admin);
   return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <div style="width:36px;height:36px;border-radius:18px;background:var(--blue-d);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff">☁️</div>
-      <div style="flex:1"><div style="font-size:13px;font-weight:800">${SYNC_USER.name || SYNC_USER.email}</div><div style="font-size:11px;color:var(--muted)">Ostatnia synchronizacja: ${when}</div></div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:800">${(SYNC_USER && (SYNC_USER.name || SYNC_USER.email)) || 'Zalogowano'}</div><div style="font-size:11px;color:var(--muted)">Ostatnia synchronizacja: ${when}</div></div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:8px">
+    <div style="display:flex;gap:8px;margin-bottom:14px">
       <button class="btn-s" style="flex:1" onclick="syncNow()">🔄 Synchronizuj teraz</button>
-      <button class="btn-r" style="flex:1" onclick="disconnectSync()">Odłącz</button>
+      <button class="btn-r" style="flex:1" onclick="disconnectSync()">Wyloguj</button>
     </div>
-    <button class="btn-p" style="width:100%" onclick="openSyncShare()">👥 Pokaż kod dla pracowników</button>`;
+    <div class="sec-hdr"><h3 style="font-size:12px">🔑 Dostęp pracowników</h3></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Wygeneruj kod dla pracownika — wpisze go raz na swoim telefonie, potem loguje się PIN-em. Pracownik widzi tylko swoje dane (bez finansów). Kod możesz w każdej chwili odłączyć.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+      ${pracownicy.map(u => `<button class="btn-s" style="padding:6px 10px;font-size:11px;width:auto" onclick="generateEmployeeCode('${u.id}')">＋ Kod: ${u.nazwa.split(' ')[0]}</button>`).join('')}
+    </div>
+    <div id="devices-list"><div style="font-size:11px;color:var(--muted)">Ładowanie urządzeń...</div></div>`;
 }
 
 function openInstallQr() {
@@ -1060,45 +1073,90 @@ function openInstallQr() {
   openModal('modal-install-qr');
 }
 
-function openSyncShare() {
-  if (!SYNC_TOKEN) return;
-  document.getElementById('sync-share-code').textContent = SYNC_TOKEN;
-  const qrEl = document.getElementById('sync-share-qr');
-  qrEl.innerHTML = '';
-  try { new QRCode(qrEl, { text: SYNC_TOKEN, width: 180, height: 180 }); } catch (e) {}
-  openModal('modal-sync-share');
+// Właściciel: utwórz kod dla pracownika i pokaż QR
+async function generateEmployeeCode(uid) {
+  const u = DATA.uzytkownicy[uid];
+  if (!u) return;
+  showToast('⏳ Tworzę kod...');
+  try {
+    const r = await fetch(SYNC_API + '/api/devices/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SYNC_TOKEN },
+      body: JSON.stringify({ pracId: u.pracownik, label: u.nazwa, perms: u.uprawnienia || {} }),
+    });
+    const j = await r.json();
+    if (!j.code) { showToast('⚠️ Nie udało się utworzyć kodu'); return; }
+    document.getElementById('sync-share-code').textContent = j.code;
+    const qrEl = document.getElementById('sync-share-qr');
+    qrEl.innerHTML = '';
+    try { new QRCode(qrEl, { text: j.code, width: 180, height: 180 }); } catch (e) {}
+    document.getElementById('sync-share-name').textContent = 'Kod dla: ' + u.nazwa;
+    openModal('modal-sync-share');
+    refreshDevices();
+  } catch (e) { showToast('⚠️ Brak połączenia z serwerem'); }
 }
 
 function copySyncCode() {
-  if (!SYNC_TOKEN) return;
-  navigator.clipboard?.writeText(SYNC_TOKEN).then(() => showToast('📋 Skopiowano kod'))
-    .catch(() => showToast('⚠️ Nie udało się skopiować — zaznacz kod ręcznie'));
+  const code = document.getElementById('sync-share-code').textContent;
+  navigator.clipboard?.writeText(code).then(() => showToast('📋 Skopiowano kod'))
+    .catch(() => showToast('⚠️ Nie udało się skopiować — zaznacz ręcznie'));
 }
 
+// Właściciel: lista aktywnych urządzeń pracowników + odłączanie
+async function refreshDevices() {
+  const el = document.getElementById('devices-list');
+  if (!el || syncRole() !== 'owner') return;
+  try {
+    const r = await fetch(SYNC_API + '/api/devices', { headers: { 'Authorization': 'Bearer ' + SYNC_TOKEN } });
+    const j = await r.json();
+    const devs = (j.devices || []).filter(d => !d.revoked);
+    if (!devs.length) { el.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:4px 0">Brak aktywnych urządzeń pracowników.</div>'; return; }
+    el.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px">Aktywne urządzenia (${devs.length})</div>` + devs.map(d => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1"><div style="font-size:12px;font-weight:700">${d.label || d.prac_id || '—'}</div><div style="font-size:10px;color:var(--muted)">${d.last_seen ? 'aktywny: ' + new Date(d.last_seen).toLocaleString('pl-PL') : 'jeszcze nieużyty'}</div></div>
+      <button class="btn-r" style="padding:5px 10px;font-size:11px;width:auto" onclick="revokeDevice('${d.token}')">🔒 Odłącz</button>
+    </div>`).join('');
+  } catch (e) { el.innerHTML = '<div style="font-size:11px;color:var(--muted)">Nie udało się pobrać listy urządzeń.</div>'; }
+}
+
+async function revokeDevice(token) {
+  if (!confirm('Odłączyć ten telefon? Natychmiast straci dostęp do danych firmy.')) return;
+  try {
+    await fetch(SYNC_API + '/api/devices/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SYNC_TOKEN },
+      body: JSON.stringify({ token }),
+    });
+    showToast('🔒 Urządzenie odłączone');
+    refreshDevices();
+  } catch (e) { showToast('⚠️ Nie udało się odłączyć'); }
+}
+
+// Pracownik: przycisk ☁️ na nagłówku „Moje godziny"
 function employeeSyncTap() {
-  if (SYNC_TOKEN) {
-    if (confirm('Synchronizacja z chmurą jest włączona na tym telefonie.\n\nOK = odłącz\nAnuluj = zamknij')) {
-      SYNC_TOKEN = null;
-      localStorage.removeItem('elektroapp_sync_token');
-      showToast('☁️ Odłączono synchronizację');
-    }
+  if (syncRole() === 'employee') {
+    if (confirm('To urządzenie jest połączone z danymi firmy.\n\nOK = odłącz (wróci do logowania kodem)\nAnuluj = zamknij')) disconnectSync();
   } else {
-    connectSyncEmployee();
+    loginEmployeeCode();
   }
 }
 
-async function connectSyncEmployee() {
-  const code = prompt('Wklej kod synchronizacji otrzymany od właściciela:');
+// Pracownik: zaloguj urządzenie kodem od szefa (z ekranu logowania lub nagłówka)
+async function loginEmployeeCode() {
+  const code = prompt('Wpisz kod pracownika otrzymany od szefa:');
   if (!code) return;
-  const prev = SYNC_TOKEN;
-  SYNC_TOKEN = code.trim();
+  const c = code.trim();
   showToast('☁️ Łączenie...');
-  const r = await fetch(SYNC_API + '/api/sync', { headers: { 'Authorization': 'Bearer ' + SYNC_TOKEN } }).catch(() => null);
-  if (!r || !r.ok) { SYNC_TOKEN = prev; showToast('⚠️ Nieprawidłowy kod'); return; }
+  const r = await fetch(SYNC_API + '/api/auth/device', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: c }),
+  }).catch(() => null);
+  if (!r || !r.ok) { showToast('⚠️ Nieprawidłowy lub odłączony kod'); return; }
+  SYNC_TOKEN = c;
   localStorage.setItem('elektroapp_sync_token', SYNC_TOKEN);
-  await syncPull();
-  await syncPush();
-  showToast('✅ Połączono — Twoje wpisy będą się teraz synchronizować');
+  localStorage.removeItem('elektroapp_sync_user');
+  const ok = await syncPull();
+  showToast(ok ? '✅ Połączono — zaloguj się swoim PIN-em' : '✅ Połączono');
+  renderLoginTiles();
+  if (currentTab === 'ustawienia') buildUstawienia();
 }
 
 function loadState() {
@@ -4128,6 +4186,7 @@ function buildUstawienia() {
       <button class="btn-r" style="width:100%;margin-top:10px" onclick="if(confirm('Usunąć wszystkie zapisane dane i wrócić do danych przykładowych?'))resetState()">♻️ Resetuj dane do przykładowych</button>
     </div>`;
   if (!SYNC_TOKEN) setTimeout(initGoogleSignIn, 50);
+  else if (syncRole() === 'owner') setTimeout(refreshDevices, 50);
 }
 
 function zmienPin(uid) {
@@ -4974,7 +5033,7 @@ function wykonajPrzyp(i) { if (_przypCache[i] && _przypCache[i].akcja) _przypCac
 // ═══════ INIT ═══════
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
-  if (SYNC_TOKEN) syncPull().then(() => { if (currentTab === 'ustawienia') buildUstawienia(); });
+  if (SYNC_TOKEN) syncPull().then(ok => { if (ok) renderLoginTiles(); if (currentTab === 'ustawienia') buildUstawienia(); });
   // Rejestry zakupów (WZ / faktury / dostawcy) — inicjalizacja jeśli brak
   if (!DATA.dostawcy) DATA.dostawcy = {};
   if (!DATA.wz) DATA.wz = {};
