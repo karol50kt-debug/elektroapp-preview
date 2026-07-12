@@ -468,14 +468,14 @@ body.employee .admin-only{display:none!important}
 
 <!-- ═══════ NARZĘDZIA ═══════ -->
 <div class="sv" id="sv-narzedzia">
-<div class="hdr"><div class="hdr-title">🔧 Narzędzia</div><div class="hdr-right"><button class="hdr-btn" onclick="openScanner()">📷</button><button class="hdr-btn" onclick="openModal('modal-narzedzie')">＋</button><div class="avatar">K</div></div></div>
+<div class="hdr"><div class="hdr-title">🔧 Narzędzia</div><div class="hdr-right"><button class="hdr-btn" onclick="openScanner()">📷</button><button class="hdr-btn" onclick="openNoweNarzedzie()">＋</button><div class="avatar">K</div></div></div>
 <div class="content" style="position:relative">
   <div class="kpi-scroll">
-    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">6</div><div class="l">Łącznie</div></div>
-    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">4</div><div class="l">Dostępne</div></div>
-    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">1</div><div class="l">Pożyczone</div></div>
-    <div class="kpi-sm" style="border-top-color:var(--purple)"><div class="v" style="color:var(--purple)">4,8k zł</div><div class="l">Wartość</div></div>
-    <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">590 zł</div><div class="l">Naprawy</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)" id="narz-kpi-total">0</div><div class="l">Łącznie</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)" id="narz-kpi-dostepne">0</div><div class="l">Dostępne</div></div>
+    <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)" id="narz-kpi-pozyczone">0</div><div class="l">Pożyczone</div></div>
+    <div class="kpi-sm fin" style="border-top-color:var(--purple)"><div class="v" style="color:var(--purple)" id="narz-kpi-wartosc">0</div><div class="l">Wartość zł</div></div>
+    <div class="kpi-sm fin" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)" id="narz-kpi-naprawy">0</div><div class="l">Naprawy zł</div></div>
   </div>
   <div class="search"><span>🔍</span><input id="search-narz" oninput="applyFilter('narz')" placeholder="Szukaj narzędzia..."></div>
   <div class="frow" id="frow-narz">
@@ -485,13 +485,7 @@ body.employee .admin-only{display:none!important}
     <div class="ftab" onclick="setFtab(this,'narz')">W użyciu</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-narz">
-    <div class="li" data-status="Dostępne" data-text="makita dhp484z" onclick="openNarz('t1')"><div class="li-icon" style="background:var(--blue-l)">🔧</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Makita</div><div class="li-title">DHP484Z</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">650 zł</div></div></div>
-    <div class="li" data-status="Pożyczone" data-text="bosch gbh 2-28 f" onclick="openNarz('t2')"><div class="li-icon" style="background:var(--orange-l)">🔨</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Bosch</div><div class="li-title">GBH 2-28 F</div><div class="li-sub">👤 Arek · 🔨 2 naprawy</div></div><div class="li-right"><span class="badge" style="background:var(--orange-l);color:var(--orange)">Pożyczone</span><div style="font-size:12px;font-weight:700;margin-top:2px">890 zł</div></div></div>
-    <div class="li" data-status="Dostępne" data-text="fluke 117 multimeter" onclick="openNarz('t3')"><div class="li-icon" style="background:var(--blue-l)">📏</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Fluke</div><div class="li-title">117 Multimeter</div><div class="li-sub">🔨 1 naprawa</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">1 200 zł</div></div></div>
-    <div class="li" data-status="W użyciu" data-text="knipex zestaw szczypiec" onclick="openNarz('t4')"><div class="li-icon" style="background:var(--blue-l)">🪛</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Knipex</div><div class="li-title">Zestaw szczypiec</div><div class="li-sub">👤 Maciek Sosna</div></div><div class="li-right"><span class="badge" style="background:var(--blue-l);color:var(--blue)">W użyciu</span><div style="font-size:12px;font-weight:700;margin-top:2px">450 zł</div></div></div>
-    <div class="li" data-status="Dostępne" data-text="stanley poziomnica 60cm" onclick="openNarz('t5')"><div class="li-icon" style="background:var(--green-l)">📐</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Stanley</div><div class="li-title">Poziomnica 60cm</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">120 zł</div></div></div>
-    <div class="li" data-status="Dostępne" data-text="milwaukee m18 fuel" onclick="openNarz('t6')"><div class="li-icon" style="background:var(--red-l)">🔋</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Milwaukee</div><div class="li-title">M18 FUEL</div><div class="li-sub">🔨 1 naprawa</div></div><div class="li-right"><span class="badge" style="background:var(--green-l);color:var(--green)">Dostępne</span><div style="font-size:12px;font-weight:700;margin-top:2px">1 450 zł</div></div></div>
-    <div class="li-empty" id="empty-narz" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
+    <div class="li-empty" id="empty-narz" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak narzędzi — dodaj pierwsze przyciskiem ＋</div>
   </div>
   <!-- Scanner overlay -->
   <div class="scan-ov" id="scan-ov" style="display:none">
@@ -499,7 +493,7 @@ body.employee .admin-only{display:none!important}
     <div class="scan-frame"><div class="sc sc-tl"></div><div class="sc sc-tr"></div><div class="sc sc-bl"></div><div class="sc sc-br"></div></div>
     <div style="color:rgba(255,255,255,.8);font-size:12px;text-align:center">Skanuje nr seryjny producenta<br>lub kod wygenerowany przez ElektroApp</div>
     <button style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-size:13px;cursor:pointer" onclick="closeDet('scan-ov');document.getElementById('scan-ov').style.display='none'">✕ Zamknij</button>
-    <button style="background:var(--green);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-size:13px;cursor:pointer" onclick="document.getElementById('scan-ov').style.display='none';openNarz('t2')">✅ Symuluj skan (Bosch)</button>
+    <button style="background:var(--green);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-size:13px;cursor:pointer" onclick="document.getElementById('scan-ov').style.display='none';symulujSkanNarz()">✅ Symuluj skan pierwszego narzędzia</button>
   </div>
 </div>
 <!-- Detail narzędzie -->
@@ -509,10 +503,11 @@ body.employee .admin-only{display:none!important}
 </div>
 <!-- Modal nowe narzędzie -->
 <div class="modal-ov" id="modal-narzedzie" style="display:none" onclick="if(event.target===this)closeModal('modal-narzedzie')">
-  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-narzedzie')">✕</button><h3>🔧 Nowe narzędzie</h3>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Marka</label><input class="fi" placeholder="Bosch"></div><div class="fg" style="flex:1"><label>Model</label><input class="fi" placeholder="GBH 2-28"></div></div>
-    <div class="fg"><label>Nr seryjny (opcjonalnie)</label><input class="fi" placeholder="BS-2024-001"></div>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Wartość (zł)</label><input class="fi" type="number" placeholder="0"></div><div class="fg" style="flex:1"><label>Data zakupu</label><input class="fi" id="nn-data-zakupu" type="date" oninput="ustawGwarancje(null)"></div></div>
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-narzedzie')">✕</button><h3 id="nn-heading">🔧 Nowe narzędzie</h3>
+    <input type="hidden" id="nn-edit-id" value="">
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Marka</label><input class="fi" id="nn-marka" placeholder="Bosch"></div><div class="fg" style="flex:1"><label>Model</label><input class="fi" id="nn-model" placeholder="GBH 2-28"></div></div>
+    <div class="fg"><label>Nr seryjny (opcjonalnie)</label><input class="fi" id="nn-nrser" placeholder="BS-2024-001"></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Wartość (zł)</label><input class="fi" id="nn-wartosc" type="number" placeholder="0"></div><div class="fg" style="flex:1"><label>Data zakupu</label><input class="fi" id="nn-data-zakupu" type="date" oninput="ustawGwarancje(null)"></div></div>
     <div class="fg">
       <label>Gwarancja do</label>
       <input class="fi" id="nn-gwarancja" type="date">
@@ -522,16 +517,17 @@ body.employee .admin-only{display:none!important}
         <button type="button" onclick="ustawGwarancje(36)" class="btn-s" style="flex:1">36 mies.</button>
       </div>
     </div>
-    <button class="btn-p" onclick="showToast('✅ Narzędzie dodane!');closeModal('modal-narzedzie')">Dodaj narzędzie</button>
+    <button class="btn-p" id="nn-submit" onclick="saveNarzedzie()">Dodaj narzędzie</button>
   </div>
 </div>
 <!-- Modal zgłoś naprawę -->
 <div class="modal-ov" id="modal-naprawa" style="display:none" onclick="if(event.target===this)closeModal('modal-naprawa')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-naprawa')">✕</button><h3>🔨 Zgłoś naprawę</h3>
-    <div class="fg"><label>Data</label><input class="fi" type="date"></div>
-    <div class="fg"><label>Opis naprawy</label><textarea class="fi" rows="2" placeholder="Co naprawiono?" style="resize:none"></textarea></div>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Serwis</label><input class="fi" placeholder="Bosch Service"></div><div class="fg" style="flex:1"><label>Koszt (zł)</label><input class="fi" type="number" placeholder="0"></div></div>
-    <button class="btn-p" onclick="showToast('✅ Naprawa zapisana!');closeModal('modal-naprawa')">Zapisz naprawę</button>
+    <div class="fg"><label>Data</label><input class="fi" id="np-nap-data" type="date"></div>
+    <div class="fg"><label>Opis naprawy</label><textarea class="fi" id="np-nap-opis" rows="2" placeholder="Co naprawiono?" style="resize:none"></textarea></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Serwis</label><input class="fi" id="np-nap-serwis" placeholder="Bosch Service"></div><div class="fg" style="flex:1"><label>Koszt (zł)</label><input class="fi" id="np-nap-koszt" type="number" placeholder="0"></div></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:10px;cursor:pointer"><input type="checkbox" id="np-nap-serwis-status" style="accent-color:var(--blue)"> Ustaw status narzędzia na „Serwis"</label>
+    <button class="btn-p" onclick="saveNaprawa()">Zapisz naprawę</button>
   </div>
 </div>
 </div>
@@ -1284,6 +1280,7 @@ function switchTab(tab, opts = {}) {
   if (tab === 'pracownicy') renderPracList();
   if (tab === 'dashboard') renderPrzypomnienia();
   if (tab === 'samochody') renderSamochodyList();
+  if (tab === 'narzedzia') renderNarzList();
   if (tab === 'zakupy') renderZakupy();
   if (tab === 'terminarz') buildTerminarz();
 }
@@ -3042,9 +3039,146 @@ function openScanner() {
   document.getElementById('scan-ov').style.display = 'flex';
 }
 
+// ═══════ NARZĘDZIA: lista, dodawanie, edycja, status, naprawy ═══════
+const NARZ_STATUSY = ['Dostępne', 'W użyciu', 'Pożyczone', 'Serwis'];
+const NARZ_META = {
+  'Dostępne': { bg: 'var(--green-l)', fg: 'var(--green)' },
+  'W użyciu': { bg: 'var(--blue-l)', fg: 'var(--blue)' },
+  'Pożyczone': { bg: 'var(--orange-l)', fg: 'var(--orange)' },
+  'Serwis': { bg: 'var(--red-l)', fg: 'var(--red)' },
+};
+let _narzCur = null;   // id narzędzia otwartego w szczegółach (dla modala naprawy)
+
+function renderNarzList() {
+  const all = Object.values(DATA.narzedzia || {});
+  const listEl = document.getElementById('list-narz');
+  const emptyEl = document.getElementById('empty-narz');
+  if (listEl) {
+    listEl.querySelectorAll(':scope > .li').forEach(li => li.remove());
+    all.forEach(n => {
+      const m = NARZ_META[n.status] || NARZ_META['Dostępne'];
+      const nap = (n.naprawy || []).length;
+      const li = document.createElement('div');
+      li.className = 'li';
+      li.dataset.status = n.status;
+      li.dataset.text = `${n.marka} ${n.model} ${n.nr_ser || ''}`.toLowerCase();
+      li.onclick = () => openNarz(n.id);
+      li.innerHTML = `<div class="li-icon" style="background:${m.bg}">${n.ikona || '🔧'}</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">${n.marka}</div><div class="li-title">${n.model}</div>${(n.komu || nap) ? `<div class="li-sub">${n.komu ? '👤 ' + n.komu : ''}${n.komu && nap ? ' · ' : ''}${nap ? '🔨 ' + nap + ' napr.' : ''}</div>` : ''}</div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${n.status}</span><div class="fin" style="font-size:12px;font-weight:700;margin-top:2px">${(n.wartosc || 0).toLocaleString('pl-PL')} zł</div></div>`;
+      listEl.insertBefore(li, emptyEl);
+    });
+    applyFilter('narz');
+  }
+  const setC = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setC('narz-kpi-total', all.length);
+  setC('narz-kpi-dostepne', all.filter(n => n.status === 'Dostępne').length);
+  setC('narz-kpi-pozyczone', all.filter(n => n.status === 'Pożyczone').length);
+  setC('narz-kpi-wartosc', all.reduce((s, n) => s + (n.wartosc || 0), 0).toLocaleString('pl-PL'));
+  setC('narz-kpi-naprawy', all.reduce((s, n) => s + (n.naprawy || []).reduce((a, r) => a + (r.koszt || 0), 0), 0).toLocaleString('pl-PL'));
+}
+
+function openNoweNarzedzie() {
+  document.getElementById('nn-edit-id').value = '';
+  document.getElementById('nn-heading').textContent = '🔧 Nowe narzędzie';
+  document.getElementById('nn-submit').textContent = 'Dodaj narzędzie';
+  ['nn-marka', 'nn-model', 'nn-nrser', 'nn-wartosc', 'nn-data-zakupu', 'nn-gwarancja'].forEach(id => document.getElementById(id).value = '');
+  openModal('modal-narzedzie');
+}
+
+function saveNarzedzie() {
+  const marka = document.getElementById('nn-marka').value.trim();
+  const model = document.getElementById('nn-model').value.trim();
+  if (!marka && !model) { showToast('⚠️ Podaj markę lub model'); return; }
+  const nr_ser = document.getElementById('nn-nrser').value.trim() || null;
+  const wartosc = Math.round(Number(document.getElementById('nn-wartosc').value) || 0);
+  const dz = document.getElementById('nn-data-zakupu').value;
+  const gw = document.getElementById('nn-gwarancja').value;
+  const data_zakupu = dz ? dz.split('-').reverse().join('.') : new Date().toLocaleDateString('pl-PL');
+  const gwarancja_do = gw ? gw.split('-').reverse().join('.') : null;
+  const editId = document.getElementById('nn-edit-id').value;
+  if (editId && DATA.narzedzia[editId]) {
+    Object.assign(DATA.narzedzia[editId], { marka, model, nr_ser, wartosc, data_zakupu, gwarancja_do });
+    showToast('✅ Zapisano zmiany');
+  } else {
+    const id = uid('t_');
+    DATA.narzedzia[id] = { id, marka, model, nr_ser, status: 'Dostępne', wartosc, data_zakupu, gwarancja_do, komu: null, ikona: '🔧', naprawy: [] };
+    showToast('✅ Narzędzie dodane');
+  }
+  saveState(); renderNarzList(); renderPrzypomnienia();
+  closeModal('modal-narzedzie');
+}
+
+function openEditNarzedzie(id) {
+  const n = DATA.narzedzia[id]; if (!n) return;
+  document.getElementById('nn-edit-id').value = id;
+  document.getElementById('nn-heading').textContent = '✏️ Edytuj narzędzie';
+  document.getElementById('nn-submit').textContent = 'Zapisz zmiany';
+  document.getElementById('nn-marka').value = n.marka || '';
+  document.getElementById('nn-model').value = n.model || '';
+  document.getElementById('nn-nrser').value = n.nr_ser || '';
+  document.getElementById('nn-wartosc').value = n.wartosc || '';
+  document.getElementById('nn-data-zakupu').value = n.data_zakupu ? n.data_zakupu.split('.').reverse().join('-') : '';
+  document.getElementById('nn-gwarancja').value = n.gwarancja_do ? n.gwarancja_do.split('.').reverse().join('-') : '';
+  openModal('modal-narzedzie');
+}
+
+function deleteNarzedzie(id) {
+  const n = DATA.narzedzia[id]; if (!n) return;
+  if (!confirm(`Usunąć narzędzie ${n.marka} ${n.model}?`)) return;
+  delete DATA.narzedzia[id];
+  saveState(); renderNarzList();
+  goBack(); showToast('🗑️ Narzędzie usunięte');
+}
+
+// Zmiana statusu narzędzia (opcjonalnie „komu" przy Pożyczone/W użyciu)
+function zmienStatusNarz(id, status) {
+  const n = DATA.narzedzia[id]; if (!n) return;
+  if (status === 'Pożyczone' || status === 'W użyciu') {
+    const komu = prompt(status === 'Pożyczone' ? 'Komu pożyczone?' : 'Kto używa?', n.komu || '');
+    if (komu === null) return;
+    n.komu = komu.trim() || null;
+  } else {
+    n.komu = null;
+  }
+  n.status = status;
+  saveState(); openNarz(id, { skipPush: true }); renderNarzList();
+  showToast('✅ Status: ' + status);
+}
+
+function saveNaprawa() {
+  const n = _narzCur ? DATA.narzedzia[_narzCur] : null;
+  if (!n) { showToast('⚠️ Brak narzędzia'); return; }
+  const opis = document.getElementById('np-nap-opis').value.trim();
+  if (!opis) { showToast('⚠️ Opisz naprawę'); return; }
+  const dv = document.getElementById('np-nap-data').value;
+  const data = dv ? dv.split('-').reverse().join('.') : new Date().toLocaleDateString('pl-PL');
+  const serwis = document.getElementById('np-nap-serwis').value.trim();
+  const koszt = Math.round(Number(document.getElementById('np-nap-koszt').value) || 0);
+  n.naprawy = n.naprawy || [];
+  n.naprawy.unshift({ data, opis, serwis, koszt });
+  if (document.getElementById('np-nap-serwis-status').checked) n.status = 'Serwis';
+  saveState();
+  ['np-nap-opis', 'np-nap-serwis', 'np-nap-koszt'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('np-nap-serwis-status').checked = false;
+  closeModal('modal-naprawa');
+  openNarz(_narzCur, { skipPush: true }); renderNarzList();
+  showToast('✅ Naprawa zapisana');
+}
+
+function openNaprawaModal() {
+  document.getElementById('np-nap-data').value = new Date().toISOString().slice(0, 10);
+  openModal('modal-naprawa');
+}
+
+function symulujSkanNarz() {
+  const first = Object.values(DATA.narzedzia || {})[0];
+  if (first) openNarz(first.id);
+  else { showToast('Brak narzędzi — dodaj pierwsze ＋'); openNoweNarzedzie(); }
+}
+
 function openNarz(id, opts = {}) {
   const n = DATA.narzedzia[id];
   if (!n) return;
+  _narzCur = id;
   if (!opts.skipPush) pushNav();
   switchTab('narzedzia', { keepStack: true });
   document.getElementById('dnarz-title').textContent = n.ikona + ' ' + n.marka + ' ' + n.model;
@@ -3111,7 +3245,14 @@ function openNarz(id, opts = {}) {
           <div style="font-size:10px;color:var(--muted);margin-top:4px">${qrIsExisting ? 'Skanuj naklejkę producenta' : 'Wydrukuj i nakleij na narzędziu'}</div>
         </div>
       </div>
-      <button onclick="openModal('modal-naprawa')" style="width:100%;padding:10px;background:var(--orange-l);color:var(--orange);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">🔨 Zgłoś naprawę</button>
+      <div style="font-size:12px;font-weight:800;margin-bottom:6px">🔄 Status</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        ${NARZ_STATUSY.map(s => `<button onclick="zmienStatusNarz('${id}','${s}')" style="flex:1;min-width:70px;padding:7px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:2px solid ${s === n.status ? (NARZ_META[s].fg) : 'var(--border)'};background:${s === n.status ? NARZ_META[s].bg : 'var(--white)'};color:${s === n.status ? NARZ_META[s].fg : 'var(--muted)'}">${s}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button onclick="openNaprawaModal()" style="flex:1;padding:10px;background:var(--orange-l);color:var(--orange);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🔨 Zgłoś naprawę</button>
+        <button onclick="openEditNarzedzie('${id}')" class="btn-s" style="flex:1">✏️ Edytuj</button>
+      </div>
       <div style="font-size:12px;font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between">
         🔨 Historia napraw
         <span style="color:var(--muted);font-weight:500">${naprawy.length} serwis${naprawy.length===1?'':'ów'} · ${naprawyCost} zł</span>
@@ -3121,9 +3262,10 @@ function openNarz(id, opts = {}) {
           <div style="background:var(--blue-l);border-radius:6px;padding:4px 8px;min-width:70px;text-align:center">
             <div style="font-size:10px;font-weight:700;color:var(--blue)">${r.data}</div>
           </div>
-          <div style="flex:1"><div style="font-size:12px;font-weight:600">${r.opis}</div><div style="font-size:10px;color:var(--muted)">🏪 ${r.serwis}</div></div>
-          <div style="font-size:12px;font-weight:800;color:var(--red)">${r.koszt} zł</div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600">${r.opis}</div><div style="font-size:10px;color:var(--muted)">🏪 ${r.serwis || '—'}</div></div>
+          <div class="fin" style="font-size:12px;font-weight:800;color:var(--red)">${r.koszt} zł</div>
         </div>`).join('')}
+      <button class="btn-r" style="width:100%;margin-top:14px" onclick="deleteNarzedzie('${id}')">🗑️ Usuń narzędzie</button>
     </div>`;
 
   // Generuj QR (prymitywny z CSS)
@@ -5131,6 +5273,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPracList();
   renderKodyList();
   renderSamochodyList();
+  renderNarzList();
   renderPrzypomnienia();
   const dashDate = document.getElementById('dash-date');
   if (dashDate) dashDate.textContent = new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
