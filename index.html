@@ -102,9 +102,12 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);margin-top:-4px}
 .fg{margin-bottom:12px}
 .fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;display:block}
-.fi{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit;color:var(--text)}
-.fi:focus{border-color:var(--blue)}
-.fs{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;background:var(--white);font-family:inherit;color:var(--text)}
+.fi{width:100%;border:1px solid #3a434b;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit;color:var(--text);background:#252d34}
+.fi:focus{border-color:var(--blue);background:#2a333b}
+.fi::placeholder,.fs::placeholder{color:#8a929a;opacity:1}
+.fs{width:100%;border:1px solid #3a434b;border-radius:8px;padding:9px 12px;font-size:13px;background:#252d34;font-family:inherit;color:var(--text)}
+.fs:focus{border-color:var(--blue);outline:none}
+.fs option{background:#252d34;color:var(--text)}
 .btn-p{background:var(--blue-d);color:#fff;border:none;border-radius:20px;padding:11px 24px;font-size:14px;font-weight:700;width:100%;cursor:pointer;margin-top:8px}
 .btn-s{background:var(--blue-l);color:var(--blue);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
 .btn-r{background:var(--red-l);color:var(--red);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
@@ -687,12 +690,25 @@ body.employee .admin-only{display:none!important}
       <input type="file" id="ocr-wz-file" accept="image/*" capture="environment" style="display:none" onchange="ocrSkanujWZ(this)">
       <div id="ocr-wz-status" style="display:none;font-size:11px;color:var(--blue);margin-top:6px"></div>
       <div id="ocr-wz-cands" style="display:none;margin-top:6px"></div>
+      <div id="nwz-foto-prev" style="display:none;margin-top:8px"></div>
     </div>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Kwota (zł)</label><input class="fi" id="nwz-kwota" type="number" placeholder="0.00"></div><div class="fg" style="flex:1"><label>Data</label><input class="fi" id="nwz-data" type="date"></div></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Kwota (zł)</label><input class="fi" id="nwz-kwota" type="number" placeholder="0.00" oninput="wzPrzeliczBrutto()"></div><div class="fg" style="flex:1"><label>Data</label><input class="fi" id="nwz-data" type="date"></div></div>
+    <div style="display:flex;gap:8px">
+      <div class="fg" style="flex:1"><label>Kwota to</label><select class="fs" id="nwz-typkwoty" onchange="wzPrzeliczBrutto()"><option value="brutto">Brutto (z VAT)</option><option value="netto">Netto (bez VAT)</option></select></div>
+      <div class="fg" id="nwz-vat-wrap" style="flex:1;display:none"><label>Stawka VAT</label><select class="fs" id="nwz-vat" onchange="wzPrzeliczBrutto()"><option value="23">23%</option><option value="8">8%</option><option value="5">5%</option><option value="0">0%</option></select></div>
+    </div>
+    <div id="nwz-brutto-info" style="display:none;font-size:11px;color:var(--green);margin:-4px 0 10px;font-weight:700"></div>
     <div class="fg"><label>Pozycje / opis towaru</label><textarea class="fi" id="nwz-opis" rows="3" placeholder="np. Wiertło SDS Plus 6/50/110 mm ×20" style="resize:vertical"></textarea></div>
     <div class="fg"><label>Dostawca</label><select class="fs" id="nwz-dostawca"></select></div>
     <div class="fg"><label>Przypisz do</label><select class="fs" id="nwz-cel"></select></div>
     <button class="btn-p" onclick="saveWZ()">Zapisz WZ</button>
+  </div>
+</div>
+
+<!-- Modal: podgląd zdjęcia WZ -->
+<div class="modal-ov" id="modal-foto-podglad" style="display:none" onclick="if(event.target===this)closeModal('modal-foto-podglad')">
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-foto-podglad')">✕</button><h3>🖼️ Zdjęcie dokumentu</h3>
+    <img id="foto-podglad-img" src="" style="width:100%;border-radius:10px" alt="Zdjęcie WZ">
   </div>
 </div>
 
@@ -4249,13 +4265,63 @@ function openNoweWZ(presetDost) {
   document.getElementById('nwz-nr').value = '';
   document.getElementById('nwz-kwota').value = '';
   document.getElementById('nwz-opis').value = '';
+  document.getElementById('nwz-typkwoty').value = 'brutto';
+  document.getElementById('nwz-vat').value = '23';
   document.getElementById('nwz-data').value = new Date().toISOString().slice(0, 10);
+  _nwzFoto = null;
+  const fp = document.getElementById('nwz-foto-prev'); if (fp) { fp.style.display = 'none'; fp.innerHTML = ''; }
   const cb = document.getElementById('ocr-wz-cands'); if (cb) { cb.style.display = 'none'; cb.innerHTML = ''; }
   const st = document.getElementById('ocr-wz-status'); if (st) st.style.display = 'none';
+  wzPrzeliczBrutto();
   openModal('modal-wz');
+}
+
+// Przelicz brutto z netto+VAT i pokaż podpowiedź; pokaż/ukryj pole VAT
+function wzPrzeliczBrutto() {
+  const typ = document.getElementById('nwz-typkwoty').value;
+  const vatWrap = document.getElementById('nwz-vat-wrap');
+  const info = document.getElementById('nwz-brutto-info');
+  vatWrap.style.display = (typ === 'netto') ? 'block' : 'none';
+  const kwota = Number(document.getElementById('nwz-kwota').value) || 0;
+  if (typ === 'netto' && kwota > 0) {
+    const vat = Number(document.getElementById('nwz-vat').value) || 0;
+    const brutto = Math.round(kwota * (1 + vat / 100) * 100) / 100;
+    info.style.display = 'block';
+    info.textContent = `= ${brutto.toLocaleString('pl-PL')} zł brutto (netto ${kwota.toLocaleString('pl-PL')} + VAT ${vat}%)`;
+  } else {
+    info.style.display = 'none';
+  }
 }
 // ═══════ OCR NUMERU WZ (Tesseract.js — działa w przeglądarce, bez serwera) ═══════
 let _tesseractLoading = null;
+let _nwzFoto = null;  // zdjęcie WZ (skompresowany dataURL) do zapisania z rekordem
+
+// Zmniejsz i skompresuj zdjęcie do dataURL (żeby nie zajmowało dużo w pamięci)
+function kompresujFoto(img, maxLong, quality) {
+  let w = img.naturalWidth, h = img.naturalHeight;
+  const scale = Math.max(w, h) > maxLong ? maxLong / Math.max(w, h) : 1;
+  w = Math.round(w * scale); h = Math.round(h * scale);
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(img, 0, 0, w, h);
+  return c.toDataURL('image/jpeg', quality);
+}
+function pokazFotoPrev() {
+  const fp = document.getElementById('nwz-foto-prev');
+  if (!_nwzFoto) { fp.style.display = 'none'; fp.innerHTML = ''; return; }
+  fp.style.display = 'block';
+  fp.innerHTML = `<div style="font-size:10px;color:var(--muted);margin-bottom:4px">📎 Zdjęcie zapamiętane z WZ:</div>
+    <img src="${_nwzFoto}" onclick="podejrzyjFoto('${'nwz'}')" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border);cursor:pointer">`;
+}
+function podejrzyjFoto(src) {
+  let url = null;
+  if (src === 'nwz') url = _nwzFoto;
+  else if (DATA.wz[src]) url = DATA.wz[src].foto;
+  else url = src;
+  if (!url) { showToast('Brak zdjęcia'); return; }
+  document.getElementById('foto-podglad-img').src = url;
+  openModal('modal-foto-podglad');
+}
 function loadTesseract() {
   if (window.Tesseract) return Promise.resolve();
   if (_tesseractLoading) return _tesseractLoading;
@@ -4381,6 +4447,8 @@ async function ocrSkanujWZ(input) {
   try {
     await loadTesseract();
     const img = await wczytajObraz(file);
+    // Zapamiętaj zdjęcie (skompresowane) — do zapisania z rekordem WZ
+    try { _nwzFoto = kompresujFoto(img, 1400, 0.6); pokazFotoPrev(); } catch (e) {}
     worker = await Tesseract.createWorker('pol', 1, {
       logger: m => { if (m.status === 'recognizing text') status.textContent = `🔍 Skanuję (${_ocrRotLabel})... ${Math.round(m.progress * 100)}%`; },
     });
@@ -4435,15 +4503,20 @@ async function ocrSkanujWZ(input) {
 
 function saveWZ() {
   const nr = document.getElementById('nwz-nr').value.trim();
-  const kwota = Math.round((Number(document.getElementById('nwz-kwota').value) || 0) * 100) / 100;
-  if (kwota <= 0) { showToast('⚠️ Podaj kwotę WZ'); return; }
+  const wpisana = Math.round((Number(document.getElementById('nwz-kwota').value) || 0) * 100) / 100;
+  if (wpisana <= 0) { showToast('⚠️ Podaj kwotę WZ'); return; }
+  const typKwoty = document.getElementById('nwz-typkwoty').value;      // 'netto' | 'brutto'
+  const vat = typKwoty === 'netto' ? (Number(document.getElementById('nwz-vat').value) || 0) : null;
+  const netto = typKwoty === 'netto' ? wpisana : null;
+  // Kwota WZ (feeduje koszty/saldo) to zawsze brutto — ile realnie do zapłaty
+  const kwota = typKwoty === 'netto' ? Math.round(wpisana * (1 + vat / 100) * 100) / 100 : wpisana;
   const dostawca = document.getElementById('nwz-dostawca').value;
   const celRaw = document.getElementById('nwz-cel').value;
   const [celTyp, cel] = celRaw ? celRaw.split(':') : ['', ''];
   const dataVal = document.getElementById('nwz-data').value;
   const opis = document.getElementById('nwz-opis').value.trim();
   const id = uid('wz_');
-  DATA.wz[id] = { id, nr, kwota, opis, dostawca, celTyp, cel, data: dataVal ? dataVal.split('-').reverse().join('.') : '', fakturaId: null };
+  DATA.wz[id] = { id, nr, kwota, netto, vat, opis, foto: _nwzFoto || null, dostawca, celTyp, cel, data: dataVal ? dataVal.split('-').reverse().join('.') : '', fakturaId: null };
   // WZ liczy się od razu do kosztów materiału celu
   if (celTyp === 'projekt' && DATA.projekty[cel]) { DATA.projekty[cel].kosztyMaterialy = (DATA.projekty[cel].kosztyMaterialy || 0) + Math.round(kwota); }
   if (celTyp === 'awaria' && DATA.awarie[cel]) { DATA.awarie[cel].koszt = (DATA.awarie[cel].koszt || 0) + Math.round(kwota); }
@@ -4490,7 +4563,8 @@ function buildDostawcaDetail(id) {
       </div>
       <div class="sec-hdr"><h3 style="font-size:12px">📄 WZ niezafakturowane (${wzOtwarte.length})</h3></div>
       ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a">
-        <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)}</div>${w.opis ? `<div style="font-size:10px;color:var(--sec);margin-top:2px">📦 ${w.opis}</div>` : ''}</div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł${w.vat != null ? ` <span style="font-weight:400;color:var(--muted)">(netto ${w.netto.toLocaleString('pl-PL')} + VAT ${w.vat}%)</span>` : ''}</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)}</div>${w.opis ? `<div style="font-size:10px;color:var(--sec);margin-top:2px">📦 ${w.opis.replace(/\n/g, ', ')}</div>` : ''}</div>
+        ${w.foto ? `<button onclick="podejrzyjFoto('${w.id}')" title="Zobacz zdjęcie" style="background:none;border:none;font-size:15px;cursor:pointer">🖼️</button>` : ''}
         <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>
       </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak — wszystko zafakturowane ✅</div>'}
       <div class="sec-hdr" style="margin-top:14px"><h3 style="font-size:12px">🧾 Faktury zakupowe (${faktury.length})</h3></div>
