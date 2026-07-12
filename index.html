@@ -686,6 +686,7 @@ body.employee .admin-only{display:none!important}
     <div class="fg"><label>Numer WZ</label><div style="display:flex;gap:6px"><input class="fi" id="nwz-nr" placeholder="np. WZ/2026/123" style="flex:1"><button class="btn-s" onclick="document.getElementById('ocr-wz-file').click()" title="Zeskanuj numer WZ ze zdjęcia">📷</button></div>
       <input type="file" id="ocr-wz-file" accept="image/*" capture="environment" style="display:none" onchange="ocrSkanujWZ(this)">
       <div id="ocr-wz-status" style="display:none;font-size:11px;color:var(--blue);margin-top:6px"></div>
+      <div id="ocr-wz-cands" style="display:none;margin-top:6px"></div>
     </div>
     <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Kwota (zł)</label><input class="fi" id="nwz-kwota" type="number" placeholder="0.00"></div><div class="fg" style="flex:1"><label>Data</label><input class="fi" id="nwz-data" type="date"></div></div>
     <div class="fg"><label>Dostawca</label><select class="fs" id="nwz-dostawca"></select></div>
@@ -4264,45 +4265,120 @@ function loadTesseract() {
   return _tesseractLoading;
 }
 
-// Wyłuskaj najbardziej prawdopodobny numer WZ z rozpoznanego tekstu.
-function wyodrebnijNrWZ(text) {
-  const t = text.replace(/\r/g, '\n');
-  // 1) linia z "WZ" i numerem, np. "WZ/005050/7701/06/2026" albo "WZ 123/2026"
-  const wzLine = t.match(/WZ[\s:/-]*[0-9][0-9A-Za-z/\-]{2,}/i);
-  if (wzLine) return wzLine[0].replace(/^WZ[\s:]*/i, 'WZ/').replace(/\s+/g, '').replace(/\/+/g, '/');
-  // 2) ciąg wyglądający jak numer dokumentu z ukośnikami
-  const slashNum = t.match(/[0-9]{3,}(?:\/[0-9A-Za-z]{1,6}){1,4}/);
-  if (slashNum) return slashNum[0];
-  return '';
+// Wczytaj plik do obiektu Image
+function wczytajObraz(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Nie udało się wczytać zdjęcia'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// Narysuj obraz na canvas z obrotem, skalowaniem, skalą szarości i zwiększonym kontrastem
+function przygotujCanvas(img, rotDeg, maxLong) {
+  const swap = rotDeg === 90 || rotDeg === 270;
+  let w = img.naturalWidth, h = img.naturalHeight;
+  const long = Math.max(w, h);
+  const scale = long > maxLong ? maxLong / long : 1;
+  w = Math.round(w * scale); h = Math.round(h * scale);
+  const cw = swap ? h : w, ch = swap ? w : h;
+  const c = document.createElement('canvas');
+  c.width = cw; c.height = ch;
+  const ctx = c.getContext('2d');
+  ctx.translate(cw / 2, ch / 2);
+  ctx.rotate(rotDeg * Math.PI / 180);
+  ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  const id = ctx.getImageData(0, 0, cw, ch);
+  const d = id.data, contrast = 1.5, intercept = 128 * (1 - contrast);
+  for (let i = 0; i < d.length; i += 4) {
+    let g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    g = g * contrast + intercept;
+    g = g < 0 ? 0 : g > 255 ? 255 : g;
+    d[i] = d[i + 1] = d[i + 2] = g;
+  }
+  ctx.putImageData(id, 0, 0);
+  return c;
+}
+
+// Znajdź kandydatów na numer dokumentu (ciągi cyfr z ukośnikami), posortowanych wg trafności
+function znajdzKandydatow(text) {
+  const t = (text || '').replace(/\r/g, '\n');
+  const found = new Set();
+  const out = [];
+  // Ciągi typu 005947/7701/07/2026 (opcjonalnie z prefiksem WZ)
+  const re = /(WZ\s*[/:]?\s*)?\d{2,}(?:\s*\/\s*[0-9A-Za-z]{1,6}){1,5}/gi;
+  let m;
+  while ((m = re.exec(t)) !== null) {
+    let s = m[0].replace(/\s+/g, '').replace(/\/+/g, '/').replace(/^WZ[:/]?/i, 'WZ/');
+    if (/^\d/.test(s)) s = s; // bez prefiksu — zostaw
+    const key = s.replace(/^WZ\//i, '');
+    if (!found.has(key) && key.length >= 5) { found.add(key); out.push(s); }
+  }
+  // Sortuj: najpierw z "WZ", potem najdłuższe (najwięcej segmentów)
+  out.sort((a, b) => {
+    const aw = /^WZ/i.test(a) ? 1 : 0, bw = /^WZ/i.test(b) ? 1 : 0;
+    if (aw !== bw) return bw - aw;
+    return b.split('/').length - a.split('/').length;
+  });
+  return out;
 }
 
 async function ocrSkanujWZ(input) {
   const file = input.files && input.files[0];
   if (!file) return;
   const status = document.getElementById('ocr-wz-status');
+  const candBox = document.getElementById('ocr-wz-cands');
   status.style.display = 'block';
   status.style.color = 'var(--blue)';
-  status.textContent = '⏳ Wczytywanie modułu OCR...';
+  candBox.style.display = 'none';
+  candBox.innerHTML = '';
+  status.textContent = '⏳ Wczytywanie modułu OCR (pierwszy raz może chwilę potrwać)...';
+  let worker = null;
   try {
     await loadTesseract();
-    status.textContent = '🔍 Rozpoznawanie numeru ze zdjęcia...';
-    const { data } = await Tesseract.recognize(file, 'pol+eng', {
-      logger: m => { if (m.status === 'recognizing text') status.textContent = `🔍 Rozpoznawanie... ${Math.round(m.progress * 100)}%`; },
+    const img = await wczytajObraz(file);
+    worker = await Tesseract.createWorker('pol', 1, {
+      logger: m => { if (m.status === 'recognizing text') status.textContent = `🔍 Skanuję (${_ocrRotLabel})... ${Math.round(m.progress * 100)}%`; },
     });
-    const nr = wyodrebnijNrWZ(data.text || '');
-    if (nr) {
-      document.getElementById('nwz-nr').value = nr;
+    // Zdjęcie może być obrócone — próbujemy 4 orientacji, zatrzymujemy się na pierwszej z numerem WZ
+    const roty = [0, 90, 270, 180];
+    let best = { cands: [], nr: '' };
+    for (let idx = 0; idx < roty.length; idx++) {
+      window._ocrRotLabel = `orientacja ${idx + 1}/4`;
+      status.textContent = `🔄 Skanuję (orientacja ${idx + 1}/4)...`;
+      const canvas = przygotujCanvas(img, roty[idx], 2200);
+      const { data } = await worker.recognize(canvas);
+      const cands = znajdzKandydatow(data.text || '');
+      const wz = cands.find(c => /^WZ/i.test(c));
+      if (wz) { best = { cands, nr: wz }; break; }
+      if (cands.length > best.cands.length) best = { cands, nr: cands[0] || '' };
+    }
+    URL.revokeObjectURL(img.src);
+
+    if (best.nr) {
+      document.getElementById('nwz-nr').value = best.nr;
       status.style.color = 'var(--green)';
-      status.textContent = '✅ Rozpoznano: ' + nr + ' — sprawdź i popraw jeśli trzeba';
+      status.textContent = '✅ Rozpoznano: ' + best.nr + ' — sprawdź i popraw jeśli trzeba';
     } else {
       status.style.color = 'var(--orange)';
-      status.textContent = '⚠️ Nie znaleziono numeru WZ — wpisz ręcznie (zdjęcie mogło być nieczytelne)';
+      status.textContent = '⚠️ Nie rozpoznano numeru automatycznie — wpisz ręcznie albo wybierz z listy poniżej';
+    }
+    // Pokaż wszystkich kandydatów jako klikalne "chipsy"
+    if (best.cands.length) {
+      candBox.style.display = 'block';
+      candBox.innerHTML = '<div style="font-size:10px;color:var(--muted);margin-bottom:4px">Wykryte numery — dotknij właściwego:</div>' +
+        best.cands.slice(0, 8).map(c =>
+          `<span onclick="document.getElementById('nwz-nr').value='${c.replace(/'/g, '')}';showToast('✅ Wybrano ${c.replace(/'/g, '')}')" style="display:inline-block;background:var(--blue-l);color:var(--blue);border:1px solid var(--blue);border-radius:14px;padding:4px 10px;font-size:11px;margin:0 4px 4px 0;cursor:pointer">${c}</span>`
+        ).join('');
     }
   } catch (e) {
     status.style.color = 'var(--orange)';
     status.textContent = '⚠️ ' + (e.message || 'Błąd OCR') + ' — wpisz numer ręcznie';
+  } finally {
+    if (worker) { try { await worker.terminate(); } catch (e) {} }
+    input.value = '';
   }
-  input.value = '';
 }
 
 function saveWZ() {
