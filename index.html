@@ -689,6 +689,7 @@ body.employee .admin-only{display:none!important}
       <div id="ocr-wz-cands" style="display:none;margin-top:6px"></div>
     </div>
     <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Kwota (zł)</label><input class="fi" id="nwz-kwota" type="number" placeholder="0.00"></div><div class="fg" style="flex:1"><label>Data</label><input class="fi" id="nwz-data" type="date"></div></div>
+    <div class="fg"><label>Pozycje / opis towaru</label><textarea class="fi" id="nwz-opis" rows="3" placeholder="np. Wiertło SDS Plus 6/50/110 mm ×20" style="resize:vertical"></textarea></div>
     <div class="fg"><label>Dostawca</label><select class="fs" id="nwz-dostawca"></select></div>
     <div class="fg"><label>Przypisz do</label><select class="fs" id="nwz-cel"></select></div>
     <button class="btn-p" onclick="saveWZ()">Zapisz WZ</button>
@@ -4247,7 +4248,10 @@ function openNoweWZ(presetDost) {
   fillCelSelect(document.getElementById('nwz-cel'));
   document.getElementById('nwz-nr').value = '';
   document.getElementById('nwz-kwota').value = '';
+  document.getElementById('nwz-opis').value = '';
   document.getElementById('nwz-data').value = new Date().toISOString().slice(0, 10);
+  const cb = document.getElementById('ocr-wz-cands'); if (cb) { cb.style.display = 'none'; cb.innerHTML = ''; }
+  const st = document.getElementById('ocr-wz-status'); if (st) st.style.display = 'none';
   openModal('modal-wz');
 }
 // ═══════ OCR NUMERU WZ (Tesseract.js — działa w przeglądarce, bez serwera) ═══════
@@ -4324,6 +4328,45 @@ function znajdzKandydatow(text) {
   return out;
 }
 
+// Znajdź kandydatów na opisy pozycji (nazwy towarów) — linie z tekstem, bez nagłówków dokumentu
+function znajdzOpisy(text) {
+  // Nagłówki/etykiety dokumentu, które NIE są nazwą towaru (pomijamy takie linie)
+  // Etykiety na początku linii
+  const boiler = /^(grodno|rozzew|adres|nip|regon|bank|rachunek|telefon|tel\.?|fax|e?-?mail|oddzia|odbiorca|nabywca|nazwa|symbol|opis\b|ilo|cena|netto|brutto|vat|razem|suma|strona|odebra|wyda|warto|lp\b|jm\b|data|miejsce|podpis|kwota)/i;
+  // Frazy nagłówkowe gdziekolwiek w linii (dokument, nie towar)
+  const boilerAny = /(wydani|na zewn|orygina|kopia|magazyn|dotyczy|zam[oó]wie|softlab|s[óo]ftlab|\berp\b|adres wys|rachunek|nr zewn)/i;
+  const lines = (text || '').split(/\n+/);
+  const out = [], seen = new Set();
+  for (const raw of lines) {
+    const s = raw.replace(/\s+/g, ' ').trim();
+    if (s.length < 6 || s.length > 80) continue;
+    const letters = (s.match(/[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/g) || []).length;
+    if (letters < 6) continue;               // za mało liter — to raczej liczby
+    if (letters / s.length < 0.3) continue;   // za dużo cyfr/symboli
+    const clean = s.replace(/^[^A-Za-zĄĆĘŁŃÓŚŹŻ]+/, '');  // pomiń wiodące [ , cyfry
+    if (boiler.test(clean) || boilerAny.test(s)) continue; // nagłówek dokumentu
+    const key = s.toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ0-9]/g, '');
+    if (key.length < 5 || seen.has(key)) continue;
+    seen.add(key); out.push(s);
+  }
+  // Preferuj linie wyglądające jak produkt (jednostka/wymiar)
+  out.sort((a, b) => {
+    const score = x => (/\b(szt|mm|cm|kpl|mb|m2|mb\.|op)\b/i.test(x) ? 2 : 0) + (/\d/.test(x) ? 1 : 0);
+    return score(b) - score(a);
+  });
+  return out.slice(0, 6);
+}
+
+// Dopisz rozpoznaną pozycję do pola opisu WZ (każda w nowej linii, bez duplikatów)
+function ocrDodajOpis(txt) {
+  const el = document.getElementById('nwz-opis');
+  const linie = el.value.split('\n').map(s => s.trim()).filter(Boolean);
+  if (linie.some(l => l.toLowerCase() === txt.toLowerCase())) { showToast('Już dodane'); return; }
+  linie.push(txt);
+  el.value = linie.join('\n');
+  showToast('＋ Dopisano pozycję');
+}
+
 async function ocrSkanujWZ(input) {
   const file = input.files && input.files[0];
   if (!file) return;
@@ -4343,7 +4386,7 @@ async function ocrSkanujWZ(input) {
     });
     // Zdjęcie może być obrócone — próbujemy 4 orientacji, zatrzymujemy się na pierwszej z numerem WZ
     const roty = [0, 90, 270, 180];
-    let best = { cands: [], nr: '' };
+    let best = { cands: [], nr: '', text: '' };
     for (let idx = 0; idx < roty.length; idx++) {
       window._ocrRotLabel = `orientacja ${idx + 1}/4`;
       status.textContent = `🔄 Skanuję (orientacja ${idx + 1}/4)...`;
@@ -4351,10 +4394,11 @@ async function ocrSkanujWZ(input) {
       const { data } = await worker.recognize(canvas);
       const cands = znajdzKandydatow(data.text || '');
       const wz = cands.find(c => /^WZ/i.test(c));
-      if (wz) { best = { cands, nr: wz }; break; }
-      if (cands.length > best.cands.length) best = { cands, nr: cands[0] || '' };
+      if (wz) { best = { cands, nr: wz, text: data.text || '' }; break; }
+      if (cands.length > best.cands.length) best = { cands, nr: cands[0] || '', text: data.text || '' };
     }
     URL.revokeObjectURL(img.src);
+    const opisy = znajdzOpisy(best.text || '');
 
     if (best.nr) {
       document.getElementById('nwz-nr').value = best.nr;
@@ -4364,14 +4408,22 @@ async function ocrSkanujWZ(input) {
       status.style.color = 'var(--orange)';
       status.textContent = '⚠️ Nie rozpoznano numeru automatycznie — wpisz ręcznie albo wybierz z listy poniżej';
     }
-    // Pokaż wszystkich kandydatów jako klikalne "chipsy"
+    // Pokaż kandydatów jako klikalne "chipsy" — numery (ustawiają pole nr) i opisy (dopisują do opisu)
+    const esc = s => s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    let html = '';
     if (best.cands.length) {
-      candBox.style.display = 'block';
-      candBox.innerHTML = '<div style="font-size:10px;color:var(--muted);margin-bottom:4px">Wykryte numery — dotknij właściwego:</div>' +
+      html += '<div style="font-size:10px;color:var(--muted);margin:2px 0 4px">Wykryte numery — dotknij właściwego:</div>' +
         best.cands.slice(0, 8).map(c =>
-          `<span onclick="document.getElementById('nwz-nr').value='${c.replace(/'/g, '')}';showToast('✅ Wybrano ${c.replace(/'/g, '')}')" style="display:inline-block;background:var(--blue-l);color:var(--blue);border:1px solid var(--blue);border-radius:14px;padding:4px 10px;font-size:11px;margin:0 4px 4px 0;cursor:pointer">${c}</span>`
+          `<span onclick="document.getElementById('nwz-nr').value='${esc(c)}';showToast('✅ Numer: ${esc(c)}')" style="display:inline-block;background:var(--blue-l);color:var(--blue);border:1px solid var(--blue);border-radius:14px;padding:4px 10px;font-size:11px;margin:0 4px 4px 0;cursor:pointer">${c}</span>`
         ).join('');
     }
+    if (opisy.length) {
+      html += '<div style="font-size:10px;color:var(--muted);margin:8px 0 4px">Wykryte pozycje — dotknij, aby dopisać do opisu:</div>' +
+        opisy.map(o =>
+          `<span onclick="ocrDodajOpis('${esc(o)}')" style="display:inline-block;background:var(--green-l);color:var(--green);border:1px solid var(--green);border-radius:14px;padding:4px 10px;font-size:11px;margin:0 4px 4px 0;cursor:pointer">＋ ${o}</span>`
+        ).join('');
+    }
+    if (html) { candBox.style.display = 'block'; candBox.innerHTML = html; }
   } catch (e) {
     status.style.color = 'var(--orange)';
     status.textContent = '⚠️ ' + (e.message || 'Błąd OCR') + ' — wpisz numer ręcznie';
@@ -4389,8 +4441,9 @@ function saveWZ() {
   const celRaw = document.getElementById('nwz-cel').value;
   const [celTyp, cel] = celRaw ? celRaw.split(':') : ['', ''];
   const dataVal = document.getElementById('nwz-data').value;
+  const opis = document.getElementById('nwz-opis').value.trim();
   const id = uid('wz_');
-  DATA.wz[id] = { id, nr, kwota, dostawca, celTyp, cel, data: dataVal ? dataVal.split('-').reverse().join('.') : '', fakturaId: null };
+  DATA.wz[id] = { id, nr, kwota, opis, dostawca, celTyp, cel, data: dataVal ? dataVal.split('-').reverse().join('.') : '', fakturaId: null };
   // WZ liczy się od razu do kosztów materiału celu
   if (celTyp === 'projekt' && DATA.projekty[cel]) { DATA.projekty[cel].kosztyMaterialy = (DATA.projekty[cel].kosztyMaterialy || 0) + Math.round(kwota); }
   if (celTyp === 'awaria' && DATA.awarie[cel]) { DATA.awarie[cel].koszt = (DATA.awarie[cel].koszt || 0) + Math.round(kwota); }
@@ -4437,7 +4490,7 @@ function buildDostawcaDetail(id) {
       </div>
       <div class="sec-hdr"><h3 style="font-size:12px">📄 WZ niezafakturowane (${wzOtwarte.length})</h3></div>
       ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a">
-        <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)}</div></div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)}</div>${w.opis ? `<div style="font-size:10px;color:var(--sec);margin-top:2px">📦 ${w.opis}</div>` : ''}</div>
         <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>
       </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak — wszystko zafakturowane ✅</div>'}
       <div class="sec-hdr" style="margin-top:14px"><h3 style="font-size:12px">🧾 Faktury zakupowe (${faktury.length})</h3></div>
