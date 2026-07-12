@@ -1159,6 +1159,37 @@ async function loginEmployeeCode() {
   if (currentTab === 'ustawienia') buildUstawienia();
 }
 
+// ═══════ PIN — hashowanie (SHA-256 + sól) zamiast jawnego tekstu ═══════
+async function sha256hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function randSalt() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function setPin(u, pin) {
+  const salt = randSalt();
+  u.pinSalt = salt;
+  u.pinHash = await sha256hex(salt + ':' + pin);
+  delete u.pin;
+}
+async function verifyPin(u, pin) {
+  if (u.pinHash) return (await sha256hex((u.pinSalt || '') + ':' + pin)) === u.pinHash;
+  if (u.pin != null) return String(u.pin) === String(pin);  // zgodność wstecz (dane sprzed hashowania)
+  return false;
+}
+// Jednorazowa migracja: zamień jawne PIN-y na hashe
+async function migratePins() {
+  let changed = false;
+  for (const u of Object.values(DATA.uzytkownicy || {})) {
+    if (u.pin != null && !u.pinHash) { await setPin(u, String(u.pin)); changed = true; }
+  }
+  if (changed) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: DATA, prefs: NOTIF_PREFS })); } catch (e) {}
+    syncSchedulePush();
+  }
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -2058,7 +2089,7 @@ function openEditPracownik(id) {
   openModal('modal-pracownik');
 }
 
-function savePracownik() {
+async function savePracownik() {
   const editId = document.getElementById('np-edit-id').value;
   const imie = document.getElementById('np-imie').value.trim();
   const nazwisko = document.getElementById('np-nazwisko').value.trim();
@@ -2085,7 +2116,8 @@ function savePracownik() {
     // utwórz konto logowania z losowym PIN-em
     const uidKonto = 'uw_' + Date.now().toString(36) + _idSeq++;
     const pin = String(Math.floor(1000 + Math.random() * 9000));
-    DATA.uzytkownicy[uidKonto] = { id: uidKonto, nazwa: `${imie} ${nazwisko}`.trim(), rola, pin, pracownik: wid, inicjaly, kolor: DATA.pracownicy[wid].kolor, admin: false, uprawnienia: { godziny:true, paski:true, kody:true, awarie:true, projekty:false, narzedzia:false } };
+    DATA.uzytkownicy[uidKonto] = { id: uidKonto, nazwa: `${imie} ${nazwisko}`.trim(), rola, pracownik: wid, inicjaly, kolor: DATA.pracownicy[wid].kolor, admin: false, uprawnienia: { godziny:true, paski:true, kody:true, awarie:true, projekty:false, narzedzia:false } };
+    await setPin(DATA.uzytkownicy[uidKonto], pin);
     if (!DATA.czasPracyWlasne[wid]) DATA.czasPracyWlasne[wid] = {};
     if (!DATA.paski[wid]) DATA.paski[wid] = [];
     if (!DATA.zaliczki) DATA.zaliczki = {};
@@ -3811,13 +3843,14 @@ function renderPinDots() {
     `<div class="pin-dot${i < pinBuffer.length ? ' filled' : ''}"></div>`).join('');
 }
 
-function pinKey(k) {
+async function pinKey(k) {
   if (k === '⌫') { pinBuffer = pinBuffer.slice(0, -1); renderPinDots(); return; }
   if (pinBuffer.length >= 4) return;
   pinBuffer += k;
   renderPinDots();
   if (pinBuffer.length === 4) {
-    if (pinBuffer === pinTarget.pin) { setUser(pinTarget); }
+    const ok = await verifyPin(pinTarget, pinBuffer);
+    if (ok) { setUser(pinTarget); }
     else { pinBuffer = ''; renderPinDots(); showToast('❌ Błędny PIN'); }
   }
 }
@@ -4139,7 +4172,7 @@ function buildUstawienia() {
     <div class="sec-hdr"><h3>👤 Moje konto</h3></div>
     <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px">
       <div style="width:36px;height:36px;border-radius:18px;background:${admin.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${admin.inicjaly}</div>
-      <div style="flex:1"><div style="font-size:13px;font-weight:800">${admin.nazwa}</div><div style="font-size:11px;color:var(--muted)">${admin.rola} · PIN: ${admin.pin}</div></div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:800">${admin.nazwa}</div><div style="font-size:11px;color:var(--muted)">${admin.rola} · PIN ustawiony 🔒</div></div>
       <button onclick="zmienPin('${admin.id}')" class="btn-s" style="flex-shrink:0;padding:5px 10px;font-size:11px">🔑 Zmień PIN</button>
     </div>
     ${bioAvailable() ? `<div class="card" style="padding:12px 14px">${bioToggleHtml(admin.id)}<div style="font-size:10px;color:var(--muted);margin-top:6px">Odcisk działa tylko na tym urządzeniu i nigdzie nie jest wysyłany — weryfikuje go telefon.</div></div>` : ''}
@@ -4149,7 +4182,7 @@ function buildUstawienia() {
       <div class="card" style="padding:12px 14px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
           <div style="width:36px;height:36px;border-radius:18px;background:${u.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${u.inicjaly}</div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:800">${u.nazwa}</div><div style="font-size:11px;color:var(--muted)">${u.rola} · PIN: ${u.pin}</div></div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:800">${u.nazwa}</div><div style="font-size:11px;color:var(--muted)">${u.rola} · PIN ustawiony 🔒</div></div>
           <button onclick="zmienPin('${u.id}')" class="btn-s" style="flex-shrink:0;padding:5px 10px;font-size:11px">🔑 Zmień PIN</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -4189,13 +4222,13 @@ function buildUstawienia() {
   else if (syncRole() === 'owner') setTimeout(refreshDevices, 50);
 }
 
-function zmienPin(uid) {
+async function zmienPin(uid) {
   const u = DATA.uzytkownicy[uid];
   if (!u) return;
   const nowy = prompt(`Nowy 4-cyfrowy PIN dla: ${u.nazwa}`, '');
   if (nowy === null) return; // anulowano
   if (!/^\d{4}$/.test(nowy)) { showToast('⚠️ PIN musi mieć dokładnie 4 cyfry'); return; }
-  u.pin = nowy;
+  await setPin(u, nowy);
   saveState();
   showToast(`✅ Zmieniono PIN: ${u.nazwa.split(' ')[0]}`);
   if (currentTab === 'ustawienia') buildUstawienia();
@@ -5033,7 +5066,8 @@ function wykonajPrzyp(i) { if (_przypCache[i] && _przypCache[i].akcja) _przypCac
 // ═══════ INIT ═══════
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
-  if (SYNC_TOKEN) syncPull().then(ok => { if (ok) renderLoginTiles(); if (currentTab === 'ustawienia') buildUstawienia(); });
+  migratePins();
+  if (SYNC_TOKEN) syncPull().then(ok => { if (ok) { migratePins(); renderLoginTiles(); } if (currentTab === 'ustawienia') buildUstawienia(); });
   // Rejestry zakupów (WZ / faktury / dostawcy) — inicjalizacja jeśli brak
   if (!DATA.dostawcy) DATA.dostawcy = {};
   if (!DATA.wz) DATA.wz = {};
