@@ -686,8 +686,9 @@ body.employee .admin-only{display:none!important}
 <!-- Modal: nowe WZ -->
 <div class="modal-ov" id="modal-wz" style="display:none" onclick="if(event.target===this)closeModal('modal-wz')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-wz')">✕</button><h3>📄 Nowe WZ (towar na WZ)</h3>
-    <div class="fg"><label>Numer WZ</label><div style="display:flex;gap:6px"><input class="fi" id="nwz-nr" placeholder="np. WZ/2026/123" style="flex:1"><button class="btn-s" onclick="document.getElementById('ocr-wz-file').click()" title="Zeskanuj numer WZ ze zdjęcia">📷</button></div>
+    <div class="fg"><label>Numer WZ</label><div style="display:flex;gap:6px"><input class="fi" id="nwz-nr" placeholder="np. WZ/2026/123" style="flex:1"><button class="btn-s" onclick="document.getElementById('pdf-wz-file').click()" title="Wczytaj z pliku PDF (najdokładniej)">📄</button><button class="btn-s" onclick="document.getElementById('ocr-wz-file').click()" title="Zeskanuj numer WZ ze zdjęcia">📷</button></div>
       <input type="file" id="ocr-wz-file" accept="image/*" capture="environment" style="display:none" onchange="ocrSkanujWZ(this)">
+      <input type="file" id="pdf-wz-file" accept="application/pdf" style="display:none" onchange="wczytajPDFWZ(this)">
       <div id="ocr-wz-status" style="display:none;font-size:11px;color:var(--blue);margin-top:6px"></div>
       <div id="ocr-wz-cands" style="display:none;margin-top:6px"></div>
       <div id="nwz-foto-prev" style="display:none;margin-top:8px"></div>
@@ -4292,6 +4293,100 @@ function wzPrzeliczBrutto() {
     info.style.display = 'none';
   }
 }
+// ═══════ IMPORT WZ Z PLIKU PDF (pdf.js — dokładny tekst, bez błędów OCR) ═══════
+let _pdfjsLoading = null;
+function loadPdfjs() {
+  if (window.pdfjsLib) return Promise.resolve();
+  if (_pdfjsLoading) return _pdfjsLoading;
+  _pdfjsLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => { try { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } catch (e) {} resolve(); };
+    s.onerror = () => reject(new Error('Nie udało się pobrać modułu PDF (brak internetu?)'));
+    document.head.appendChild(s);
+  });
+  return _pdfjsLoading;
+}
+
+// Parsuj tekst dokumentu WZ (z PDF) → numer, data, kwota netto, projekt, pozycje
+function parseWZtekst(text) {
+  const t = (text || '').replace(/\s+/g, ' ');
+  const nr = (t.match(/\b(WZK?|ZW)\/\d{3,}\/\d{4}\/\d{2}\/\d{4}\b/) || [])[0] || '';
+  const dm = t.match(/z dnia\s+(\d{2})-(\d{2})-(\d{4})/);
+  const data = dm ? `${dm[1]}.${dm[2]}.${dm[3]}` : '';
+  const rm = t.match(/(?:^|\D)(\d{1,3}(?: \d{3})*,\d{2})\s+Razem/);
+  const kwota = rm ? rm[1].replace(/\s/g, '').replace(',', '.') : '';
+  const pm = t.match(/Nr zewn:\s*(.+?)\s+Opis\b/i);
+  const projekt = pm ? pm[1].trim() : '';
+  const items = [];
+  const re = /\b\d{1,3}\s+\d{4,}\s+(.+?)\s+(SZT|KPL|MB|OP|KG|M2|M)\s+\d/gi;
+  let m;
+  while ((m = re.exec(t)) !== null) {
+    const name = m[1].replace(/^[\d\s]+/, '').trim();
+    if (name.length > 3 && !items.includes(name)) items.push(name);
+  }
+  return { nr, data, kwota, projekt, items };
+}
+
+// Dopasuj etykietę z WZ ("Nr zewn") do istniejącego projektu lub awarii i ustaw select
+function dopasujCelWZ(label) {
+  const l = (label || '').toLowerCase().trim();
+  if (!l) return;
+  const sel = document.getElementById('nwz-cel');
+  let val = '';
+  for (const p of Object.values(DATA.projekty)) {
+    const n = (p.nazwa || '').toLowerCase();
+    if (n && (n.includes(l) || l.includes(n.split(' ')[0]))) { val = 'projekt:' + p.id; break; }
+  }
+  if (!val) for (const a of Object.values(DATA.awarie)) {
+    const n = (a.opis || '').toLowerCase();
+    if (n && n.length > 3 && (n.includes(l) || l.includes(n))) { val = 'awaria:' + a.id; break; }
+  }
+  if (val) sel.value = val;
+}
+
+async function wczytajPDFWZ(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const status = document.getElementById('ocr-wz-status');
+  status.style.display = 'block';
+  status.style.color = 'var(--blue)';
+  status.textContent = '⏳ Wczytywanie PDF...';
+  try {
+    await loadPdfjs();
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    const page = await doc.getPage(1);
+    const tc = await page.getTextContent();
+    const text = tc.items.map(i => i.str).join(' ');
+    const p = parseWZtekst(text);
+    if (p.nr) document.getElementById('nwz-nr').value = p.nr;
+    if (p.kwota) {
+      document.getElementById('nwz-kwota').value = p.kwota;
+      document.getElementById('nwz-typkwoty').value = 'netto';
+      document.getElementById('nwz-vat').value = '23';
+      wzPrzeliczBrutto();
+    }
+    if (p.data) { const [d, mo, y] = p.data.split('.'); document.getElementById('nwz-data').value = `${y}-${mo}-${d}`; }
+    if (p.items.length) document.getElementById('nwz-opis').value = p.items.join('\n');
+    if (p.projekt) dopasujCelWZ(p.projekt);
+    // Zapamiętaj obraz strony 1 (żeby móc podejrzeć dokument)
+    try {
+      const vp = page.getViewport({ scale: 1.6 });
+      const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      _nwzFoto = c.toDataURL('image/jpeg', 0.7); pokazFotoPrev();
+    } catch (e) {}
+    status.style.color = 'var(--green)';
+    status.textContent = '✅ Wczytano z PDF: ' + (p.nr || '(sprawdź numer)') + (p.projekt ? ' · projekt: ' + p.projekt : '');
+  } catch (e) {
+    status.style.color = 'var(--orange)';
+    status.textContent = '⚠️ ' + (e.message || 'Nie udało się odczytać PDF') + ' — wpisz ręcznie';
+  } finally {
+    input.value = '';
+  }
+}
+
 // ═══════ OCR NUMERU WZ (Tesseract.js — działa w przeglądarce, bez serwera) ═══════
 let _tesseractLoading = null;
 let _nwzFoto = null;  // zdjęcie WZ (skompresowany dataURL) do zapisania z rekordem
