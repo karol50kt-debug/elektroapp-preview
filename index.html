@@ -320,7 +320,7 @@ body.kier .kier-only{display:flex!important}
   <div class="ctabs">
     <div class="ctab active" id="prac-view-tab-lista" onclick="setPracView('lista')">👷 Ludzie</div>
     <div class="ctab" id="prac-view-tab-kalendarz" onclick="setPracView('kalendarz')">📅 Kalendarz</div>
-    <div class="ctab" id="prac-view-tab-paski" onclick="setPracView('paski')">🧾 Paski</div>
+    <div class="ctab admin-only" id="prac-view-tab-paski" onclick="setPracView('paski')">🧾 Paski</div>
   </div>
 
   <div id="prac-lista-section">
@@ -779,7 +779,14 @@ body.kier .kier-only{display:flex!important}
   <div class="login-title">ElektroApp</div>
   <div class="login-sub">ElektroSmart Instalacje · wybierz konto</div>
   <div id="login-tiles" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
-  <button id="login-emp-code" onclick="loginEmployeeCode()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;padding:9px 18px;border-radius:22px;width:100%">🔑 Mam kod pracownika</button>
+  <!-- Ekran świeżego urządzenia: bez kont, tylko logowanie właściciela (Google) lub kod pracownika -->
+  <div id="login-fresh" style="display:none;width:100%;flex-direction:column;gap:10px;align-items:center">
+    <div id="login-google-wrap" style="display:flex;justify-content:center;width:100%"></div>
+    <div style="color:rgba(255,255,255,.5);font-size:11px">— albo —</div>
+    <button onclick="loginEmployeeScan()" style="background:var(--blue-d);border:none;color:#fff;font-size:14px;font-weight:800;cursor:pointer;padding:12px 18px;border-radius:22px;width:100%">📷 Zeskanuj kod pracownika</button>
+    <button onclick="loginEmployeeCode()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:11px;cursor:pointer">albo wpisz kod ręcznie</button>
+  </div>
+  <button id="login-emp-code" onclick="loginEmployeeScan()" style="display:none;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;padding:9px 18px;border-radius:22px;width:100%">📷 Zeskanuj kod pracownika</button>
   <div id="login-pin" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%">
     <div style="color:#fff;font-size:14px;font-weight:700" id="pin-user-label"></div>
     <div class="pin-dots" id="pin-dots"></div>
@@ -787,6 +794,14 @@ body.kier .kier-only{display:flex!important}
     <button id="pin-bio-btn" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;padding:9px 18px;border-radius:22px">👆 Zaloguj odciskiem</button>
     <button onclick="pinCancel()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;margin-top:6px">← Wybierz inne konto</button>
   </div>
+</div>
+<!-- Skaner QR kodu pracownika -->
+<div id="qr-scan-ov" style="display:none;position:absolute;inset:0;z-index:10000;background:#000;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+  <div style="color:#fff;font-size:14px;font-weight:700">📷 Zeskanuj kod QR od szefa</div>
+  <video id="qr-video" playsinline style="width:78%;max-width:280px;border-radius:16px;border:2px solid rgba(255,255,255,.4)"></video>
+  <div style="color:rgba(255,255,255,.7);font-size:12px;text-align:center;padding:0 24px">Skieruj aparat na kod QR wygenerowany w aplikacji szefa</div>
+  <button onclick="stopQrScan()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:22px;padding:9px 22px;font-size:13px;cursor:pointer">✕ Anuluj</button>
+  <button onclick="stopQrScan();loginEmployeeCode()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:11px;cursor:pointer">wpisz kod ręcznie</button>
 </div>
 </div><!-- .screen -->
 <script>
@@ -1071,7 +1086,8 @@ function handleGoogleCredential(response) {
       await syncPush();
       showToast('☁️ Połączono z Google — dane wysłane do chmury');
     }
-    buildUstawienia();
+    renderLoginTiles();  // teraz urządzenie sprovisionowane — pokaż konta do logowania PIN
+    if (currentTab === 'ustawienia') buildUstawienia();
   }).catch(() => showToast('⚠️ Brak połączenia z serwerem synchronizacji'));
 }
 
@@ -1135,6 +1151,8 @@ function openInstallQr() {
 async function generateEmployeeCode(uid) {
   const u = DATA.uzytkownicy[uid];
   if (!u) return;
+  u.mustSetPin = true;  // pracownik ustawi własny PIN przy pierwszym logowaniu
+  saveState();
   showToast('⏳ Tworzę kod...');
   try {
     const r = await fetch(SYNC_API + '/api/devices/create', {
@@ -1198,11 +1216,10 @@ function employeeSyncTap() {
   }
 }
 
-// Pracownik: zaloguj urządzenie kodem od szefa (z ekranu logowania lub nagłówka)
-async function loginEmployeeCode() {
-  const code = prompt('Wpisz kod pracownika otrzymany od szefa:');
-  if (!code) return;
-  const c = code.trim();
+// Pracownik: użyj kodu (z QR albo wpisany) → autoryzuj urządzenie
+async function useEmployeeCode(code) {
+  const c = (code || '').trim();
+  if (!c) return;
   showToast('☁️ Łączenie...');
   const r = await fetch(SYNC_API + '/api/auth/device', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: c }),
@@ -1212,9 +1229,62 @@ async function loginEmployeeCode() {
   localStorage.setItem('elektroapp_sync_token', SYNC_TOKEN);
   localStorage.removeItem('elektroapp_sync_user');
   const ok = await syncPull();
-  showToast(ok ? '✅ Połączono — zaloguj się swoim PIN-em' : '✅ Połączono');
   renderLoginTiles();
+  await forcePinSetupIfNeeded();
+  showToast(ok ? '✅ Połączono — zaloguj się PIN-em' : '✅ Połączono');
   if (currentTab === 'ustawienia') buildUstawienia();
+}
+
+function loginEmployeeCode() {
+  const code = prompt('Wpisz kod pracownika otrzymany od szefa:');
+  if (code) useEmployeeCode(code);
+}
+
+// Skan QR kodu pracownika (BarcodeDetector — Android Chrome; fallback: wpisanie ręczne)
+let _qrStream = null, _qrRAF = null;
+async function loginEmployeeScan() {
+  if (!('BarcodeDetector' in window) || !navigator.mediaDevices) { showToast('Skaner niedostępny — wpisz kod ręcznie'); loginEmployeeCode(); return; }
+  const ov = document.getElementById('qr-scan-ov');
+  const video = document.getElementById('qr-video');
+  try {
+    _qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = _qrStream;
+    await video.play();
+    ov.style.display = 'flex';
+    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+    const tick = async () => {
+      if (!_qrStream) return;
+      try {
+        const codes = await detector.detect(video);
+        const hit = codes.find(c => /^dev_/.test(c.rawValue));
+        if (hit) { stopQrScan(); useEmployeeCode(hit.rawValue); return; }
+      } catch (e) {}
+      _qrRAF = requestAnimationFrame(tick);
+    };
+    _qrRAF = requestAnimationFrame(tick);
+  } catch (e) { showToast('Brak dostępu do aparatu — wpisz kod ręcznie'); loginEmployeeCode(); }
+}
+function stopQrScan() {
+  document.getElementById('qr-scan-ov').style.display = 'none';
+  if (_qrRAF) { cancelAnimationFrame(_qrRAF); _qrRAF = null; }
+  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
+}
+
+// Wymuś ustawienie PIN przy pierwszym logowaniu pracownika (konto oznaczone mustSetPin lub bez PIN)
+async function forcePinSetupIfNeeded() {
+  const accs = Object.values(DATA.uzytkownicy);
+  const acc = accs.find(u => !u.admin) || accs[0];
+  if (!acc) return;
+  if (!acc.mustSetPin && acc.pinHash) return;
+  let pin = '';
+  while (!/^\d{4}$/.test(pin)) {
+    pin = prompt(`Cześć ${acc.nazwa.split(' ')[0]}! Ustaw swój 4-cyfrowy PIN do logowania:`);
+    if (pin === null) return;  // anuluje — poprosimy ponownie przy próbie logowania
+  }
+  await setPin(acc, pin);
+  delete acc.mustSetPin;
+  saveState();
+  showToast('✅ PIN ustawiony — teraz zaloguj się nim');
 }
 
 // ═══════ PIN — hashowanie (SHA-256 + sól) zamiast jawnego tekstu ═══════
@@ -2265,25 +2335,27 @@ function renderPracList() {
   const listEl = document.getElementById('prac-list');
   const kpiEl = document.getElementById('prac-kpi');
   if (!listEl) return;
-  const all = Object.values(DATA.pracownicy);
+  const pelny = fullAccess();
+  // Kierownik/pracownik nie widzą nieaktywnych ani stawek
+  const all = Object.values(DATA.pracownicy).filter(w => pelny || w.status === 'Aktywny');
   const statMeta = { 'Aktywny':['var(--green-l)','var(--green)'], 'L4':['var(--red-l)','var(--red)'], 'Urlop':['var(--orange-l)','var(--orange)'] };
 
   listEl.innerHTML = all.map(w => {
     const [bg, fg] = statMeta[w.status] || statMeta['Aktywny'];
     const np = (w.projekty || []).length;
-    return `<div class="li" onclick="openPrac('${w.id}')"><div class="li-icon" style="background:${w.kolor}22;font-size:15px;font-weight:800;color:${w.kolor}">${w.inicjaly}</div><div class="li-body"><div class="li-title">${w.imie} ${w.nazwisko}</div><div class="li-sub">${w.rola} · ${w.stawka} zł/h${w.tel ? ' · 📞 ' + w.tel : ''}</div></div><div class="li-right"><span class="badge" style="background:${bg};color:${fg}">${w.status}</span>${np ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">${np} ${np === 1 ? 'projekt' : 'proj.'}</div>` : ''}</div></div>`;
+    const stawkaTxt = pelny ? ` · ${w.stawka} zł/h` : '';
+    return `<div class="li" onclick="openPrac('${w.id}')"><div class="li-icon" style="background:${w.kolor}22;font-size:15px;font-weight:800;color:${w.kolor}">${w.inicjaly}</div><div class="li-body"><div class="li-title">${w.imie} ${w.nazwisko}</div><div class="li-sub">${w.rola}${stawkaTxt}${w.tel ? ' · 📞 ' + w.tel : ''}</div></div><div class="li-right"><span class="badge" style="background:${bg};color:${fg}">${w.status}</span>${np ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">${np} ${np === 1 ? 'projekt' : 'proj.'}</div>` : ''}</div></div>`;
   }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px">Brak pracowników</div>`;
 
   if (kpiEl) {
     const aktywniLista = all.filter(w => w.status === 'Aktywny');
     const l4 = all.filter(w => w.status === 'L4' || w.status === 'Urlop').length;
-    // Stawka/h zespołu = suma stawek godzinowych aktywnych pracowników (koszt godziny pracy całej ekipy)
-    const stawkaZespolu = aktywniLista.reduce((s, w) => s + w.stawka, 0);
+    const stawkaZespolu = aktywniLista.reduce((s, w) => s + (w.stawka || 0), 0);
     kpiEl.innerHTML = `
       <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)">${all.length}</div><div class="l">Łącznie</div></div>
       <div class="kpi-sm" style="border-top-color:var(--green)"><div class="v" style="color:var(--green)">${aktywniLista.length}</div><div class="l">Aktywni</div></div>
       <div class="kpi-sm" style="border-top-color:var(--red)"><div class="v" style="color:var(--red)">${l4}</div><div class="l">L4 / urlop</div></div>
-      <div class="kpi-sm" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">${stawkaZespolu} zł/h</div><div class="l">Stawka/h zespołu</div></div>`;
+      ${pelny ? `<div class="kpi-sm fin" style="border-top-color:var(--orange)"><div class="v" style="color:var(--orange)">${stawkaZespolu} zł/h</div><div class="l">Stawka/h zespołu</div></div>` : ''}`;
   }
   // pulpit: licznik aktywnych pracowników
   const dashP = document.getElementById('dash-kpi-pracownicy');
@@ -2742,7 +2814,7 @@ function buildPracDetail(id) {
   document.getElementById('dprac-content').innerHTML = `
     <div style="background:${w.kolor}22;padding:14px;display:flex;align-items:center;gap:12px">
       <div style="width:50px;height:50px;border-radius:25px;background:${w.kolor};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff">${w.inicjaly}</div>
-      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;color:var(--text)">${w.imie} ${w.nazwisko}</div><div style="font-size:12px;color:var(--sec);margin-top:2px">${w.rola} · ${w.stawka} zł/h</div>${w.tel ? `<div style="font-size:11px;color:var(--muted)">📞 ${w.tel}</div>` : ''}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;color:var(--text)">${w.imie} ${w.nazwisko}</div><div style="font-size:12px;color:var(--sec);margin-top:2px">${w.rola}${fullAccess() ? ' · ' + w.stawka + ' zł/h' : ''}</div>${w.tel ? `<div style="font-size:11px;color:var(--muted)">📞 ${w.tel}</div>` : ''}</div>
       <span style="background:${statusBg};color:${statusColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;flex-shrink:0">${w.status}</span>
     </div>
     <div style="padding:12px 14px 0;display:flex;gap:8px">
@@ -4078,7 +4150,26 @@ function can(perm) {
 }
 
 function renderLoginTiles() {
-  document.getElementById('login-tiles').innerHTML = Object.values(DATA.uzytkownicy).map(u => {
+  const provisioned = !!SYNC_TOKEN;
+  const tilesEl = document.getElementById('login-tiles');
+  const freshEl = document.getElementById('login-fresh');
+  const empBtn = document.getElementById('login-emp-code');
+  const sub = document.querySelector('.login-sub');
+  if (!provisioned) {
+    // Świeże urządzenie — nie pokazujemy żadnych kont
+    tilesEl.style.display = 'none';
+    tilesEl.innerHTML = '';
+    empBtn.style.display = 'none';
+    freshEl.style.display = 'flex';
+    if (sub) sub.textContent = 'zaloguj się';
+    setTimeout(initGoogleSignInLogin, 60);
+    return;
+  }
+  freshEl.style.display = 'none';
+  tilesEl.style.display = 'flex';
+  empBtn.style.display = 'none';
+  if (sub) sub.textContent = 'wybierz konto';
+  tilesEl.innerHTML = Object.values(DATA.uzytkownicy).map(u => {
     const bio = bioRegistered(u.id);
     return `
     <div class="login-tile" onclick="${bio ? `bioLogin('${u.id}')` : `pinStart('${u.id}')`}">
@@ -4087,6 +4178,20 @@ function renderLoginTiles() {
       <div style="margin-left:auto;color:rgba(255,255,255,.5);font-size:16px">${bio ? '👆' : '›'}</div>
     </div>`;
   }).join('');
+}
+
+function initGoogleSignInLogin(tries) {
+  tries = tries || 0;
+  const el = document.getElementById('login-google-wrap');
+  if (!el) return;
+  if (typeof google === 'undefined' || !google.accounts) {
+    if (tries < 12) setTimeout(() => initGoogleSignInLogin(tries + 1), 400);
+    else el.innerHTML = '<div style="color:rgba(255,255,255,.6);font-size:11px">Logowanie Google wymaga internetu</div>';
+    return;
+  }
+  el.innerHTML = '';
+  google.accounts.id.initialize({ client_id: '1098577783563-t0vse07f035fi9b70d64kmslcrgccv1i.apps.googleusercontent.com', callback: handleGoogleCredential });
+  google.accounts.id.renderButton(el, { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with', width: 260 });
 }
 
 function pinStart(uid) {
@@ -4368,7 +4473,7 @@ function buildMojeGodziny() {
       <div style="font-size:20px;font-weight:900">${w.imie} 👋</div>
       <div style="display:flex;gap:18px;margin-top:12px">
         <div><div style="font-size:10px;opacity:.75">Godziny (ten mies.)</div><div style="font-size:17px;font-weight:800">${sumaH}h</div></div>
-        <div><div style="font-size:10px;opacity:.75">Zarobek (brutto)</div><div style="font-size:17px;font-weight:800">${Math.round(sumaZl)} zł</div></div>
+        <div><div style="font-size:10px;opacity:.75">Zarobek (netto)</div><div style="font-size:17px;font-weight:800">${Math.round(sumaZl)} zł</div></div>
         <div><div style="font-size:10px;opacity:.75">Stawka</div><div style="font-size:17px;font-weight:800">${w.stawka} zł/h</div></div>
       </div>
     </div>
