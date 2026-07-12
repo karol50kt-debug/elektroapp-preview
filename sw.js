@@ -2,7 +2,7 @@
 // HTML (kod aplikacji): network-first — zawsze najnowsza wersja gdy jest zasieg,
 // cache tylko jako fallback offline (unika efektu "jedno stare otwarcie po update").
 // Pozostale zasoby (ikony, obrazy): stale-while-revalidate — szybki start, cichy update w tle.
-const CACHE = 'elektroapp-v21';
+const CACHE = 'elektroapp-v22';
 const ASSETS = ['.', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'logo-watermark.png', 'login-bg.jpg', 'empty-generic.png', 'empty-ok.png'];
 
 self.addEventListener('install', e => {

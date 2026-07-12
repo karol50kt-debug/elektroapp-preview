@@ -567,6 +567,16 @@ body.employee .admin-only{display:none!important}
 <div class="modal-ov" id="modal-wydatek" style="display:none" onclick="if(event.target===this)closeModal('modal-wydatek')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-wydatek')">✕</button><h3 id="nw-heading">💰 Nowy wydatek</h3>
     <input type="hidden" id="nw-edit-id" value="">
+    <div class="fg"><label>Dokument (opcjonalnie)</label>
+      <div style="display:flex;gap:6px">
+        <button class="btn-s" style="flex:1" onclick="document.getElementById('pdf-wyd-file').click()">📄 Wczytaj z PDF</button>
+        <button class="btn-s" style="flex:1" onclick="document.getElementById('ocr-wyd-file').click()">📷 Zdjęcie</button>
+      </div>
+      <input type="file" id="pdf-wyd-file" accept="application/pdf" style="display:none" onchange="wczytajDokWydatek(this,true)">
+      <input type="file" id="ocr-wyd-file" accept="image/*" capture="environment" style="display:none" onchange="wczytajDokWydatek(this,false)">
+      <div id="nw-dok-status" style="display:none;font-size:11px;color:var(--blue);margin-top:6px"></div>
+      <div id="nw-foto-prev" style="display:none;margin-top:8px"></div>
+    </div>
     <div class="fg"><label>Opis</label><input class="fi" id="nw-opis" placeholder="Materiały, paliwo..."></div>
     <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Kwota (zł)</label><input class="fi" id="nw-kwota" type="number" placeholder="0.00"></div><div class="fg" style="flex:1"><label>Typ</label><select class="fs" id="nw-typ"><option>Materiały</option><option>Paliwo</option><option>Narzędzia</option><option>Przychód</option><option>Inne</option></select></div></div>
     <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label>Data</label><input class="fi" id="nw-data" type="date"></div><div class="fg" style="flex:1"><label>Projekt</label><select class="fs" id="nw-projekt"><option value="">— ogólny —</option></select></div></div>
@@ -685,7 +695,8 @@ body.employee .admin-only{display:none!important}
 
 <!-- Modal: nowe WZ -->
 <div class="modal-ov" id="modal-wz" style="display:none" onclick="if(event.target===this)closeModal('modal-wz')">
-  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-wz')">✕</button><h3>📄 Nowe WZ (towar na WZ)</h3>
+  <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-wz')">✕</button><h3 id="nwz-heading">📄 Nowe WZ (towar na WZ)</h3>
+    <input type="hidden" id="nwz-edit-id" value="">
     <div class="fg"><label>Numer WZ</label><div style="display:flex;gap:6px"><input class="fi" id="nwz-nr" placeholder="np. WZ/2026/123" style="flex:1"><button class="btn-s" onclick="document.getElementById('pdf-wz-file').click()" title="Wczytaj z pliku PDF (najdokładniej)">📄</button><button class="btn-s" onclick="document.getElementById('ocr-wz-file').click()" title="Zeskanuj numer WZ ze zdjęcia">📷</button></div>
       <input type="file" id="ocr-wz-file" accept="image/*" capture="environment" style="display:none" onchange="ocrSkanujWZ(this)">
       <input type="file" id="pdf-wz-file" accept="application/pdf" style="display:none" onchange="wczytajPDFWZ(this)">
@@ -702,7 +713,7 @@ body.employee .admin-only{display:none!important}
     <div class="fg"><label>Pozycje / opis towaru</label><textarea class="fi" id="nwz-opis" rows="3" placeholder="np. Wiertło SDS Plus 6/50/110 mm ×20" style="resize:vertical"></textarea></div>
     <div class="fg"><label>Dostawca</label><select class="fs" id="nwz-dostawca"></select></div>
     <div class="fg"><label>Przypisz do</label><select class="fs" id="nwz-cel"></select></div>
-    <button class="btn-p" onclick="saveWZ()">Zapisz WZ</button>
+    <button class="btn-p" id="nwz-submit-btn" onclick="saveWZ()">Zapisz WZ</button>
   </div>
 </div>
 
@@ -1785,7 +1796,7 @@ function renderWydatkiList() {
       li.dataset.status = e.typ;
       li.dataset.text = `${e.opis} ${e.typ} ${proj ? proj.nazwa : ''}`.toLowerCase();
       li.onclick = () => openEditWydatek(e.id);
-      li.innerHTML = `<div class="li-icon" style="background:${meta.bg}">${meta.ikona}</div><div class="li-body"><div class="li-title">${e.opis}</div><div class="li-sub">${e.typ} · ${e.data}${proj ? ' · ' + proj.nazwa.split(' — ')[0] : ''}</div></div><div class="li-right"><span style="font-weight:800;color:${isIncome ? 'var(--green)' : 'var(--red)'}">${isIncome ? '+' : '-'}${e.kwota.toLocaleString('pl-PL')} zł</span></div>`;
+      li.innerHTML = `<div class="li-icon" style="background:${meta.bg}">${meta.ikona}</div><div class="li-body"><div class="li-title">${e.opis}</div><div class="li-sub">${e.typ} · ${e.data}${proj ? ' · ' + proj.nazwa.split(' — ')[0] : ''}</div></div><div class="li-right" style="display:flex;align-items:center;gap:6px">${e.foto ? `<span onclick="event.stopPropagation();podejrzyjFoto('${e.id}')" title="Zobacz dokument" style="cursor:pointer;font-size:15px">🖼️</span>` : ''}<span style="font-weight:800;color:${isIncome ? 'var(--green)' : 'var(--red)'}">${isIncome ? '+' : '-'}${e.kwota.toLocaleString('pl-PL')} zł</span></div>`;
       listEl.insertBefore(li, emptyEl);
     });
     applyFilter('wyd');
@@ -1818,6 +1829,9 @@ function openNewWydatek(presetProj) {
   fillWydatekProjektSelect(presetProj || '');
   document.getElementById('nw-submit-btn').textContent = 'Zapisz wydatek';
   document.getElementById('nw-delete-btn').style.display = 'none';
+  _nwWydFoto = null;
+  const s = document.getElementById('nw-dok-status'); if (s) s.style.display = 'none';
+  const fp = document.getElementById('nw-foto-prev'); if (fp) { fp.style.display = 'none'; fp.innerHTML = ''; }
   openModal('modal-wydatek');
 }
 
@@ -1834,6 +1848,9 @@ function openEditWydatek(id) {
   fillWydatekProjektSelect(e.proj || '');
   document.getElementById('nw-submit-btn').textContent = 'Zapisz zmiany';
   document.getElementById('nw-delete-btn').style.display = 'block';
+  _nwWydFoto = e.foto || null;
+  const s = document.getElementById('nw-dok-status'); if (s) s.style.display = 'none';
+  wydPokazFotoPrev();
   openModal('modal-wydatek');
 }
 
@@ -1849,11 +1866,11 @@ function saveWydatek() {
   const proj = document.getElementById('nw-projekt').value || null;
 
   if (editId && DATA.wydatki[editId]) {
-    Object.assign(DATA.wydatki[editId], { opis, kwota, typ, data: dataLabel, proj, terminPlatnosci });
+    Object.assign(DATA.wydatki[editId], { opis, kwota, typ, data: dataLabel, proj, terminPlatnosci, foto: _nwWydFoto || null });
     showToast('✅ Zapisano zmiany');
   } else {
     const id = uid('e_');
-    DATA.wydatki[id] = { id, opis, kwota, typ, data: dataLabel, proj, terminPlatnosci };
+    DATA.wydatki[id] = { id, opis, kwota, typ, data: dataLabel, proj, terminPlatnosci, foto: _nwWydFoto || null };
     showToast('✅ Wydatek zapisany!');
   }
   renderWydatkiList();
@@ -1870,6 +1887,86 @@ function deleteWydatek() {
   renderWydatkiList();
   saveState();
   closeModal('modal-wydatek');
+}
+
+// ═══════ IMPORT DOKUMENTU DO WYDATKU (PDF/zdjęcie — kwota + data + zapis dokumentu) ═══════
+let _nwWydFoto = null;
+function wydPokazFotoPrev() {
+  const fp = document.getElementById('nw-foto-prev');
+  if (!_nwWydFoto) { fp.style.display = 'none'; fp.innerHTML = ''; return; }
+  fp.style.display = 'block';
+  fp.innerHTML = `<div style="font-size:10px;color:var(--muted);margin-bottom:4px">📎 Dokument zapamiętany:</div>
+    <img src="${_nwWydFoto}" onclick="podejrzyjFoto('wyd')" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border);cursor:pointer">`;
+}
+// Wyłuskaj kwotę (brutto/do zapłaty/razem) i datę z tekstu faktury/paragonu
+function parseDokKwotaData(text) {
+  const t = (text || '').replace(/\s+/g, ' ');
+  const dm = t.match(/(\d{2})[-.\/](\d{2})[-.\/](\d{4})/);
+  const data = dm ? `${dm[1]}.${dm[2]}.${dm[3]}` : '';
+  const norm = s => s.replace(/[ .](?=\d{3}\b)/g, '').replace(',', '.');
+  let kwota = '';
+  const near = t.match(/(?:do zap[łl]aty|razem do zap|warto[śs][cć] brutto|brutto|razem|suma)[^\d]{0,25}(\d{1,3}(?:[ .]\d{3})*,\d{2})/i);
+  if (near) kwota = norm(near[1]);
+  else {
+    const money = /(\d{1,3}(?:[ .]\d{3})*,\d{2})/g;
+    let m, max = 0, best = '';
+    while ((m = money.exec(t)) !== null) { const v = parseFloat(norm(m[1])); if (v > max) { max = v; best = m[1]; } }
+    kwota = best ? norm(best) : '';
+  }
+  return { kwota, data };
+}
+async function wczytajDokWydatek(input, isPdf) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const status = document.getElementById('nw-dok-status');
+  status.style.display = 'block';
+  status.style.color = 'var(--blue)';
+  status.textContent = isPdf ? '⏳ Wczytywanie PDF...' : '⏳ Wczytywanie modułu OCR...';
+  try {
+    let text = '', foto = null;
+    if (isPdf) {
+      await loadPdfjs();
+      const buf = await file.arrayBuffer();
+      const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+      const page = await doc.getPage(1);
+      const tc = await page.getTextContent();
+      text = tc.items.map(i => i.str).join(' ');
+      try {
+        const vp = page.getViewport({ scale: 1.6 });
+        const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+        await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+        foto = c.toDataURL('image/jpeg', 0.7);
+      } catch (e) {}
+    } else {
+      await loadTesseract();
+      const img = await wczytajObraz(file);
+      try { foto = kompresujFoto(img, 1400, 0.6); } catch (e) {}
+      const worker = await Tesseract.createWorker('pol', 1, {
+        logger: m => { if (m.status === 'recognizing text') status.textContent = `🔍 Rozpoznaję... ${Math.round(m.progress * 100)}%`; },
+      });
+      const roty = [0, 90, 270];
+      for (let i = 0; i < roty.length; i++) {
+        status.textContent = `🔄 Skanuję (orientacja ${i + 1}/3)...`;
+        const canvas = przygotujCanvas(img, roty[i], 2200);
+        const { data } = await worker.recognize(canvas);
+        text = data.text || '';
+        if (parseDokKwotaData(text).kwota) break;
+      }
+      try { await worker.terminate(); } catch (e) {}
+      URL.revokeObjectURL(img.src);
+    }
+    const p = parseDokKwotaData(text);
+    if (p.kwota) document.getElementById('nw-kwota').value = p.kwota;
+    if (p.data) { const [d, mo, y] = p.data.split('.'); document.getElementById('nw-data').value = `${y}-${mo}-${d}`; }
+    if (foto) { _nwWydFoto = foto; wydPokazFotoPrev(); }
+    status.style.color = p.kwota ? 'var(--green)' : 'var(--orange)';
+    status.textContent = p.kwota ? `✅ Kwota: ${p.kwota} zł${p.data ? ' · ' + p.data : ''} — sprawdź i uzupełnij opis` : '⚠️ Nie odczytano kwoty — wpisz ręcznie (dokument zapisany)';
+  } catch (e) {
+    status.style.color = 'var(--orange)';
+    status.textContent = '⚠️ ' + (e.message || 'Błąd odczytu') + ' — wpisz ręcznie';
+  } finally {
+    input.value = '';
+  }
 }
 
 // ═══════ PRACOWNICY: dodaj / edytuj / usuń / status ═══════
@@ -4263,6 +4360,9 @@ function openNoweWZ(presetDost) {
   if (Object.keys(DATA.dostawcy).length === 0) { showToast('⚠️ Najpierw dodaj dostawcę'); openNowyDostawca(); return; }
   if (presetDost) dSel.value = presetDost;
   fillCelSelect(document.getElementById('nwz-cel'));
+  document.getElementById('nwz-edit-id').value = '';
+  document.getElementById('nwz-heading').textContent = '📄 Nowe WZ (towar na WZ)';
+  document.getElementById('nwz-submit-btn').textContent = 'Zapisz WZ';
   document.getElementById('nwz-nr').value = '';
   document.getElementById('nwz-kwota').value = '';
   document.getElementById('nwz-opis').value = '';
@@ -4271,6 +4371,36 @@ function openNoweWZ(presetDost) {
   document.getElementById('nwz-data').value = new Date().toISOString().slice(0, 10);
   _nwzFoto = null;
   const fp = document.getElementById('nwz-foto-prev'); if (fp) { fp.style.display = 'none'; fp.innerHTML = ''; }
+  const cb = document.getElementById('ocr-wz-cands'); if (cb) { cb.style.display = 'none'; cb.innerHTML = ''; }
+  const st = document.getElementById('ocr-wz-status'); if (st) st.style.display = 'none';
+  wzPrzeliczBrutto();
+  openModal('modal-wz');
+}
+
+function openEditWZ(id) {
+  const w = DATA.wz[id]; if (!w) return;
+  if (w.fakturaId) { showToast('⚠️ WZ jest na fakturze — odepnij ją, aby edytować'); return; }
+  const dSel = document.getElementById('nwz-dostawca');
+  dSel.innerHTML = Object.values(DATA.dostawcy).map(d => `<option value="${d.id}">${d.nazwa}</option>`).join('');
+  dSel.value = w.dostawca;
+  fillCelSelect(document.getElementById('nwz-cel'));
+  document.getElementById('nwz-edit-id').value = id;
+  document.getElementById('nwz-heading').textContent = '✏️ Edytuj WZ';
+  document.getElementById('nwz-submit-btn').textContent = 'Zapisz zmiany';
+  document.getElementById('nwz-nr').value = w.nr || '';
+  document.getElementById('nwz-opis').value = w.opis || '';
+  if (w.netto != null) {
+    document.getElementById('nwz-typkwoty').value = 'netto';
+    document.getElementById('nwz-vat').value = String(w.vat);
+    document.getElementById('nwz-kwota').value = w.netto;
+  } else {
+    document.getElementById('nwz-typkwoty').value = 'brutto';
+    document.getElementById('nwz-kwota').value = w.kwota;
+  }
+  document.getElementById('nwz-data').value = w.data ? w.data.split('.').reverse().join('-') : '';
+  document.getElementById('nwz-cel').value = w.celTyp ? (w.celTyp + ':' + w.cel) : '';
+  _nwzFoto = w.foto || null;
+  pokazFotoPrev();
   const cb = document.getElementById('ocr-wz-cands'); if (cb) { cb.style.display = 'none'; cb.innerHTML = ''; }
   const st = document.getElementById('ocr-wz-status'); if (st) st.style.display = 'none';
   wzPrzeliczBrutto();
@@ -4411,7 +4541,9 @@ function pokazFotoPrev() {
 function podejrzyjFoto(src) {
   let url = null;
   if (src === 'nwz') url = _nwzFoto;
+  else if (src === 'wyd') url = _nwWydFoto;
   else if (DATA.wz[src]) url = DATA.wz[src].foto;
+  else if (DATA.wydatki[src]) url = DATA.wydatki[src].foto;
   else url = src;
   if (!url) { showToast('Brak zdjęcia'); return; }
   document.getElementById('foto-podglad-img').src = url;
@@ -4610,14 +4742,25 @@ function saveWZ() {
   const [celTyp, cel] = celRaw ? celRaw.split(':') : ['', ''];
   const dataVal = document.getElementById('nwz-data').value;
   const opis = document.getElementById('nwz-opis').value.trim();
-  const id = uid('wz_');
-  DATA.wz[id] = { id, nr, kwota, netto, vat, opis, foto: _nwzFoto || null, dostawca, celTyp, cel, data: dataVal ? dataVal.split('-').reverse().join('.') : '', fakturaId: null };
+  const data = dataVal ? dataVal.split('-').reverse().join('.') : '';
+  const editId = document.getElementById('nwz-edit-id').value;
+
+  // Przy edycji: najpierw cofnij stary wkład do kosztów, potem dodaj nowy
+  if (editId && DATA.wz[editId]) {
+    const old = DATA.wz[editId];
+    if (old.celTyp === 'projekt' && DATA.projekty[old.cel]) DATA.projekty[old.cel].kosztyMaterialy = Math.max(0, (DATA.projekty[old.cel].kosztyMaterialy || 0) - Math.round(old.kwota));
+    if (old.celTyp === 'awaria' && DATA.awarie[old.cel]) DATA.awarie[old.cel].koszt = Math.max(0, (DATA.awarie[old.cel].koszt || 0) - Math.round(old.kwota));
+    Object.assign(DATA.wz[editId], { nr, kwota, netto, vat, opis, foto: _nwzFoto || null, dostawca, celTyp, cel, data });
+  } else {
+    const id = uid('wz_');
+    DATA.wz[id] = { id, nr, kwota, netto, vat, opis, foto: _nwzFoto || null, dostawca, celTyp, cel, data, fakturaId: null };
+  }
   // WZ liczy się od razu do kosztów materiału celu
   if (celTyp === 'projekt' && DATA.projekty[cel]) { DATA.projekty[cel].kosztyMaterialy = (DATA.projekty[cel].kosztyMaterialy || 0) + Math.round(kwota); }
   if (celTyp === 'awaria' && DATA.awarie[cel]) { DATA.awarie[cel].koszt = (DATA.awarie[cel].koszt || 0) + Math.round(kwota); }
   saveState(); renderZakupy();
   if (document.getElementById('det-dostawca').classList.contains('open')) openDostawca(dostawca);
-  closeModal('modal-wz'); showToast('✅ WZ zapisane');
+  closeModal('modal-wz'); showToast(editId ? '✅ Zmiany zapisane' : '✅ WZ zapisane');
 }
 function deleteWZ(id) {
   const wz = DATA.wz[id]; if (!wz) return;
@@ -4658,7 +4801,7 @@ function buildDostawcaDetail(id) {
       </div>
       <div class="sec-hdr"><h3 style="font-size:12px">📄 WZ niezafakturowane (${wzOtwarte.length})</h3></div>
       ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a">
-        <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł${w.vat != null ? ` <span style="font-weight:400;color:var(--muted)">(netto ${w.netto.toLocaleString('pl-PL')} + VAT ${w.vat}%)</span>` : ''}</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)}</div>${w.opis ? `<div style="font-size:10px;color:var(--sec);margin-top:2px">📦 ${w.opis.replace(/\n/g, ', ')}</div>` : ''}</div>
+        <div style="flex:1;cursor:pointer" onclick="openEditWZ('${w.id}')"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł${w.vat != null ? ` <span style="font-weight:400;color:var(--muted)">(netto ${w.netto.toLocaleString('pl-PL')} + VAT ${w.vat}%)</span>` : ''}</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)} · ✏️ edytuj</div>${w.opis ? `<div style="font-size:10px;color:var(--sec);margin-top:2px">📦 ${w.opis.replace(/\n/g, ', ')}</div>` : ''}</div>
         ${w.foto ? `<button onclick="podejrzyjFoto('${w.id}')" title="Zobacz zdjęcie" style="background:none;border:none;font-size:15px;cursor:pointer">🖼️</button>` : ''}
         <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>
       </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak — wszystko zafakturowane ✅</div>'}
