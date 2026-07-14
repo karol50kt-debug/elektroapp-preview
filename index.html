@@ -249,7 +249,7 @@ body.kier .kier-only{display:flex!important}
 <!-- Modal Dodaj Dzień -->
 <div class="modal-ov" id="modal-dzien" style="display:none" onclick="if(event.target===this)closeModal('modal-dzien')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-dzien')">✕</button><h3>⏱️ Dodaj dzień pracy</h3>
-    <div class="fg"><label>Data</label><input class="fi" id="nd-data" type="date" value="2024-04-10"></div>
+    <div class="fg"><label>Data</label><input class="fi" id="nd-data" type="date"></div>
     <div class="fg"><label>Projekt</label><select class="fs" id="nd-projekt"></select></div>
     <div style="margin-bottom:6px;font-weight:700;font-size:13px">Pracownicy</div>
     <div id="nd-pracownicy" style="margin-bottom:10px"></div>
@@ -376,7 +376,7 @@ body.kier .kier-only{display:flex!important}
 <!-- Modal: dodaj godziny dla pojedynczego pracownika (z detalu pracownika) -->
 <div class="modal-ov" id="modal-godziny" style="display:none" onclick="if(event.target===this)closeModal('modal-godziny')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-godziny')">✕</button><h3 id="ng-heading">⏱️ Dodaj godziny</h3>
-    <div class="fg"><label>Data</label><input class="fi" id="ng-data" type="date" value="2024-04-10"></div>
+    <div class="fg"><label>Data</label><input class="fi" id="ng-data" type="date"></div>
     <div class="fg"><label>Projekt</label><select class="fs" id="ng-projekt"></select></div>
     <div id="ng-pracownicy" style="margin-bottom:10px"></div>
     <div style="display:flex;gap:8px;margin-bottom:4px">
@@ -3860,6 +3860,7 @@ function collectDzienWpisy(prefix, dayKey, dateLabel, projId) {
 
 // ═══════ DASHBOARD: DODAJ DZIEŃ (wielu pracowników + auto + nieobecności) ═══════
 function openDzienModal() {
+  document.getElementById('nd-data').value = new Date().toISOString().slice(0, 10);
   const projSel = document.getElementById('nd-projekt');
   projSel.innerHTML = Object.values(DATA.projekty).map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
 
@@ -3908,6 +3909,7 @@ function openGodzinyModal(pracId) {
   const w = DATA.pracownicy[pracId];
   if (!w) return;
   document.getElementById('ng-heading').textContent = `⏱️ Dodaj godziny — ${w.imie} ${w.nazwisko}`;
+  document.getElementById('ng-data').value = new Date().toISOString().slice(0, 10);
 
   const projSel = document.getElementById('ng-projekt');
   projSel.innerHTML = Object.values(DATA.projekty).map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
