@@ -250,7 +250,7 @@ body.kier .kier-only{display:flex!important}
 <div class="modal-ov" id="modal-dzien" style="display:none" onclick="if(event.target===this)closeModal('modal-dzien')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-dzien')">✕</button><h3>⏱️ Dodaj dzień pracy</h3>
     <div class="fg"><label>Data</label><input class="fi" id="nd-data" type="date"></div>
-    <div class="fg"><label>Projekt</label><select class="fs" id="nd-projekt"></select></div>
+    <div class="fg"><label>Projekt</label><select class="fs" id="nd-projekt" onchange="projektKmRefresh('nd')"></select></div>
     <div style="margin-bottom:6px;font-weight:700;font-size:13px">Pracownicy</div>
     <div id="nd-pracownicy" style="margin-bottom:10px"></div>
     <div class="fg"><label>Opis (opcja)</label><input class="fi" id="nd-opis" placeholder="np. Układanie kabli"></div>
@@ -307,6 +307,7 @@ body.kier .kier-only{display:flex!important}
       <div class="fg" style="flex:1"><label>Termin wykonania</label><input class="fi" id="npr-termin" type="date"></div>
     </div>
     <div class="fg"><label>Wartość (zł)</label><input class="fi" id="npr-wartosc" type="number" placeholder="0"></div>
+    <div class="fg"><label>Stała trasa (km/dzień, opcjonalnie)</label><input class="fi" id="npr-km-trasa" type="number" placeholder="np. 22"></div>
     <div style="font-size:11px;color:var(--muted);margin:-6px 0 12px">ℹ️ Postęp (%) liczy się automatycznie z podetapów w zakładce „Ogólne" projektu.</div>
     <button class="btn-p" id="npr-submit-btn" onclick="saveProjekt()">Utwórz projekt</button>
   </div>
@@ -377,7 +378,7 @@ body.kier .kier-only{display:flex!important}
 <div class="modal-ov" id="modal-godziny" style="display:none" onclick="if(event.target===this)closeModal('modal-godziny')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-godziny')">✕</button><h3 id="ng-heading">⏱️ Dodaj godziny</h3>
     <div class="fg"><label>Data</label><input class="fi" id="ng-data" type="date"></div>
-    <div class="fg"><label>Projekt</label><select class="fs" id="ng-projekt"></select></div>
+    <div class="fg"><label>Projekt</label><select class="fs" id="ng-projekt" onchange="projektKmRefresh('ng')"></select></div>
     <div id="ng-pracownicy" style="margin-bottom:10px"></div>
     <div style="display:flex;gap:8px;margin-bottom:4px">
       <div class="fg" style="flex:1"><label>Godzin</label><div class="fi" id="ng-total-h" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
@@ -1931,6 +1932,7 @@ function openNewProjekt() {
   document.getElementById('npr-start').value = '';
   document.getElementById('npr-termin').value = '';
   document.getElementById('npr-wartosc').value = '';
+  document.getElementById('npr-km-trasa').value = '';
   document.getElementById('npr-submit-btn').textContent = 'Utwórz projekt';
   openModal('modal-projekt');
 }
@@ -1947,6 +1949,7 @@ function openEditProjekt(id) {
   document.getElementById('npr-start').value = plToIso(p.start);
   document.getElementById('npr-termin').value = plToIso(p.terminWykonania || p.koniec);
   document.getElementById('npr-wartosc').value = p.wartosc;
+  document.getElementById('npr-km-trasa').value = p.kmTrasa || '';
   document.getElementById('npr-submit-btn').textContent = 'Zapisz zmiany';
   openModal('modal-projekt');
 }
@@ -1959,12 +1962,14 @@ function saveProjekt() {
   const adres = document.getElementById('npr-adres').value.trim();
   const status = document.getElementById('npr-status').value;
   const wartosc = Number(document.getElementById('npr-wartosc').value) || 0;
+  const kmTrasaVal = document.getElementById('npr-km-trasa').value;
+  const kmTrasa = kmTrasaVal ? Number(kmTrasaVal) : null;
   const start = isoToPl(document.getElementById('npr-start').value);
   const terminWykonania = isoToPl(document.getElementById('npr-termin').value);
 
   if (editId && DATA.projekty[editId]) {
     const p = DATA.projekty[editId];
-    Object.assign(p, { nazwa, klient, adres, status, wartosc, start, terminWykonania, koniec: terminWykonania || p.koniec });
+    Object.assign(p, { nazwa, klient, adres, status, wartosc, kmTrasa, start, terminWykonania, koniec: terminWykonania || p.koniec });
     if (status !== 'Zakończony') {
       const used = new Set(Object.values(DATA.projekty).filter(x => x.id !== p.id && x.status !== 'Zakończony').map(x => x.kolor));
       if (used.has(p.kolor)) {
@@ -1981,7 +1986,7 @@ function saveProjekt() {
   } else {
     const id = uid('p_');
     const c = assignProjectColor();
-    DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, postep:0, start, koniec:terminWykonania, terminWykonania, kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, planLudzie:0, planMaterial:0, planZysk:0, opis:'', zaplacono:false, dataZaplaty:null, zadania:[] };
+    DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, kmTrasa, postep:0, start, koniec:terminWykonania, terminWykonania, kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, planLudzie:0, planMaterial:0, planZysk:0, opis:'', zaplacono:false, dataZaplaty:null, zadania:[] };
     showToast('✅ Projekt dodany!');
     renderProjektyList();
   }
@@ -2330,6 +2335,30 @@ function buildZaliczkiSekcja(pracId) {
     </div>`;
 }
 
+// Widoczne tylko dla kierownika — jego własne wpisy godzin za INNYCH (3. lista), bo tabela
+// porównania (buildPorownanieHtml) jest fullAccess()-only i kierownik jej nie widzi.
+function buildKierownikWpisySekcja(pracId) {
+  if (!isKierownik()) return '';
+  const myId = currentUser.pracownik;
+  const prefix = `${pracCalYear}-${String(pracCalMonth + 1).padStart(2, '0')}-`;
+  const dni = Object.keys(DATA.czasPracyKierownik || {})
+    .filter(k => k.startsWith(prefix) && dniKierRaw(pracId, k).some(x => x.entry.wpisanyPrzez === myId))
+    .sort();
+  if (dni.length === 0) return '';
+  return `
+    <div style="padding:0 14px 14px">
+      <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">📝 Moje wpisy godzin dla tej osoby</div>
+      ${dni.map(key => {
+        const agg = dniKier(pracId, key);
+        const label = agg.nieobecny ? '🚫 Nieobecny' : `${agg.godz}h${agg.od && agg.do ? ' · ' + agg.od + '–' + agg.do : ''}`;
+        return `<div onclick="openPracDayModal('${pracId}','${key}','kierownik')" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #2b333a;cursor:pointer">
+          <div style="flex:1"><div style="font-size:13px;font-weight:700">${key.slice(8)}.${key.slice(5,7)}.${key.slice(0,4)}</div><div style="font-size:11px;color:var(--muted)">${label}</div></div>
+          <span style="color:var(--blue)">›</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
 // ═══════ PRACOWNICY ═══════ (zakładka Ludzie łączy listę pracowników i kalendarz zespołu)
 function renderPracList() {
   const listEl = document.getElementById('prac-list');
@@ -2402,6 +2431,32 @@ function dniPrac(pracId, dayKey) {
     const nb = wpisy[0];
     return { nieobecny: true, powod: nb.powod };
   }
+  const godz = Math.round(obecne.reduce((s, x) => s + (x.godz || 0), 0) * 100) / 100;
+  const ody = obecne.map(x => x.od).filter(Boolean).sort();
+  const doy = obecne.map(x => x.do).filter(Boolean).sort();
+  const projekty = [...new Set(obecne.map(x => x.proj).filter(Boolean))];
+  return { godz, od: ody[0], do: doy[doy.length - 1], proj: projekty[0], projekty, liczbaWpisow: obecne.length };
+}
+
+// Surowe wpisy pracownika danego dnia z oficjalnej ewidencji, każdy z indeksem w PEŁNEJ
+// tablicy dnia (potrzebne do celowanego usuwania pojedynczego wpisu — DATA.czasPracy[dayKey].splice(idx,1)).
+function dniPracRaw(pracId, dayKey) {
+  return (DATA.czasPracy[dayKey] || [])
+    .map((entry, idx) => ({ entry, idx }))
+    .filter(x => x.entry.prac === pracId);
+}
+
+// Surowe wpisy własnych godzin pracownika danego dnia — zawsze tablica (nawet pusta).
+function wlasneWpisy(pracId, dayKey) {
+  return (DATA.czasPracyWlasne[pracId] || {})[dayKey] || [];
+}
+
+// Agregat własnych godzin (jak dniPrac, ale nad czasPracyWlasne) — do kalendarza/sum/porównania.
+function wlasneDayAgg(pracId, dayKey) {
+  const wpisy = wlasneWpisy(pracId, dayKey);
+  if (wpisy.length === 0) return null;
+  const obecne = wpisy.filter(x => !x.nieobecny);
+  if (obecne.length === 0) return { nieobecny: true, powod: wpisy[0].powod };
   const godz = Math.round(obecne.reduce((s, x) => s + (x.godz || 0), 0) * 100) / 100;
   const ody = obecne.map(x => x.od).filter(Boolean).sort();
   const doy = obecne.map(x => x.do).filter(Boolean).sort();
@@ -2610,6 +2665,29 @@ function zatwierdzPasek(pracId, idx) {
   buildPaskiAdmin();
 }
 
+function przeliczPasekRoboczy(pracId, idx) {
+  const pasek = DATA.paski[pracId][idx];
+  if (!pasek || pasek.status !== 'roboczy') return;
+  const dni = pasekRozpisDni(pracId, pasek.mIdx, pasek.rok);
+  pasek.dni = dni;
+  pasek.godziny = dni.reduce((s, x) => s + (x.godz || 0), 0);
+  const w = DATA.pracownicy[pracId];
+  showToast(`🔄 Przeliczono pasek: ${w.imie} ${w.nazwisko}`);
+  saveState();
+  buildPaskiAdmin();
+}
+
+function usunPasekRoboczy(pracId, idx) {
+  const pasek = DATA.paski[pracId][idx];
+  if (!pasek || pasek.status !== 'roboczy') return;
+  const w = DATA.pracownicy[pracId];
+  if (!confirm(`Usunąć roboczy pasek ${w.imie} ${w.nazwisko}? Będzie można wygenerować nowy.`)) return;
+  DATA.paski[pracId].splice(idx, 1);
+  showToast('🗑️ Usunięto pasek roboczy');
+  saveState();
+  buildPaskiAdmin();
+}
+
 // Nierozliczone zaliczki pracownika pobrane w danym miesiącu (do odliczenia od paska)
 function zaliczkiOkresu(pracId, mIdx, rok) {
   const list = (DATA.zaliczki && DATA.zaliczki[pracId]) || [];
@@ -2702,6 +2780,10 @@ function buildPaskiAdmin() {
           <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
             <input class="fi" id="premia-${w.id}-${idx}" type="number" placeholder="Premia (zł)" value="${pasek.premia || ''}" style="flex:1;padding:7px 10px;font-size:12px">
             <button onclick="zatwierdzPasek('${w.id}',${idx})" class="btn-g" style="flex-shrink:0">✔ Zatwierdź</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+            <button onclick="przeliczPasekRoboczy('${w.id}',${idx})" style="flex:1;background:var(--blue-l);color:var(--blue);border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer">🔄 Przelicz</button>
+            <button onclick="usunPasekRoboczy('${w.id}',${idx})" style="flex:1;background:#fdeaea;color:#b00;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer">🗑️ Usuń</button>
           </div>` : ''}
         ${pasek.status === 'zatwierdzony' ? `
           <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:8px">
@@ -2836,6 +2918,7 @@ function buildPracDetail(id) {
       ${sumaHtml}
     </div>
     ${buildPorownanieHtml(id)}
+    ${buildKierownikWpisySekcja(id)}
     <div style="padding:0 14px 14px">
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">📋 Projekty (kliknij → szczegóły)</div>
       ${projListHtml || '<div style="color:var(--muted);font-size:12px">Brak projektów</div>'}
@@ -2850,6 +2933,14 @@ function dniKier(pracId, dayKey) {
   if (!mine.length) return null;
   if (mine.some(x => x.nieobecny)) return { nieobecny: true, powod: mine[0].powod };
   return { godz: Math.round(mine.reduce((s, x) => s + (x.godz || 0), 0) * 100) / 100, od: mine[0].od, do: mine[mine.length - 1].do };
+}
+
+// Surowe wpisy z 3. listy (kierownika) dla pracownika danego dnia, z indeksem w PEŁNEJ
+// tablicy dnia (do celowanego usuwania — DATA.czasPracyKierownik[dayKey].splice(idx,1)).
+function dniKierRaw(pracId, dayKey) {
+  return ((DATA.czasPracyKierownik || {})[dayKey] || [])
+    .map((entry, idx) => ({ entry, idx }))
+    .filter(x => x.entry.prac === pracId);
 }
 
 // Widoczne tylko dla właściciela / biura w detalu pracownika (3 kolumny: oficjalne, pracownik, kierownik).
@@ -2868,14 +2959,14 @@ function buildPorownanieHtml(pracId) {
   const hh = w => w && !w.nieobecny ? w.godz : 0;
   let zgodne = 0, rozne = 0;
   const rows = sorted.map(key => {
-    const moje = dniPrac(pracId, key), jego = wlasne[key], kier = dniKier(pracId, key);
+    const moje = dniPrac(pracId, key), jego = wlasneDayAgg(pracId, key), kier = dniKier(pracId, key);
     const hs = [hh(moje), hh(jego), hh(kier)].filter((v, i) => [moje, jego, kier][i]);
     const zgoda = hs.length >= 2 && hs.every(v => v === hs[0]);
     if (zgoda) zgodne++; else rozne++;
     const bg = zgoda ? 'var(--green-l)' : 'var(--orange-l)';
     return `<div style="display:grid;grid-template-columns:34px 1fr 1fr 1fr 20px;gap:4px;align-items:center;padding:6px 8px;background:${bg};border-radius:8px;margin-bottom:4px;font-size:10px">
       <strong>${key.slice(8)}.${key.slice(5,7)}</strong>
-      <span>${fmt(moje)}</span><span>${fmt(jego)}</span><span>${fmt(kier)}</span>
+      <span>${fmt(moje)}</span><span>${fmt(jego)}</span><span${kier ? ` onclick="openPracDayModal('${pracId}','${key}','kierownik')" style="cursor:pointer;text-decoration:underline"` : ''}>${fmt(kier)}</span>
       <span style="text-align:center">${zgoda ? '✅' : '⚠️'}</span>
     </div>`;
   }).join('');
@@ -2891,42 +2982,123 @@ function buildPorownanieHtml(pracId) {
     </div>`;
 }
 
+// ═══════ USUWANIE WPISÓW GODZIN (z trzech magazynów, z uprawnieniami) ═══════
+function deleteCzasPracyEntry(dayKey, idx) {
+  if (!fullAccess()) return;
+  const arr = DATA.czasPracy[dayKey];
+  if (!arr || !arr[idx]) return;
+  const e = arr[idx];
+  const etykieta = e.nieobecny ? '🚫 Nieobecny' : `${e.godz}h`;
+  if (!confirm(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`)) return;
+  arr.splice(idx, 1);
+  if (arr.length === 0) delete DATA.czasPracy[dayKey];
+  saveState();
+  showToast('🗑️ Wpis usunięty');
+  closeModal('modal-dzien-detail');
+  buildCzasCalendar();
+  const detPrac = document.getElementById('det-prac');
+  if (detPrac && detPrac.classList.contains('open') && lastReopen['det-prac']) lastReopen['det-prac']();
+}
+
+function deleteCzasPracyWlasneEntry(pracId, dayKey, idx) {
+  const isOwn = currentUser && currentUser.pracownik === pracId;
+  if (!fullAccess() && !isOwn) return;
+  const arr = wlasneWpisy(pracId, dayKey);
+  if (!arr[idx]) return;
+  const e = arr[idx];
+  const etykieta = e.nieobecny ? '🚫 Nieobecny' : `${e.godz}h`;
+  if (!confirm(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`)) return;
+  arr.splice(idx, 1);
+  if (!DATA.czasPracyWlasne[pracId]) DATA.czasPracyWlasne[pracId] = {};
+  if (arr.length === 0) delete DATA.czasPracyWlasne[pracId][dayKey];
+  else DATA.czasPracyWlasne[pracId][dayKey] = arr;
+  saveState();
+  showToast('🗑️ Wpis usunięty');
+  closeModal('modal-dzien-detail');
+  if (currentTab === 'mojegodziny') buildMojeGodziny();
+  const detPrac = document.getElementById('det-prac');
+  if (detPrac && detPrac.classList.contains('open') && lastReopen['det-prac']) lastReopen['det-prac']();
+}
+
+function deleteCzasPracyKierownikEntry(pracId, dayKey, idx) {
+  const raw = dniKierRaw(pracId, dayKey);
+  const target = raw[idx];
+  if (!target) return;
+  const canDelete = fullAccess() || target.entry.wpisanyPrzez === (currentUser && currentUser.pracownik);
+  if (!canDelete) return;
+  const etykieta = target.entry.nieobecny ? '🚫 Nieobecny' : `${target.entry.godz}h`;
+  if (!confirm(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`)) return;
+  DATA.czasPracyKierownik[dayKey].splice(target.idx, 1);
+  if (DATA.czasPracyKierownik[dayKey].length === 0) delete DATA.czasPracyKierownik[dayKey];
+  saveState();
+  showToast('🗑️ Wpis usunięty');
+  closeModal('modal-dzien-detail');
+  const detPrac = document.getElementById('det-prac');
+  if (detPrac && detPrac.classList.contains('open') && lastReopen['det-prac']) lastReopen['det-prac']();
+}
+
 // Szczegóły JEDNEGO dnia dla TEGO pracownika (z zakresem od–do), w odróżnieniu od
 // openCzasDayModal, który pokazuje wszystkich pracowników danego dnia (widok zespołu)
+// dayKey/src → nazwa funkcji usuwającej + jej argumenty (poza idx)
+function _czasDelFn(src) {
+  if (src === 'wlasne') return 'deleteCzasPracyWlasneEntry';
+  if (src === 'kierownik') return 'deleteCzasPracyKierownikEntry';
+  return 'deleteCzasPracyEntry';
+}
+function _czasCanDelete(src, entry, pracId) {
+  if (src === 'wlasne') return fullAccess() || (currentUser && currentUser.pracownik === pracId);
+  if (src === 'kierownik') return fullAccess() || (entry.wpisanyPrzez === (currentUser && currentUser.pracownik));
+  return fullAccess();
+}
+
 function openPracDayModal(pracId, dayKey, src) {
   const w = DATA.pracownicy[pracId];
-  const wpis = src === 'wlasne'
-    ? (DATA.czasPracyWlasne[pracId] || {})[dayKey]
-    : dniPrac(pracId, dayKey);
-  if (!w || !wpis) return;
+  if (!w) return;
+
+  let raw;
+  if (src === 'wlasne') raw = wlasneWpisy(pracId, dayKey).map((entry, idx) => ({ entry, idx }));
+  else if (src === 'kierownik') raw = dniKierRaw(pracId, dayKey);
+  else raw = dniPracRaw(pracId, dayKey);
+
+  if (raw.length === 0) { closeModal('modal-dzien-detail'); return; }
 
   const dateLabel = dayKey.split('-').reverse().join('.');
   document.getElementById('modal-dzien-title').textContent = '📅 ' + dateLabel;
 
+  const delFn = _czasDelFn(src);
+  const delArgs = src === 'wlasne' || src === 'kierownik' ? `'${pracId}','${dayKey}'` : `'${dayKey}'`;
+  const delBtn = (entry, idx) => _czasCanDelete(src, entry, pracId)
+    ? `<button onclick="${delFn}(${delArgs},${idx})" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px 6px" title="Usuń wpis">🗑️</button>`
+    : '';
+
+  const nieobecny = raw.find(x => x.entry.nieobecny);
   let html;
-  if (wpis.nieobecny) {
-    html = `<div style="padding:12px;background:#232a31;border-radius:8px;text-align:center;color:var(--red);font-weight:700">🚫 Nieobecny${wpis.powod ? ' — ' + wpis.powod : ''}</div>`;
+  if (nieobecny) {
+    html = `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:#232a31;border-radius:8px;color:var(--red);font-weight:700">
+      <div style="flex:1">🚫 Nieobecny${nieobecny.entry.powod ? ' — ' + nieobecny.entry.powod : ''}</div>
+      ${delBtn(nieobecny.entry, nieobecny.idx)}
+    </div>`;
   } else {
-    const proj = DATA.projekty[wpis.proj];
-    const koszt = Math.round(w.stawka * wpis.godz);
+    const hs = raw.filter(x => !x.entry.nieobecny);
     html = `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#232a31;border-radius:8px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#232a31;border-radius:8px;margin-bottom:10px">
         <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${w.inicjaly}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700">${w.imie} ${w.nazwisko}</div>
-          <div style="font-size:11px;color:var(--muted)">${proj ? proj.nazwa : ''}</div>
+          <div style="font-size:11px;color:var(--muted)">${hs.length} ${hs.length === 1 ? 'wpis' : 'wpisy'} tego dnia</div>
         </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-        <div style="background:var(--blue-l);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:16px;font-weight:800;color:var(--blue)">${wpis.od && wpis.do ? `${wpis.od}–${wpis.do}` : wpis.godz + 'h'}</div>
-          <div style="font-size:10px;color:var(--muted)">Godziny${wpis.od && wpis.do ? ` (${wpis.godz}h)` : ''}</div>
-        </div>
-        <div style="background:var(--green-l);border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:16px;font-weight:800;color:var(--green)">${koszt} zł</div>
-          <div style="font-size:10px;color:var(--muted)">Wynagrodzenie</div>
-        </div>
-      </div>`;
+      </div>` + hs.map(({ entry, idx }) => {
+        const proj = DATA.projekty[entry.proj];
+        const koszt = Math.round((w.stawka || 0) * (entry.godz || 0));
+        return `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:#232a31;border-radius:8px;margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${proj ? proj.nazwa : '(bez projektu)'}</div>
+            <div style="font-size:11px;color:var(--muted)">${entry.od && entry.do ? `${entry.od}–${entry.do} · ` : ''}${entry.godz}h${entry.wpisanyPrzez ? ` · wpisał: ${(DATA.pracownicy[entry.wpisanyPrzez] || {}).imie || entry.wpisanyPrzez}` : ''}</div>
+            <div${src === 'wlasne' ? '' : ' class="fin"'} style="font-size:11px;color:var(--green);font-weight:700;margin-top:2px">${koszt} zł</div>
+          </div>
+          ${delBtn(entry, idx)}
+        </div>`;
+      }).join('');
   }
 
   document.getElementById('modal-dzien-body').innerHTML = html;
@@ -3698,8 +3870,9 @@ function openCzasDayModal(dayKey) {
     <div style="background:var(--green-l);border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--green)">${totalKoszt} zł</div><div style="font-size:10px;color:var(--muted)">Wynagrodzenia</div></div>
   </div>`;
 
-  wpisy.forEach(w => {
+  wpisy.forEach((w, idx) => {
     const prac = DATA.pracownicy[w.prac];
+    const delBtn = fullAccess() ? `<button onclick="deleteCzasPracyEntry('${dayKey}',${idx})" style="background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:4px 6px;flex-shrink:0" title="Usuń wpis">🗑️</button>` : '';
     if (w.nieobecny) {
       html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px;opacity:.75">
         <div style="width:32px;height:32px;border-radius:16px;background:#4a545c;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
@@ -3707,6 +3880,7 @@ function openCzasDayModal(dayKey) {
           <div style="font-size:12px;font-weight:700">${prac?prac.imie+' '+prac.nazwisko.charAt(0)+'.':'?'}</div>
           <div style="font-size:10px;color:var(--red)">🚫 Nieobecny${w.powod ? ' — ' + w.powod : ''}</div>
         </div>
+        ${delBtn}
       </div>`;
       return;
     }
@@ -3722,6 +3896,7 @@ function openCzasDayModal(dayKey) {
         <div style="font-size:13px;font-weight:800;color:var(--blue)">${w.od && w.do ? `${w.od}–${w.do}` : w.godz + 'h'}</div>
         <div style="font-size:10px;color:var(--muted)">${w.od && w.do ? w.godz + 'h · ' : ''}<span style="color:var(--green);font-weight:700">${koszt} zł</span></div>
       </div>
+      ${delBtn}
     </div>`;
   });
 
@@ -3748,11 +3923,16 @@ function buildPracownikRow(w, prefix) {
           <span style="font-size:11px;color:var(--muted)">–</span>
           <input type="time" class="fi" id="${prefix}-do-${w.id}" value="15:00" oninput="recalcDzien('${prefix}')" style="flex:1;padding:6px 8px;font-size:12px">
         </div>
-        <select class="fs" id="${prefix}-auto-${w.id}" onchange="recalcDzien('${prefix}')" style="width:100%;padding:6px 8px;font-size:12px;margin-bottom:6px">
+        <select class="fs" id="${prefix}-auto-${w.id}" onchange="rowKmTrybChange('${prefix}','${w.id}')" style="width:100%;padding:6px 8px;font-size:12px;margin-bottom:6px">
           <option value="">— bez auta —</option>
           ${Object.values(DATA.samochody).map(a => `<option value="${a.id}">${a.marka} ${a.model} (${a.rej})</option>`).join('')}
         </select>
-        <div style="display:flex;gap:6px;align-items:center">
+        <select class="fs" id="${prefix}-kmtryb-${w.id}" onchange="rowKmTrybChange('${prefix}','${w.id}')" style="display:none;width:100%;padding:6px 8px;font-size:12px;margin-bottom:6px">
+          <option value="reczny">Liczniki (ręcznie)</option>
+          <option value="stala">Stała trasa (z projektu)</option>
+        </select>
+        <div id="${prefix}-kmstala-info-${w.id}" style="display:none;font-size:11px;color:var(--muted);margin-bottom:6px"></div>
+        <div id="${prefix}-kmliczniki-${w.id}" style="display:flex;gap:6px;align-items:center">
           <input type="number" class="fi" id="${prefix}-licznik-od-${w.id}" placeholder="licznik rano" min="0" oninput="recalcKm('${prefix}','${w.id}')" style="flex:1;padding:6px 8px;font-size:12px">
           <span style="font-size:11px;color:var(--muted)">→</span>
           <input type="number" class="fi" id="${prefix}-licznik-do-${w.id}" placeholder="po południu" min="0" oninput="recalcKm('${prefix}','${w.id}')" style="flex:1;padding:6px 8px;font-size:12px">
@@ -3780,6 +3960,52 @@ function recalcKm(prefix, wid) {
   document.getElementById(`${prefix}-km-${wid}`).value = km;
   const out = document.getElementById(`${prefix}-km-out-${wid}`);
   if (out) out.textContent = km + ' km';
+}
+
+// Przełącza tryb liczenia km dla danego pracownika: stała trasa (z projektu) vs liczniki (ręcznie)
+function rowKmTrybChange(prefix, wid) {
+  const autoId = document.getElementById(`${prefix}-auto-${wid}`).value;
+  const trybSel = document.getElementById(`${prefix}-kmtryb-${wid}`);
+  const stalaInfo = document.getElementById(`${prefix}-kmstala-info-${wid}`);
+  const liczWrap = document.getElementById(`${prefix}-kmliczniki-${wid}`);
+  const kmHidden = document.getElementById(`${prefix}-km-${wid}`);
+  if (!autoId) {
+    trybSel.style.display = 'none';
+    stalaInfo.style.display = 'none';
+    liczWrap.style.display = 'flex';
+    kmHidden.value = 0;
+    return;
+  }
+  trybSel.style.display = 'block';
+  const projEl = document.getElementById(`${prefix}-projekt`);
+  const proj = projEl ? DATA.projekty[projEl.value] : null;
+  const stalaOpt = trybSel.querySelector('option[value="stala"]');
+  if (proj && proj.kmTrasa) {
+    stalaOpt.disabled = false;
+    stalaOpt.textContent = `Stała trasa (${proj.kmTrasa} km/dzień)`;
+  } else {
+    stalaOpt.disabled = true;
+    stalaOpt.textContent = 'Stała trasa (ustaw w edycji projektu)';
+    if (trybSel.value === 'stala') trybSel.value = 'reczny';
+  }
+  if (trybSel.value === 'stala' && proj && proj.kmTrasa) {
+    liczWrap.style.display = 'none';
+    stalaInfo.style.display = 'block';
+    stalaInfo.textContent = `📍 ${proj.kmTrasa} km/dzień (stała trasa projektu)`;
+    kmHidden.value = proj.kmTrasa;
+  } else {
+    liczWrap.style.display = 'flex';
+    stalaInfo.style.display = 'none';
+    recalcKm(prefix, wid);
+  }
+}
+
+// Po zmianie projektu w modalu — odśwież dostępność "stałej trasy" dla wszystkich wierszy z wybranym autem
+function projektKmRefresh(prefix) {
+  Object.values(DATA.pracownicy).forEach(w => {
+    const autoEl = document.getElementById(`${prefix}-auto-${w.id}`);
+    if (autoEl) rowKmTrybChange(prefix, w.id);
+  });
 }
 
 function dzienModeChange(prefix, wid) {
@@ -3862,7 +4088,7 @@ function collectDzienWpisy(prefix, dayKey, dateLabel, projId) {
 function openDzienModal() {
   document.getElementById('nd-data').value = new Date().toISOString().slice(0, 10);
   const projSel = document.getElementById('nd-projekt');
-  projSel.innerHTML = Object.values(DATA.projekty).map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
+  projSel.innerHTML = Object.values(DATA.projekty).filter(p => p.status !== 'Zakończony').map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
 
   const rowsEl = document.getElementById('nd-pracownicy');
   rowsEl.innerHTML = Object.values(DATA.pracownicy).map(w => buildPracownikRow(w, 'nd')).join('');
@@ -3888,9 +4114,13 @@ function saveDzien() {
   if (wpisy.length === 0) { showToast('⚠️ Zaznacz co najmniej jednego pracownika'); return; }
 
   if (!DATA.czasPracy[dayKey]) DATA.czasPracy[dayKey] = [];
-  // nadpisz ewentualne wcześniejsze wpisy tych samych pracowników na ten dzień
-  const ids = new Set(wpisy.map(x => x.prac));
-  DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x => !ids.has(x.prac));
+  // Nieobecność kasuje wszystkie wpisy tej osoby tego dnia; nowe godziny dopisują się
+  // do istniejących (inny projekt), kasując jedynie ewentualny stary marker nieobecności.
+  const nieobecniIds = new Set(wpisy.filter(w => w.nieobecny).map(w => w.prac));
+  const obecniIds = new Set(wpisy.filter(w => !w.nieobecny).map(w => w.prac));
+  DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x =>
+    !nieobecniIds.has(x.prac) && !(obecniIds.has(x.prac) && x.nieobecny)
+  );
   DATA.czasPracy[dayKey].push(...wpisy);
 
   const obecni = wpisy.filter(w => !w.nieobecny).length;
@@ -3912,7 +4142,7 @@ function openGodzinyModal(pracId) {
   document.getElementById('ng-data').value = new Date().toISOString().slice(0, 10);
 
   const projSel = document.getElementById('ng-projekt');
-  projSel.innerHTML = Object.values(DATA.projekty).map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
+  projSel.innerHTML = Object.values(DATA.projekty).filter(p => p.status !== 'Zakończony').map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
 
   document.getElementById('ng-pracownicy').innerHTML = buildPracownikRow(w, 'ng');
   document.getElementById(`ng-mode-${pracId}`).value = 'obecny';
@@ -3932,25 +4162,26 @@ function saveGodziny() {
   const pracId = wpisy[0].prac;
 
   const isOwn = currentUser && currentUser.pracownik === pracId;
+  const nowNieobecny = wpisy.some(w => w.nieobecny);
   if (fullAccess()) {
-    // Właściciel / biuro prowadzą oficjalną ewidencję
+    // Właściciel / biuro prowadzą oficjalną ewidencję — dopisz (nieobecność kasuje wpisy tego dnia)
     if (!DATA.czasPracy[dayKey]) DATA.czasPracy[dayKey] = [];
-    DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x => x.prac !== pracId);
+    DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x => x.prac !== pracId || (!nowNieobecny && !x.nieobecny));
     DATA.czasPracy[dayKey].push(...wpisy);
     buildCzasCalendar();
   } else if (isKierownik() && !isOwn) {
     // Kierownik wpisuje godziny INNYCH → osobna 3. lista (widoczna dla właściciela/biura w porównaniu)
     if (!DATA.czasPracyKierownik) DATA.czasPracyKierownik = {};
     if (!DATA.czasPracyKierownik[dayKey]) DATA.czasPracyKierownik[dayKey] = [];
-    DATA.czasPracyKierownik[dayKey] = DATA.czasPracyKierownik[dayKey].filter(x => x.prac !== pracId);
+    DATA.czasPracyKierownik[dayKey] = DATA.czasPracyKierownik[dayKey].filter(x => x.prac !== pracId || (!nowNieobecny && !x.nieobecny));
     DATA.czasPracyKierownik[dayKey].push(...wpisy.map(w => ({ ...w, wpisanyPrzez: currentUser.pracownik })));
   } else {
-    // Pracownik (lub kierownik dla siebie) pisze do WŁASNEGO rejestru
-    const w = wpisy[0];
+    // Pracownik (lub kierownik dla siebie) pisze do WŁASNEGO rejestru — tablica wpisów, dopisujemy
     if (!DATA.czasPracyWlasne[pracId]) DATA.czasPracyWlasne[pracId] = {};
-    DATA.czasPracyWlasne[pracId][dayKey] = w.nieobecny
-      ? { nieobecny: true, powod: w.powod }
-      : { godz: w.godz, od: w.od, do: w.do, proj: w.proj };
+    const existing = wlasneWpisy(pracId, dayKey);
+    const kept = existing.filter(x => !nowNieobecny && !x.nieobecny);
+    const nowe = wpisy.map(w => w.nieobecny ? { nieobecny: true, powod: w.powod } : { godz: w.godz, od: w.od, do: w.do, proj: w.proj });
+    DATA.czasPracyWlasne[pracId][dayKey] = [...kept, ...nowe];
   }
 
   showToast('✅ Zapisano godziny');
@@ -4441,7 +4672,6 @@ function buildMojeGodziny() {
   if (!currentUser || !currentUser.pracownik) return;
   const id = currentUser.pracownik;
   const w = DATA.pracownicy[id];
-  const wlasne = DATA.czasPracyWlasne[id] || {};
   const daysInMonth = new Date(pracCalYear, pracCalMonth + 1, 0).getDate();
   const startOffset = (new Date(pracCalYear, pracCalMonth, 1).getDay() + 6) % 7;
 
@@ -4454,7 +4684,7 @@ function buildMojeGodziny() {
     const key = dk(pracCalYear, pracCalMonth, i);
     const dow = new Date(pracCalYear, pracCalMonth, i).getDay();
     const isWeekend = dow === 0 || dow === 6;
-    const wpis = wlasne[key];
+    const wpis = wlasneDayAgg(id, key);
     if (wpis && wpis.nieobecny) {
       calHtml += `<div onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed #4a545c;color:#c62828">🚫</div>`;
       continue;
