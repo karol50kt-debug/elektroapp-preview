@@ -1686,6 +1686,14 @@ function buildProjDetail(id, tab) {
         ${(fullAccess() || isKierownik()) ? `<div style="display:flex;gap:6px;margin-top:10px">
           <input class="fi" id="nz-${id}" placeholder="＋ Dodaj zadanie..." style="flex:1;padding:9px 10px;font-size:12px" onkeydown="if(event.key==='Enter')addZadanie('${id}')">
           <button onclick="addZadanie('${id}')" class="btn-s">Dodaj</button>
+        </div>
+        <div style="margin-top:8px">
+          <span onclick="toggleImportZadan('${id}')" style="font-size:11px;color:var(--blue);font-weight:700;cursor:pointer">📥 Importuj zadania (wklej tekst)</span>
+          <div id="imp-zad-box-${id}" style="display:none;background:#232a31;border-radius:8px;padding:10px;margin-top:8px">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Jedna linia = jedno zadanie główne. Linia zaczynająca się od "- " = podzadanie poprzedniego zadania głównego.</div>
+            <textarea class="fi" id="imp-zad-text-${id}" rows="6" style="resize:vertical;font-family:monospace;font-size:11px" placeholder="Parter — Montaż szaf${'\\n'}- wg rysunku 4.1: Montaż szafy LPD02"></textarea>
+            <button class="btn-s" style="width:100%;margin-top:8px" onclick="importZadania('${id}')">Importuj</button>
+          </div>
         </div>` : ''}
       </div>`;
   } else if (tab === 'pracownicy') {
@@ -1846,6 +1854,41 @@ function addZadanie(projId) {
   p.zadania.push({ nazwa, done: false, open: true, sub: [] });
   recalcPostep(p);
   buildProjDetail(projId, 'ogolne');
+}
+
+function toggleImportZadan(projId) {
+  const box = document.getElementById('imp-zad-box-' + projId);
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+// Parsuje wklejony tekst: linia bez prefiksu "- " = nowe zadanie główne,
+// linia zaczynająca się od "- " = podzadanie ostatniego zadania głównego.
+function importZadania(projId) {
+  if (!fullAccess() && !isKierownik()) return;
+  const p = DATA.projekty[projId];
+  const raw = document.getElementById('imp-zad-text-' + projId).value;
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) { showToast('⚠️ Wklej listę zadań'); return; }
+  if (!p.zadania) p.zadania = [];
+  let dodaneGlowne = 0, dodanePod = 0, ostatnie = null;
+  lines.forEach(line => {
+    if (line.startsWith('- ')) {
+      const nazwa = line.slice(2).trim();
+      if (!nazwa) return;
+      if (!ostatnie) { ostatnie = { nazwa: '(bez nazwy)', done: false, open: true, sub: [] }; p.zadania.push(ostatnie); dodaneGlowne++; }
+      ostatnie.sub.push({ nazwa, done: false });
+      dodanePod++;
+    } else {
+      ostatnie = { nazwa: line, done: false, open: true, sub: [] };
+      p.zadania.push(ostatnie);
+      dodaneGlowne++;
+    }
+  });
+  recalcPostep(p);
+  document.getElementById('imp-zad-text-' + projId).value = '';
+  toggleImportZadan(projId);
+  buildProjDetail(projId, 'ogolne');
+  showToast(`✅ Zaimportowano ${dodaneGlowne} zadań głównych, ${dodanePod} podzadań`);
 }
 
 function addSub(projId, i) {
