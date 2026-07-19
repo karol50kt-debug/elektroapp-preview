@@ -320,7 +320,7 @@ body.kier .kier-only{display:flex!important}
 <div class="content">
   <div class="ctabs">
     <div class="ctab active" id="prac-view-tab-lista" onclick="setPracView('lista')">👷 Ludzie</div>
-    <div class="ctab" id="prac-view-tab-kalendarz" onclick="setPracView('kalendarz')">📅 Kalendarz</div>
+    <div class="ctab admin-only" id="prac-view-tab-kalendarz" onclick="setPracView('kalendarz')">📅 Kalendarz</div>
     <div class="ctab admin-only" id="prac-view-tab-paski" onclick="setPracView('paski')">🧾 Paski</div>
   </div>
 
@@ -2436,6 +2436,7 @@ function renderPracList() {
 }
 
 function setPracView(view) {
+  if ((view === 'kalendarz' || view === 'paski') && !fullAccess()) return;
   if (view === 'lista') renderPracList();
   ['lista','kalendarz','paski'].forEach(v => {
     document.getElementById('prac-' + v + '-section').style.display = v === view ? 'block' : 'none';
@@ -3908,6 +3909,7 @@ function czasPrevMonth() { if (czasMonth > 0) czasMonth--; else { czasMonth = 11
 function czasNextMonth() { if (czasMonth < 11) czasMonth++; else { czasMonth = 0; czasYear++; } buildCzasCalendar(); }
 
 function openCzasDayModal(dayKey) {
+  if (!fullAccess()) return;
   const wpisy = DATA.czasPracy[dayKey];
   if (!wpisy) return;
 
