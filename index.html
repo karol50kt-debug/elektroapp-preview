@@ -313,6 +313,19 @@ body.kier .kier-only{display:flex!important}
       <div class="fg" style="flex:1"><label>Plan robocizna (zł)</label><input class="fi" id="npr-plan-ludzie" type="number" placeholder="0"></div>
       <div class="fg" style="flex:1"><label>Plan materiały (zł)</label><input class="fi" id="npr-plan-material" type="number" placeholder="0"></div>
     </div>
+    <div style="margin:-6px 0 12px">
+      <span onclick="toggleRoboczyznaCalc()" style="font-size:11px;color:var(--blue);font-weight:700;cursor:pointer">🧮 Wylicz plan robocizny z godzin pracy</span>
+      <div id="npr-calc-box" style="display:none;background:#232a31;border-radius:8px;padding:10px;margin-top:8px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Kto będzie pracował:</div>
+        <div id="npr-calc-prac-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;max-height:160px;overflow-y:auto"></div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <div class="fg" style="flex:1;margin-bottom:0"><label>Godzin dziennie</label><input class="fi" id="npr-calc-godz" type="number" value="8"></div>
+          <div class="fg" style="flex:1;margin-bottom:0"><label>Ile</label><input class="fi" id="npr-calc-ile" type="number" value="5"></div>
+          <div class="fg" style="flex:1;margin-bottom:0"><label>Jednostka</label><select class="fs" id="npr-calc-jednostka"><option value="dni">dni</option><option value="tygodni">tygodni</option></select></div>
+        </div>
+        <button class="btn-s" style="width:100%;margin-top:8px" onclick="obliczPlanRobocizna()">Oblicz i wstaw</button>
+      </div>
+    </div>
     <div class="fg"><label>Planowany zysk (zł)</label><input class="fi" id="npr-plan-zysk" type="number" placeholder="0"></div>
     <div style="font-size:11px;color:var(--muted);margin:-6px 0 12px">ℹ️ Postęp (%) liczy się automatycznie z podetapów w zakładce „Ogólne" projektu.</div>
     <button class="btn-p" id="npr-submit-btn" onclick="saveProjekt()">Utwórz projekt</button>
@@ -1973,6 +1986,7 @@ function openNewProjekt() {
   document.getElementById('npr-plan-ludzie').value = '';
   document.getElementById('npr-plan-material').value = '';
   document.getElementById('npr-plan-zysk').value = '';
+  document.getElementById('npr-calc-box').style.display = 'none';
   document.getElementById('npr-submit-btn').textContent = 'Utwórz projekt';
   openModal('modal-projekt');
 }
@@ -1993,8 +2007,36 @@ function openEditProjekt(id) {
   document.getElementById('npr-plan-ludzie').value = p.planLudzie || '';
   document.getElementById('npr-plan-material').value = p.planMaterial || '';
   document.getElementById('npr-plan-zysk').value = p.planZysk || '';
+  document.getElementById('npr-calc-box').style.display = 'none';
   document.getElementById('npr-submit-btn').textContent = 'Zapisz zmiany';
   openModal('modal-projekt');
+}
+
+function toggleRoboczyznaCalc() {
+  const box = document.getElementById('npr-calc-box');
+  const showing = box.style.display !== 'none';
+  if (showing) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  const listEl = document.getElementById('npr-calc-prac-list');
+  const aktywni = Object.values(DATA.pracownicy).filter(w => w.status === 'Aktywny');
+  listEl.innerHTML = aktywni.map(w => `
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:4px 0">
+      <input type="checkbox" id="npr-calc-w-${w.id}" data-stawka="${w.stawka}" style="accent-color:var(--blue)">
+      ${escapeHtml(w.imie)} ${escapeHtml(w.nazwisko)} <span style="color:var(--muted);margin-left:auto">${w.stawka} zł/h</span>
+    </label>`).join('') || `<div style="color:var(--muted);font-size:12px">Brak aktywnych pracowników</div>`;
+}
+
+function obliczPlanRobocizna() {
+  const checked = [...document.querySelectorAll('#npr-calc-prac-list input[type=checkbox]:checked')];
+  if (checked.length === 0) { showToast('⚠️ Zaznacz co najmniej jednego pracownika'); return; }
+  const godzDziennie = Number(document.getElementById('npr-calc-godz').value) || 0;
+  const ile = Number(document.getElementById('npr-calc-ile').value) || 0;
+  const jednostka = document.getElementById('npr-calc-jednostka').value;
+  const dni = jednostka === 'tygodni' ? ile * 5 : ile;
+  const sumaStawek = checked.reduce((s, el) => s + Number(el.dataset.stawka), 0);
+  const plan = Math.round(sumaStawek * godzDziennie * dni);
+  document.getElementById('npr-plan-ludzie').value = plan;
+  showToast(`🧮 Plan robocizny: ${checked.length} os. × ${godzDziennie}h × ${dni}d = ${plan.toLocaleString('pl-PL')} zł`);
 }
 
 function saveProjekt() {
