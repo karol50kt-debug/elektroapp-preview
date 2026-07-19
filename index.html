@@ -256,7 +256,7 @@ body.kier .kier-only{display:flex!important}
     <div class="fg"><label>Opis (opcja)</label><input class="fi" id="nd-opis" placeholder="np. Układanie kabli"></div>
     <div style="display:flex;gap:8px;margin-bottom:4px">
       <div class="fg" style="flex:1"><label>Razem godzin</label><div class="fi" id="nd-total-h" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
-      <div class="fg" style="flex:1"><label>Koszt razem</label><div class="fi" id="nd-total-koszt" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
+      <div class="fg" id="nd-total-koszt-wrap" style="flex:1"><label>Koszt razem</label><div class="fi" id="nd-total-koszt" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
     </div>
     <div style="position:sticky;bottom:-32px;background:var(--white);padding:8px 0 8px;margin:0 -16px;box-shadow:0 -4px 8px rgba(0,0,0,.05)">
       <button class="btn-p" style="margin:0 16px;width:calc(100% - 32px)" onclick="saveDzien()">Zapisz dzień pracy</button>
@@ -316,7 +316,7 @@ body.kier .kier-only{display:flex!important}
 
 <!-- ═══════ PRACOWNICY + CZAS PRACY (połączone) ═══════ -->
 <div class="sv" id="sv-pracownicy">
-<div class="hdr"><div class="hdr-title">👷 Ludzie</div><div class="hdr-right"><button class="hdr-btn" onclick="openNewPracownik()" title="Nowy pracownik">＋</button><button class="hdr-btn" onclick="openDzienModal()" title="Dodaj dzień pracy">⏱️＋</button><div class="avatar" onclick="logout()" title="Wyloguj" style="cursor:pointer">K</div></div></div>
+<div class="hdr"><div class="hdr-title">👷 Ludzie</div><div class="hdr-right"><button class="hdr-btn admin-only" onclick="openNewPracownik()" title="Nowy pracownik">＋</button><button class="hdr-btn admin-only" onclick="openDzienModal()" title="Dodaj dzień pracy">⏱️＋</button><div class="avatar" onclick="logout()" title="Wyloguj" style="cursor:pointer">K</div></div></div>
 <div class="content">
   <div class="ctabs">
     <div class="ctab active" id="prac-view-tab-lista" onclick="setPracView('lista')">👷 Ludzie</div>
@@ -382,7 +382,7 @@ body.kier .kier-only{display:flex!important}
     <div id="ng-pracownicy" style="margin-bottom:10px"></div>
     <div style="display:flex;gap:8px;margin-bottom:4px">
       <div class="fg" style="flex:1"><label>Godzin</label><div class="fi" id="ng-total-h" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
-      <div class="fg" style="flex:1"><label>Koszt</label><div class="fi" id="ng-total-koszt" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
+      <div class="fg" id="ng-total-koszt-wrap" style="flex:1"><label>Koszt</label><div class="fi" id="ng-total-koszt" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0 zł</div></div>
     </div>
     <div style="position:sticky;bottom:-32px;background:var(--white);padding:8px 0 8px;margin:0 -16px;box-shadow:0 -4px 8px rgba(0,0,0,.05)">
       <button class="btn-p" style="margin:0 16px;width:calc(100% - 32px)" onclick="saveGodziny()">Zapisz</button>
@@ -1495,6 +1495,13 @@ function applyFilter(group) {
   if (emptyEl) emptyEl.style.display = visibleCount === 0 ? 'block' : 'none';
 }
 
+// Ucieczka HTML dla wolnego tekstu wpisywanego przez pracowników (opis awarii itp.), zanim
+// trafi do innerHTML — bez tego dowolny pracownik mógłby wstrzyknąć znaczniki wykonywane
+// w przeglądarce właściciela (m.in. przy przeglądaniu listy awarii).
+function escapeHtml(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
 // ═══════ TOAST ═══════
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -2224,6 +2231,7 @@ function openEditPracownik(id) {
 }
 
 async function savePracownik() {
+  if (!fullAccess()) return;
   const editId = document.getElementById('np-edit-id').value;
   const imie = document.getElementById('np-imie').value.trim();
   const nazwisko = document.getElementById('np-nazwisko').value.trim();
@@ -2341,15 +2349,25 @@ function buildKierownikWpisySekcja(pracId) {
   if (!isKierownik()) return '';
   const myId = currentUser.pracownik;
   const prefix = `${pracCalYear}-${String(pracCalMonth + 1).padStart(2, '0')}-`;
-  const dni = Object.keys(DATA.czasPracyKierownik || {})
-    .filter(k => k.startsWith(prefix) && dniKierRaw(pracId, k).some(x => x.entry.wpisanyPrzez === myId))
-    .sort();
+  // Tylko WŁASNE wpisy tego kierownika (nie sumę ze wszystkimi kierownikami, jak dniKier) —
+  // inny kierownik mógł wpisać godziny tej samej osobie tego samego dnia.
+  const mineByDay = Object.keys(DATA.czasPracyKierownik || {})
+    .filter(k => k.startsWith(prefix))
+    .reduce((acc, k) => {
+      const mine = dniKierRaw(pracId, k).filter(x => x.entry.wpisanyPrzez === myId).map(x => x.entry);
+      if (mine.length) acc[k] = mine;
+      return acc;
+    }, {});
+  const dni = Object.keys(mineByDay).sort();
   if (dni.length === 0) return '';
   return `
     <div style="padding:0 14px 14px">
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">📝 Moje wpisy godzin dla tej osoby</div>
       ${dni.map(key => {
-        const agg = dniKier(pracId, key);
+        const mine = mineByDay[key];
+        const agg = mine.some(x => x.nieobecny)
+          ? { nieobecny: true, powod: mine[0].powod }
+          : { godz: Math.round(mine.reduce((s, x) => s + (x.godz || 0), 0) * 100) / 100, od: mine[0].od, do: mine[mine.length - 1].do };
         const label = agg.nieobecny ? '🚫 Nieobecny' : `${agg.godz}h${agg.od && agg.do ? ' · ' + agg.od + '–' + agg.do : ''}`;
         return `<div onclick="openPracDayModal('${pracId}','${key}','kierownik')" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #2b333a;cursor:pointer">
           <div style="flex:1"><div style="font-size:13px;font-weight:700">${key.slice(8)}.${key.slice(5,7)}.${key.slice(0,4)}</div><div style="font-size:11px;color:var(--muted)">${label}</div></div>
@@ -3022,7 +3040,7 @@ function deleteCzasPracyWlasneEntry(pracId, dayKey, idx) {
 
 function deleteCzasPracyKierownikEntry(pracId, dayKey, idx) {
   const raw = dniKierRaw(pracId, dayKey);
-  const target = raw[idx];
+  const target = raw.find(x => x.idx === idx);
   if (!target) return;
   const canDelete = fullAccess() || target.entry.wpisanyPrzez === (currentUser && currentUser.pracownik);
   if (!canDelete) return;
@@ -3161,7 +3179,7 @@ function renderAwarieList() {
   if (dashEl) {
     dashEl.innerHTML = otwarte.slice(0, 3).map(a => {
       const m = AWARIA_STATUS_META[a.status];
-      return `<div class="li" onclick="openAwaria('${a.id}')"><div class="li-icon" style="background:${m.bg}">⚠️</div><div class="li-body"><div class="li-title">${a.opis}</div><div class="li-sub">${a.blok.split(' ').slice(1).join(' ')} · ${a.data}</div></div><span class="badge" style="background:${m.bg};color:${m.fg}">${a.priorytet}</span></div>`;
+      return `<div class="li" onclick="openAwaria('${a.id}')"><div class="li-icon" style="background:${m.bg}">⚠️</div><div class="li-body"><div class="li-title">${escapeHtml(a.opis)}</div><div class="li-sub">${escapeHtml(a.blok.split(' ').slice(1).join(' '))} · ${a.data}</div></div><span class="badge" style="background:${m.bg};color:${m.fg}">${a.priorytet}</span></div>`;
     }).join('') || `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak otwartych awarii ✅</div>`;
   }
 }
@@ -3217,8 +3235,8 @@ function buildAwariaDetail(id) {
   document.getElementById('dawaria-content').innerHTML = `
     <div style="background:${statusBg[a.status]||"#232a31"};padding:14px;border-left:4px solid ${statusColors[a.status]||"var(--muted)"}">
       <div style="font-size:20px;margin-bottom:4px">${a.ikona}</div>
-      <div style="font-size:14px;font-weight:800;color:var(--text)">${a.opis}</div>
-      <div style="font-size:12px;color:var(--sec);margin-top:2px">📍 ${a.blok} · 📅 ${a.data}</div>
+      <div style="font-size:14px;font-weight:800;color:var(--text)">${escapeHtml(a.opis)}</div>
+      <div style="font-size:12px;color:var(--sec);margin-top:2px">📍 ${escapeHtml(a.blok)} · 📅 ${a.data}</div>
     </div>
 
     <div style="padding:14px">
@@ -3667,7 +3685,7 @@ function openBlok(id, opts = {}) {
     const scol = { 'Zgłoszona':'var(--red)', 'W realizacji':'var(--orange)', 'Zakończona':'var(--green)' };
     return `<div onclick="openAwaria('${aid}')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;cursor:pointer">
       <span>${a.ikona}</span>
-      <div style="flex:1"><div style="font-size:12px;font-weight:600">${a.opis}</div><div style="font-size:10px;color:var(--muted)">${a.data}</div></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${escapeHtml(a.opis)}</div><div style="font-size:10px;color:var(--muted)">${a.data}</div></div>
       <span style="font-size:10px;font-weight:700;color:${scol[a.status]}">${a.status}</span>
     </div>`;
   }).join('');
@@ -3906,11 +3924,12 @@ function openCzasDayModal(dayKey) {
 
 // ═══════ WSPÓLNY KOMPONENT: wiersz pracownika (Obecny z godz./autem, Nieobecny z powodem, lub nic) ═══════
 function buildPracownikRow(w, prefix) {
+  const canSeeCost = fullAccess() || (currentUser && currentUser.pracownik === w.id);
   return `
     <div style="background:#232a31;border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700;flex:1">${w.imie} ${w.nazwisko}</span>
-        <span style="font-size:11px;color:var(--muted)">${w.stawka} zł/h</span>
+        ${canSeeCost ? `<span style="font-size:11px;color:var(--muted)">${w.stawka} zł/h</span>` : ''}
       </div>
       <select class="fs" id="${prefix}-mode-${w.id}" onchange="dzienModeChange('${prefix}','${w.id}')" style="margin-bottom:8px">
         <option value="brak">— nie dotyczy —</option>
@@ -4029,15 +4048,19 @@ function dzienGodziny(prefix, wid) {
 }
 
 function recalcDzien(prefix) {
-  let totalH = 0, totalKoszt = 0;
+  let totalH = 0, totalKoszt = 0, hideKoszt = false;
   Object.values(DATA.pracownicy).forEach(w => {
     const modeEl = document.getElementById(`${prefix}-mode-${w.id}`);
     if (!modeEl) return;
     const hint = document.getElementById(`${prefix}-h-${w.id}`);
     const mode = modeEl.value;
+    const canSeeCost = fullAccess() || (currentUser && currentUser.pracownik === w.id);
+    if (!canSeeCost) hideKoszt = true;
     if (mode === 'obecny') {
       const godz = dzienGodziny(prefix, w.id);
-      hint.textContent = godz > 0 ? `= ${godz}h × ${w.stawka} zł = ${Math.round(godz * w.stawka)} zł` : '⚠️ nieprawidłowy zakres godzin';
+      hint.textContent = godz > 0
+        ? (canSeeCost ? `= ${godz}h × ${w.stawka} zł = ${Math.round(godz * w.stawka)} zł` : `= ${godz}h`)
+        : '⚠️ nieprawidłowy zakres godzin';
       totalH += godz;
       totalKoszt += godz * w.stawka;
     } else if (mode === 'nieobecny') {
@@ -4048,8 +4071,10 @@ function recalcDzien(prefix) {
   });
   const totalHEl = document.getElementById(`${prefix}-total-h`);
   const totalKosztEl = document.getElementById(`${prefix}-total-koszt`);
+  const totalKosztWrap = document.getElementById(`${prefix}-total-koszt-wrap`);
   if (totalHEl) totalHEl.textContent = (Math.round(totalH * 100) / 100) + 'h';
-  if (totalKosztEl) totalKosztEl.textContent = Math.round(totalKoszt) + ' zł';
+  if (totalKosztWrap) totalKosztWrap.style.display = hideKoszt ? 'none' : '';
+  if (totalKosztEl && !hideKoszt) totalKosztEl.textContent = Math.round(totalKoszt) + ' zł';
 }
 
 // Zbiera wpisy (obecny/nieobecny) ze wszystkich wierszy danego formularza
@@ -4104,6 +4129,7 @@ function openDzienModalForProject(projId) {
 }
 
 function saveDzien() {
+  if (!fullAccess()) return;
   const dataVal = document.getElementById('nd-data').value;
   if (!dataVal) { showToast('⚠️ Podaj datę'); return; }
   const dayKey = dataVal; // pełna data YYYY-MM-DD
