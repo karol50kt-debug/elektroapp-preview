@@ -1342,6 +1342,7 @@ let navStack = [];           // stos { tab, det } do przywracania przy "←"
 const lastReopen = {};       // detId -> funkcja ponownie otwierająca dokładnie ten sam widok
 
 function switchTab(tab, opts = {}) {
+  if (currentUser && !tabsForCurrentUser().includes(tab)) { showToast('⚠️ Brak dostępu do tej sekcji'); return; }
   if (!opts.keepStack) { navStack = []; currentOpenDet = null; }
   document.querySelectorAll('.sv').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(n => n.classList.remove('active'));
@@ -1603,6 +1604,7 @@ function buildBudzetHtml(p) {
 
 function buildProjDetail(id, tab) {
   const p = DATA.projekty[id];
+  if (tab === 'rentownosc' && !fullAccess()) tab = 'ogolne';
   currentProjTab = tab;
   const koszty = p.kosztyRobocizna + p.kosztyMaterialy;
   const margin = p.wartosc > 0 ? Math.round(((p.wartosc - koszty) / p.wartosc) * 100) : 0;
@@ -1614,18 +1616,18 @@ function buildProjDetail(id, tab) {
   let html = `
     <div style="background:${p.kolorL};padding:14px;border-left:4px solid ${p.kolor};display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
       <div>
-        <div style="font-size:13px;font-weight:800;color:${p.kolor}">${p.nazwa}</div>
-        <div style="font-size:11px;color:${p.kolor};opacity:.8;margin-top:2px">${p.klient}</div>
-        ${p.adres ? `<div style="font-size:11px;color:${p.kolor};opacity:.7;margin-top:2px">📍 ${p.adres}</div>` : ''}
+        <div style="font-size:13px;font-weight:800;color:${p.kolor}">${escapeHtml(p.nazwa)}</div>
+        <div style="font-size:11px;color:${p.kolor};opacity:.8;margin-top:2px">${escapeHtml(p.klient)}</div>
+        ${p.adres ? `<div style="font-size:11px;color:${p.kolor};opacity:.7;margin-top:2px">📍 ${escapeHtml(p.adres)}</div>` : ''}
       </div>
-      <button onclick="openEditProjekt('${id}')" style="flex-shrink:0;background:rgba(255,255,255,.6);border:none;border-radius:14px;padding:6px 10px;font-size:11px;font-weight:700;color:${p.kolor};cursor:pointer">✏️ Edytuj</button>
+      <button onclick="openEditProjekt('${id}')" class="admin-only" style="flex-shrink:0;background:rgba(255,255,255,.6);border:none;border-radius:14px;padding:6px 10px;font-size:11px;font-weight:700;color:${p.kolor};cursor:pointer">✏️ Edytuj</button>
     </div>
-    <div style="display:flex;gap:6px;padding:10px 14px 0;flex-wrap:wrap">
+    <div class="admin-only" style="display:flex;gap:6px;padding:10px 14px 0;flex-wrap:wrap">
       ${['W realizacji','Planowany','Zakończony','Wstrzymany'].map(s => `
         <button onclick="updateProjektStatus('${id}','${s}')" style="flex:1;min-width:72px;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:700;border:2px solid ${s===p.status?statusColors[s]:'var(--border)'};background:${s===p.status?statusBg[s]:'var(--white)'};color:${s===p.status?statusColors[s]:'var(--muted)'};cursor:pointer">${s}</button>`).join('')}
     </div>
     <div style="display:flex;gap:2px;padding:12px 14px 0;border-bottom:1px solid var(--border);margin:0 0 14px 0">
-      ${['ogolne','pracownicy','wydatki','rentownosc'].map(t => `
+      ${['ogolne','pracownicy','wydatki'].concat(fullAccess() ? ['rentownosc'] : []).map(t => `
         <div onclick="buildProjDetail('${id}','${t}')" style="padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;border-bottom:3px solid ${currentProjTab===t?p.kolor:'transparent'};color:${currentProjTab===t?p.kolor:"var(--muted)"};transition:.2s">
           ${{'ogolne':'Ogólne','pracownicy':'Pracownicy','wydatki':'Wydatki','rentownosc':'Rentowność'}[t]}
         </div>`).join('')}
@@ -1635,11 +1637,11 @@ function buildProjDetail(id, tab) {
     const zadania = p.zadania || [];
     const leafStats = zadaniaLeafStats(zadania);
     html += `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 14px">
-        <div style="background:var(--white);border-radius:8px;padding:10px;border-top:3px solid ${p.kolor};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="display:grid;grid-template-columns:${fullAccess() ? '1fr 1fr' : '1fr'};gap:10px;padding:0 14px 14px">
+        ${fullAccess() ? `<div style="background:var(--white);border-radius:8px;padding:10px;border-top:3px solid ${p.kolor};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
           <div style="font-size:16px;font-weight:800;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div>
           <div style="font-size:9px;color:var(--muted);margin-top:2px">Wartość</div>
-        </div>
+        </div>` : ''}
         <div style="background:var(--white);border-radius:8px;padding:10px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
           <div style="font-size:16px;font-weight:800;color:var(--blue)">${p.postep}%</div>
           <div style="font-size:9px;color:var(--muted);margin-top:2px">Postęp${leafStats.total ? ` (${leafStats.done}/${leafStats.total})` : ''}</div>
@@ -1650,22 +1652,22 @@ function buildProjDetail(id, tab) {
           <div style="background:${p.kolor};height:6px;width:${p.postep}%;transition:.6s ease"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:14px">
-          <div><span style="color:var(--muted)">Start:</span> <strong>${p.start}</strong></div>
-          <div><span style="color:var(--muted)">Koniec:</span> <strong>${p.koniec}</strong></div>
+          <div><span style="color:var(--muted)">Start:</span> <strong>${escapeHtml(p.start)}</strong></div>
+          <div><span style="color:var(--muted)">Koniec:</span> <strong>${escapeHtml(p.koniec)}</strong></div>
         </div>
-        <div style="font-size:13px;color:var(--sec);line-height:1.5;margin-bottom:14px">${p.opis}</div>
+        <div style="font-size:13px;color:var(--sec);line-height:1.5;margin-bottom:14px">${escapeHtml(p.opis)}</div>
 
-        <div style="background:${p.zaplacono ? 'var(--green-l)' : '#232a31'};border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <div style="font-size:12px;font-weight:700;color:${p.zaplacono ? "var(--green)" : "var(--muted)"}">${p.zaplacono ? `✅ Zapłacono${p.dataZaplaty ? ' — ' + p.dataZaplaty : ''}` : '⏳ Nie zapłacono'}</div>
-          <button onclick="toggleZaplacono('${id}')" class="btn-s" style="flex-shrink:0">${p.zaplacono ? 'Cofnij' : 'Oznacz jako zapłacone'}</button>
+        <div class="fin" style="background:${p.zaplacono ? 'var(--green-l)' : '#232a31'};border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="font-size:12px;font-weight:700;color:${p.zaplacono ? "var(--green)" : "var(--muted)"}">${p.zaplacono ? `✅ Zapłacono${p.dataZaplaty ? ' — ' + escapeHtml(p.dataZaplaty) : ''}` : '⏳ Nie zapłacono'}</div>
+          <button onclick="toggleZaplacono('${id}')" class="btn-s admin-only" style="flex-shrink:0">${p.zaplacono ? 'Cofnij' : 'Oznacz jako zapłacone'}</button>
         </div>
 
         <div class="sec-hdr" style="margin-bottom:8px"><h3 style="font-size:12px">✅ Zadania</h3><span style="font-size:11px;color:var(--muted);font-weight:700">${leafStats.done}/${leafStats.total}</span></div>
         ${zadania.map((z, i) => buildZadanieHtml(p, i)).join('') || `<div style="color:var(--muted);font-size:12px;padding:8px 0">Brak zadań — dodaj poniżej.</div>`}
-        <div style="display:flex;gap:6px;margin-top:10px">
+        ${(fullAccess() || isKierownik()) ? `<div style="display:flex;gap:6px;margin-top:10px">
           <input class="fi" id="nz-${id}" placeholder="＋ Dodaj zadanie..." style="flex:1;padding:9px 10px;font-size:12px" onkeydown="if(event.key==='Enter')addZadanie('${id}')">
           <button onclick="addZadanie('${id}')" class="btn-s">Dodaj</button>
-        </div>
+        </div>` : ''}
       </div>`;
   } else if (tab === 'pracownicy') {
     html += `<div style="padding:0 14px">
@@ -1673,17 +1675,18 @@ function buildProjDetail(id, tab) {
     p.pracownicy.forEach(wid => {
       const w = DATA.pracownicy[wid];
       if (!w) return;
+      const canSeeCost = fullAccess() || (currentUser && currentUser.pracownik === w.id);
       html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #2b333a" onclick="openPrac('${wid}')">
-        <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor}22;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:${w.kolor}">${w.inicjaly}</div>
-        <div style="flex:1"><div style="font-weight:700;font-size:13px">${w.imie} ${w.nazwisko}</div><div style="font-size:11px;color:var(--muted)">${w.rola} · ${w.stawka} zł/h</div></div>
+        <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor}22;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:${w.kolor}">${escapeHtml(w.inicjaly)}</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:13px">${escapeHtml(w.imie)} ${escapeHtml(w.nazwisko)}</div><div style="font-size:11px;color:var(--muted)">${escapeHtml(w.rola)}${canSeeCost ? ` · ${w.stawka} zł/h` : ''}</div></div>
         <div style="font-size:12px;color:var(--blue)">›</div>
       </div>`;
     });
     html += `</div>`;
   } else if (tab === 'wydatki') {
     html += `<div style="padding:0 14px">
-      <button onclick="openNewWydatek('${id}')" class="btn-s" style="width:100%;margin-bottom:12px">＋ Dodaj wydatek dla tego projektu</button>
-      ${buildBudzetHtml(p)}
+      ${(fullAccess() || isKierownik()) ? `<button onclick="openNewWydatek('${id}')" class="btn-s" style="width:100%;margin-bottom:12px">＋ Dodaj wydatek dla tego projektu</button>` : ''}
+      ${fullAccess() ? buildBudzetHtml(p) : `<div style="color:var(--muted);font-size:12px;padding:8px 0">Brak dostępu do podglądu budżetu.</div>`}
     </div>`;
   } else if (tab === 'rentownosc') {
     const marginColor = margin >= 30 ? 'var(--green)' : margin >= 10 ? 'var(--orange)' : 'var(--red)';
@@ -1745,27 +1748,31 @@ function buildZadanieHtml(p, i) {
   const hasSubs = z.sub && z.sub.length > 0;
   const subDone = hasSubs ? z.sub.filter(s => s.done).length : 0;
   const zDone = hasSubs ? subDone === z.sub.length : z.done;
+  // Zadania synchronizują się z backendem tylko dla fullAccess i kierownika — zwykły
+  // pracownik z (rzadko nadawanym) uprawnieniem "projekty" widzi checklistę, ale nie edytuje,
+  // żeby nie tworzyć zmian, które i tak zgubią się przy najbliższej synchronizacji.
+  const canEdit = fullAccess() || isKierownik();
   return `
   <div style="background:var(--white);border:1px solid ${zDone ? p.kolor + '55' : 'var(--border)'};border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)">
     <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer" onclick="toggleZadanieOpen('${p.id}',${i})">
-      <input type="checkbox" ${zDone ? 'checked' : ''} onclick="event.stopPropagation();toggleZadanie('${p.id}',${i})" style="accent-color:${p.kolor};width:18px;height:18px;flex-shrink:0;cursor:pointer">
-      <span style="flex:1;font-size:13px;font-weight:700;${zDone ? 'color:var(--muted);text-decoration:line-through' : 'color:var(--text)'}">${z.nazwa}</span>
+      <input type="checkbox" ${zDone ? 'checked' : ''} ${canEdit ? '' : 'disabled'} onclick="event.stopPropagation();toggleZadanie('${p.id}',${i})" style="accent-color:${p.kolor};width:18px;height:18px;flex-shrink:0;cursor:pointer">
+      <span style="flex:1;font-size:13px;font-weight:700;${zDone ? 'color:var(--muted);text-decoration:line-through' : 'color:var(--text)'}">${escapeHtml(z.nazwa)}</span>
       ${hasSubs ? `<span style="font-size:10px;font-weight:800;background:${p.kolorL};color:${p.kolor};padding:2px 8px;border-radius:12px">${subDone}/${z.sub.length}</span>` : ''}
       <span style="font-size:11px;color:var(--muted);transform:rotate(${z.open ? 90 : 0}deg);transition:.2s">›</span>
-      <button onclick="event.stopPropagation();removeZadanie('${p.id}',${i})" style="background:none;border:none;color:#4a545c;font-size:13px;cursor:pointer;flex-shrink:0;padding:2px">✕</button>
+      ${canEdit ? `<button onclick="event.stopPropagation();removeZadanie('${p.id}',${i})" style="background:none;border:none;color:#4a545c;font-size:13px;cursor:pointer;flex-shrink:0;padding:2px">✕</button>` : ''}
     </div>
     ${z.open ? `
     <div style="border-top:1px solid var(--border);padding:4px 12px 8px 22px;background:#232a31">
       ${z.sub.map((s, j) => `
         <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
-          <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleSub('${p.id}',${i},${j})" style="accent-color:${p.kolor};width:15px;height:15px;flex-shrink:0">
-          <span style="flex:1;font-size:12px;${s.done ? 'color:#4a545c;text-decoration:line-through' : 'color:var(--sec)'}">${s.nazwa}</span>
-          <button onclick="event.preventDefault();removeSub('${p.id}',${i},${j})" style="background:none;border:none;color:var(--border);font-size:12px;cursor:pointer;padding:2px">✕</button>
+          <input type="checkbox" ${s.done ? 'checked' : ''} ${canEdit ? '' : 'disabled'} onchange="toggleSub('${p.id}',${i},${j})" style="accent-color:${p.kolor};width:15px;height:15px;flex-shrink:0">
+          <span style="flex:1;font-size:12px;${s.done ? 'color:#4a545c;text-decoration:line-through' : 'color:var(--sec)'}">${escapeHtml(s.nazwa)}</span>
+          ${canEdit ? `<button onclick="event.preventDefault();removeSub('${p.id}',${i},${j})" style="background:none;border:none;color:var(--border);font-size:12px;cursor:pointer;padding:2px">✕</button>` : ''}
         </label>`).join('')}
-      <div style="display:flex;gap:6px;margin-top:4px">
+      ${canEdit ? `<div style="display:flex;gap:6px;margin-top:4px">
         <input class="fi" id="ns-${p.id}-${i}" placeholder="＋ pod-zadanie..." style="flex:1;padding:6px 9px;font-size:11px" onkeydown="if(event.key==='Enter')addSub('${p.id}',${i})">
         <button onclick="addSub('${p.id}',${i})" class="btn-s" style="padding:5px 10px;font-size:11px">＋</button>
-      </div>
+      </div>` : ''}
     </div>` : ''}
   </div>`;
 }
@@ -1777,6 +1784,7 @@ function toggleZadanieOpen(projId, i) {
 }
 
 function toggleZadanie(projId, i) {
+  if (!fullAccess() && !isKierownik()) return;
   const p = DATA.projekty[projId];
   const z = p.zadania[i];
   if (z.sub && z.sub.length > 0) {
@@ -1791,6 +1799,7 @@ function toggleZadanie(projId, i) {
 }
 
 function toggleSub(projId, i, j) {
+  if (!fullAccess() && !isKierownik()) return;
   const p = DATA.projekty[projId];
   p.zadania[i].sub[j].done = !p.zadania[i].sub[j].done;
   recalcPostep(p);
@@ -1798,6 +1807,7 @@ function toggleSub(projId, i, j) {
 }
 
 function addZadanie(projId) {
+  if (!fullAccess() && !isKierownik()) return;
   const p = DATA.projekty[projId];
   const input = document.getElementById('nz-' + projId);
   const nazwa = input.value.trim();
@@ -1809,6 +1819,7 @@ function addZadanie(projId) {
 }
 
 function addSub(projId, i) {
+  if (!fullAccess() && !isKierownik()) return;
   const p = DATA.projekty[projId];
   const input = document.getElementById(`ns-${projId}-${i}`);
   const nazwa = input.value.trim();
@@ -1820,6 +1831,7 @@ function addSub(projId, i) {
 }
 
 function removeZadanie(projId, i) {
+  if (!fullAccess() && !isKierownik()) return;
   const p = DATA.projekty[projId];
   p.zadania.splice(i, 1);
   recalcPostep(p);
@@ -1827,6 +1839,7 @@ function removeZadanie(projId, i) {
 }
 
 function removeSub(projId, i, j) {
+  if (!fullAccess() && !isKierownik()) return;
   const p = DATA.projekty[projId];
   p.zadania[i].sub.splice(j, 1);
   recalcPostep(p);
@@ -1904,7 +1917,7 @@ function renderProjektyList() {
       li.dataset.status = p.status;
       li.dataset.text = `${p.nazwa} ${p.klient} ${p.adres || ''}`.toLowerCase();
       li.onclick = () => openProjekt(p.id);
-      li.innerHTML = `<div class="li-icon" style="background:${p.kolorL}">📋</div><div class="li-body"><div class="li-title">${p.nazwa}</div><div class="li-sub">📍 ${p.adres || p.klient}</div><div style="height:4px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden"><div style="height:4px;width:${p.postep}%;background:${p.kolor};border-radius:2px"></div></div></div><div class="li-right"><div style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg};margin-top:4px;display:block">${p.status}</span></div>`;
+      li.innerHTML = `<div class="li-icon" style="background:${p.kolorL}">📋</div><div class="li-body"><div class="li-title">${escapeHtml(p.nazwa)}</div><div class="li-sub">📍 ${escapeHtml(p.adres || p.klient)}</div><div style="height:4px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden"><div style="height:4px;width:${p.postep}%;background:${p.kolor};border-radius:2px"></div></div></div><div class="li-right"><div class="fin" style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg};margin-top:4px;display:block">${escapeHtml(p.status)}</span></div>`;
       listEl.insertBefore(li, emptyEl);
     });
     applyFilter('projekty');
@@ -1915,7 +1928,7 @@ function renderProjektyList() {
     const aktywne = all.filter(p => p.status === 'W realizacji').slice(0, 3);
     dashEl.innerHTML = aktywne.map(p => {
       const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#232a31', fg:'var(--muted)' };
-      return `<div class="li" onclick="openProjekt('${p.id}')"><div style="width:10px;height:10px;border-radius:5px;background:${p.kolor};flex-shrink:0"></div><div class="li-body"><div class="li-title">${p.nazwa}</div><div class="li-sub">${p.klient}</div></div><div class="li-right"><div style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg}">${p.status}</span></div></div>`;
+      return `<div class="li" onclick="openProjekt('${p.id}')"><div style="width:10px;height:10px;border-radius:5px;background:${p.kolor};flex-shrink:0"></div><div class="li-body"><div class="li-title">${escapeHtml(p.nazwa)}</div><div class="li-sub">${escapeHtml(p.klient)}</div></div><div class="li-right"><div class="fin" style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg}">${escapeHtml(p.status)}</span></div></div>`;
     }).join('') || `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak aktywnych projektów</div>`;
   }
 
@@ -2026,7 +2039,7 @@ function renderWydatkiList() {
       li.dataset.status = e.typ;
       li.dataset.text = `${e.opis} ${e.typ} ${proj ? proj.nazwa : ''}`.toLowerCase();
       li.onclick = () => openEditWydatek(e.id);
-      li.innerHTML = `<div class="li-icon" style="background:${meta.bg}">${meta.ikona}</div><div class="li-body"><div class="li-title">${e.opis}</div><div class="li-sub">${e.typ} · ${e.data}${proj ? ' · ' + proj.nazwa.split(' — ')[0] : ''}</div></div><div class="li-right" style="display:flex;align-items:center;gap:6px">${e.foto ? `<span onclick="event.stopPropagation();podejrzyjFoto('${e.id}')" title="Zobacz dokument" style="cursor:pointer;font-size:15px">🖼️</span>` : ''}<span style="font-weight:800;color:${isIncome ? 'var(--green)' : 'var(--red)'}">${isIncome ? '+' : '-'}${e.kwota.toLocaleString('pl-PL')} zł</span></div>`;
+      li.innerHTML = `<div class="li-icon" style="background:${meta.bg}">${meta.ikona}</div><div class="li-body"><div class="li-title">${escapeHtml(e.opis)}</div><div class="li-sub">${escapeHtml(e.typ)} · ${escapeHtml(e.data)}${proj ? ' · ' + escapeHtml(proj.nazwa.split(' — ')[0]) : ''}</div></div><div class="li-right" style="display:flex;align-items:center;gap:6px">${e.foto ? `<span onclick="event.stopPropagation();podejrzyjFoto('${e.id}')" title="Zobacz dokument" style="cursor:pointer;font-size:15px">🖼️</span>` : ''}<span style="font-weight:800;color:${isIncome ? 'var(--green)' : 'var(--red)'}">${isIncome ? '+' : '-'}${e.kwota.toLocaleString('pl-PL')} zł</span></div>`;
       listEl.insertBefore(li, emptyEl);
     });
     applyFilter('wyd');
@@ -2044,7 +2057,7 @@ function renderWydatkiList() {
 
 function fillWydatekProjektSelect(selectedProj) {
   const sel = document.getElementById('nw-projekt');
-  sel.innerHTML = '<option value="">— ogólny —</option>' + Object.values(DATA.projekty).map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
+  sel.innerHTML = '<option value="">— ogólny —</option>' + Object.values(DATA.projekty).map(p => `<option value="${p.id}">${escapeHtml(p.nazwa)}</option>`).join('');
   sel.value = selectedProj || '';
 }
 
@@ -2337,7 +2350,7 @@ function buildZaliczkiSekcja(pracId) {
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">💵 Zaliczki${sumaNieroz ? ` · nierozliczone: <span style="color:var(--orange)">${sumaNieroz.toLocaleString('pl-PL')} zł</span>` : ''}</div>
       ${list.slice().reverse().map(z => `
         <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #2b333a">
-          <div style="flex:1"><div style="font-size:13px;font-weight:700">${z.kwota.toLocaleString('pl-PL')} zł ${z.rozliczona ? '<span style="font-size:10px;color:var(--green)">✅ rozliczona</span>' : '<span style="font-size:10px;color:var(--orange)">⏳ do rozliczenia</span>'}</div><div style="font-size:11px;color:var(--muted)">${z.data}${z.notatka ? ' · ' + z.notatka : ''}</div></div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700">${z.kwota.toLocaleString('pl-PL')} zł ${z.rozliczona ? '<span style="font-size:10px;color:var(--green)">✅ rozliczona</span>' : '<span style="font-size:10px;color:var(--orange)">⏳ do rozliczenia</span>'}</div><div style="font-size:11px;color:var(--muted)">${escapeHtml(z.data)}${z.notatka ? ' · ' + escapeHtml(z.notatka) : ''}</div></div>
           ${z.rozliczona ? '' : `<button onclick="deleteZaliczka('${pracId}','${z.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>`}
         </div>`).join('')}
     </div>`;
@@ -2578,7 +2591,7 @@ function drukujPasek(pracId, idx) {
   const zal = zaliczkiPaska(pracId, pasek) || [];
   const zalSum = zal.reduce((s, z) => s + z.kwota, 0);
   const doWyplaty = brutto - zalSum;
-  const zalRows = zal.map(z => `<tr><td colspan="2">Zaliczka ${z.data}${z.notatka ? ' — ' + z.notatka : ''}</td><td style="text-align:right;color:#b00">-${z.kwota.toLocaleString('pl-PL')} zł</td></tr>`).join('');
+  const zalRows = zal.map(z => `<tr><td colspan="2">Zaliczka ${escapeHtml(z.data)}${z.notatka ? ' — ' + escapeHtml(z.notatka) : ''}</td><td style="text-align:right;color:#b00">-${z.kwota.toLocaleString('pl-PL')} zł</td></tr>`).join('');
   const rows = (pasek.dni || []).map(x => {
     const dow = new Date(pasek.rok, pasek.mIdx, x.d).getDay();
     const wk = dow === 0 || dow === 6;
@@ -2749,7 +2762,7 @@ function buildPasekZaliczkiHtml(pracId, pasek) {
   return `
     <div style="margin-top:8px;border-top:1px dashed var(--border);padding-top:8px">
       <div style="font-size:11px;font-weight:800;color:var(--orange);margin-bottom:4px">➖ Zaliczki pobrane w tym okresie</div>
-      ${zal.map(z => `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:var(--sec)">${z.data}${z.notatka ? ' · ' + z.notatka : ''}</span><span style="font-weight:700;color:var(--orange)">-${z.kwota.toLocaleString('pl-PL')} zł</span></div>`).join('')}
+      ${zal.map(z => `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:var(--sec)">${escapeHtml(z.data)}${z.notatka ? ' · ' + escapeHtml(z.notatka) : ''}</span><span style="font-weight:700;color:var(--orange)">-${z.kwota.toLocaleString('pl-PL')} zł</span></div>`).join('')}
       <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;border-top:1px solid #2b333a;margin-top:3px;padding-top:3px"><span>Razem zaliczki</span><span style="color:var(--orange)">-${suma.toLocaleString('pl-PL')} zł</span></div>
     </div>`;
 }
@@ -2879,7 +2892,7 @@ function buildPracDetail(id) {
     <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;border:2px dashed #4a545c;background:var(--border)"></div><span style="color:var(--sec)">🚫 Nieobecny</span></div>`;
   activeProjIds.forEach(pid => {
     const p = DATA.projekty[pid];
-    if (p) legendHtml += `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:var(--sec)">${p.nazwa.split(' — ')[0].substring(0,15)}</span></div>`;
+    if (p) legendHtml += `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:var(--sec)">${escapeHtml(p.nazwa.split(' — ')[0].substring(0,15))}</span></div>`;
   });
   legendHtml += `</div>`;
 
@@ -2896,7 +2909,7 @@ function buildPracDetail(id) {
     if (!p) return '';
     return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #2b333a;cursor:pointer">
       <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
-      <div style="flex:1;font-size:12px;color:var(--text)">${p.nazwa.split(' — ')[0]}</div>
+      <div style="flex:1;font-size:12px;color:var(--text)">${escapeHtml(p.nazwa.split(' — ')[0])}</div>
       <div style="font-size:12px;font-weight:800;color:${p.kolor}">${godz}h</div>
     </div>`;
   }).join('') || `<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak godzin w tym miesiącu</div>`;
@@ -2906,7 +2919,7 @@ function buildPracDetail(id) {
     const p = DATA.projekty[pid];
     return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2b333a;cursor:pointer">
       <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
-      <div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--text)">${p.nazwa.split(' — ')[0]}</div><div style="font-size:10px;color:var(--muted)">${p.klient}</div></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--text)">${escapeHtml(p.nazwa.split(' — ')[0])}</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(p.klient)}</div></div>
       <span style="font-size:9px;font-weight:700;background:${p.kolorL};color:${p.kolor};padding:2px 8px;border-radius:20px">${p.postep}%</span>
     </div>`;
   }).join('');
@@ -3158,7 +3171,7 @@ function renderAwarieList() {
       li.dataset.status = a.status;
       li.dataset.text = `${a.opis} ${a.blok}`.toLowerCase();
       li.onclick = () => openAwaria(a.id);
-      li.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:${m.dot}"></div><div class="li-icon" style="background:${zak ? '#232a31' : m.bg}">${a.ikona || '⚡'}</div></div><div class="li-body"><div class="li-title">${a.opis}</div><div class="li-sub">${a.blok.split(' ').slice(1).join(' ') || a.blok} · ${a.data}</div></div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${a.status}</span>${zak && a.koszt ? `<div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">${a.koszt} zł</div>` : `<div style="font-size:10px;color:${m.fg};font-weight:700;margin-top:2px">${PRIORYTET_META[a.priorytet] || ''} ${zak ? '' : a.priorytet}</div>`}</div>`;
+      li.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:${m.dot}"></div><div class="li-icon" style="background:${zak ? '#232a31' : m.bg}">${a.ikona || '⚡'}</div></div><div class="li-body"><div class="li-title">${escapeHtml(a.opis)}</div><div class="li-sub">${escapeHtml(a.blok.split(' ').slice(1).join(' ') || a.blok)} · ${escapeHtml(a.data)}</div></div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${escapeHtml(a.status)}</span>${zak && a.koszt ? `<div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">${a.koszt} zł</div>` : `<div style="font-size:10px;color:${m.fg};font-weight:700;margin-top:2px">${PRIORYTET_META[a.priorytet] || ''} ${escapeHtml(zak ? '' : a.priorytet)}</div>`}</div>`;
       listEl.insertBefore(li, emptyEl);
     });
     applyFilter('awarie');
@@ -3262,7 +3275,7 @@ function buildAwariaDetail(id) {
       </div>
 
       <div class="fg fin"><label>Koszt naprawy (zł)</label><input class="fi" id="aw-koszt" type="number" value="${a.koszt||0}" placeholder="0"></div>
-      <div class="fg"><label>Notatka / opis prac</label><textarea class="fi" id="aw-notatka" rows="3" style="resize:none" placeholder="Co zrobiono, jakie części...">${a.notatka||''}</textarea></div>
+      <div class="fg"><label>Notatka / opis prac</label><textarea class="fi" id="aw-notatka" rows="3" style="resize:none" placeholder="Co zrobiono, jakie części...">${escapeHtml(a.notatka||'')}</textarea></div>
 
       ${a.status === 'Zakończona' ? `
       <div class="fin" style="background:var(--green-l);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;margin-top:4px">
@@ -3343,7 +3356,7 @@ function renderNarzList() {
       li.dataset.status = n.status;
       li.dataset.text = `${n.marka} ${n.model} ${n.nr_ser || ''}`.toLowerCase();
       li.onclick = () => openNarz(n.id);
-      li.innerHTML = `<div class="li-icon" style="background:${m.bg}">${n.ikona || '🔧'}</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">${n.marka}</div><div class="li-title">${n.model}</div>${(n.komu || nap) ? `<div class="li-sub">${n.komu ? '👤 ' + n.komu : ''}${n.komu && nap ? ' · ' : ''}${nap ? '🔨 ' + nap + ' napr.' : ''}</div>` : ''}</div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${n.status}</span><div class="fin" style="font-size:12px;font-weight:700;margin-top:2px">${(n.wartosc || 0).toLocaleString('pl-PL')} zł</div></div>`;
+      li.innerHTML = `<div class="li-icon" style="background:${m.bg}">${n.ikona || '🔧'}</div><div class="li-body"><div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">${escapeHtml(n.marka)}</div><div class="li-title">${escapeHtml(n.model)}</div>${(n.komu || nap) ? `<div class="li-sub">${n.komu ? '👤 ' + escapeHtml(n.komu) : ''}${n.komu && nap ? ' · ' : ''}${nap ? '🔨 ' + nap + ' napr.' : ''}</div>` : ''}</div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${escapeHtml(n.status)}</span><div class="fin" style="font-size:12px;font-weight:700;margin-top:2px">${(n.wartosc || 0).toLocaleString('pl-PL')} zł</div></div>`;
       listEl.insertBefore(li, emptyEl);
     });
     applyFilter('narz');
@@ -3462,6 +3475,7 @@ function openNarz(id, opts = {}) {
   if (!opts.skipPush) pushNav();
   switchTab('narzedzia', { keepStack: true });
   document.getElementById('dnarz-title').textContent = n.ikona + ' ' + n.marka + ' ' + n.model;
+  const narzTileCols = fullAccess() ? 4 : 2;
 
   function daysFrom(dateStr) {
     const [d,m,y] = dateStr.split('.').map(Number);
@@ -3488,22 +3502,22 @@ function openNarz(id, opts = {}) {
 
   document.getElementById('dnarz-content').innerHTML = `
     <div style="background:#232a31;padding:14px;display:flex;justify-content:space-between;align-items:flex-start">
-      <div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">${n.marka}</div>
-      <div style="font-size:18px;font-weight:800;color:var(--text)">${n.model}</div>
-      ${n.nr_ser ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:monospace">S/N: ${n.nr_ser}</div>` : ''}
-      ${n.komu ? `<div style="font-size:11px;color:var(--orange);margin-top:2px">👤 ${n.komu}</div>` : ''}
+      <div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">${escapeHtml(n.marka)}</div>
+      <div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(n.model)}</div>
+      ${n.nr_ser ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:monospace">S/N: ${escapeHtml(n.nr_ser)}</div>` : ''}
+      ${n.komu ? `<div style="font-size:11px;color:var(--orange);margin-top:2px">👤 ${escapeHtml(n.komu)}</div>` : ''}
       </div>
-      <span style="background:${statusBg[n.status]};color:${statusColor[n.status]};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700">${n.status}</span>
+      <span style="background:${statusBg[n.status]};color:${statusColor[n.status]};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700">${escapeHtml(n.status)}</span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 14px">
-      <div style="background:var(--white);border-radius:8px;padding:8px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+    <div style="display:grid;grid-template-columns:repeat(${narzTileCols},1fr);gap:6px;padding:12px 14px">
+      ${fullAccess() ? `<div style="background:var(--white);border-radius:8px;padding:8px;border-top:3px solid var(--blue);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <div style="font-size:11px;font-weight:800;color:var(--blue)">${n.wartosc.toLocaleString('pl-PL')}</div>
         <div style="font-size:8px;color:var(--muted);margin-top:1px">Wartość zł</div>
       </div>
       <div style="background:var(--white);border-radius:8px;padding:8px;border-top:3px solid var(--red);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <div style="font-size:11px;font-weight:800;color:var(--red)">${tco.toLocaleString('pl-PL')}</div>
         <div style="font-size:8px;color:var(--muted);margin-top:1px">TCO zł</div>
-      </div>
+      </div>` : ''}
       <div style="background:var(--white);border-radius:8px;padding:8px;border-top:3px solid ${gwarOk?'var(--green)':'var(--red)'};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <div style="font-size:11px;font-weight:800;color:${gwarOk?'var(--green)':'var(--red)'}">${gwarDni !== null ? (gwarOk ? gwarDni+'d' : 'Wygasła') : '—'}</div>
         <div style="font-size:8px;color:var(--muted);margin-top:1px">Gwarancja</div>
@@ -3542,7 +3556,7 @@ function openNarz(id, opts = {}) {
           <div style="background:var(--blue-l);border-radius:6px;padding:4px 8px;min-width:70px;text-align:center">
             <div style="font-size:10px;font-weight:700;color:var(--blue)">${r.data}</div>
           </div>
-          <div style="flex:1"><div style="font-size:12px;font-weight:600">${r.opis}</div><div style="font-size:10px;color:var(--muted)">🏪 ${r.serwis || '—'}</div></div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600">${escapeHtml(r.opis)}</div><div style="font-size:10px;color:var(--muted)">🏪 ${escapeHtml(r.serwis || '—')}</div></div>
           <div class="fin" style="font-size:12px;font-weight:800;color:var(--red)">${r.koszt} zł</div>
         </div>`).join('')}
       <button class="btn-r" style="width:100%;margin-top:14px" onclick="deleteNarzedzie('${id}')">🗑️ Usuń narzędzie</button>
@@ -4113,7 +4127,7 @@ function collectDzienWpisy(prefix, dayKey, dateLabel, projId) {
 function openDzienModal() {
   document.getElementById('nd-data').value = new Date().toISOString().slice(0, 10);
   const projSel = document.getElementById('nd-projekt');
-  projSel.innerHTML = Object.values(DATA.projekty).filter(p => p.status !== 'Zakończony').map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
+  projSel.innerHTML = Object.values(DATA.projekty).filter(p => p.status !== 'Zakończony').map(p => `<option value="${p.id}">${escapeHtml(p.nazwa)}</option>`).join('');
 
   const rowsEl = document.getElementById('nd-pracownicy');
   rowsEl.innerHTML = Object.values(DATA.pracownicy).map(w => buildPracownikRow(w, 'nd')).join('');
@@ -4168,7 +4182,7 @@ function openGodzinyModal(pracId) {
   document.getElementById('ng-data').value = new Date().toISOString().slice(0, 10);
 
   const projSel = document.getElementById('ng-projekt');
-  projSel.innerHTML = Object.values(DATA.projekty).filter(p => p.status !== 'Zakończony').map(p => `<option value="${p.id}">${p.nazwa}</option>`).join('');
+  projSel.innerHTML = Object.values(DATA.projekty).filter(p => p.status !== 'Zakończony').map(p => `<option value="${p.id}">${escapeHtml(p.nazwa)}</option>`).join('');
 
   document.getElementById('ng-pracownicy').innerHTML = buildPracownikRow(w, 'ng');
   document.getElementById(`ng-mode-${pracId}`).value = 'obecny';
@@ -4240,12 +4254,12 @@ function buildAutoDetail(id) {
   const a = DATA.samochody[id];
   let html = `
     <div style="background:linear-gradient(135deg,${a.kolorA},${a.kolorB});border-radius:12px;padding:16px;color:#fff;margin-bottom:14px">
-      <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700">${a.marka} ${a.model}</div>
-      <div style="font-size:20px;font-weight:800;margin:4px 0;letter-spacing:2px">${a.rej}</div>
+      <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700">${escapeHtml(a.marka)} ${escapeHtml(a.model)}</div>
+      <div style="font-size:20px;font-weight:800;margin:4px 0;letter-spacing:2px">${escapeHtml(a.rej)}</div>
       <div style="display:flex;gap:16px;margin-top:10px">
         <div><div style="font-size:10px;opacity:.7">Przebieg</div><div style="font-size:14px;font-weight:700">${a.przebieg.toLocaleString('pl-PL')} km</div></div>
-        <div><div style="font-size:10px;opacity:.7">Przegląd</div><div style="font-size:14px;font-weight:700">${a.przeglad}</div></div>
-        <div><div style="font-size:10px;opacity:.7">OC</div><div style="font-size:14px;font-weight:700">${a.oc}</div></div>
+        <div><div style="font-size:10px;opacity:.7">Przegląd</div><div style="font-size:14px;font-weight:700">${escapeHtml(a.przeglad)}</div></div>
+        <div><div style="font-size:10px;opacity:.7">OC</div><div style="font-size:14px;font-weight:700">${escapeHtml(a.oc)}</div></div>
       </div>
     </div>
     <div class="sec-hdr"><h3>Historia użytkowania</h3></div>
@@ -4257,14 +4271,14 @@ function buildAutoDetail(id) {
     a.historia.forEach((h, hi) => {
       const meta = AUTO_TYP_META[h.typ] || { ikona:'📄', label:h.typ };
       const sub = h.typ === 'jazda'
-        ? `👤 ${h.prac} · ${h.od}–${h.do}${h.km ? ' · ' + h.km + ' km' : ''}${h.proj ? ' · ' + h.proj.split(' — ')[0] : ''}`
-        : `${h.data}${h.serwis ? ' · ' + h.serwis : ''}`;
+        ? `👤 ${escapeHtml(h.prac)} · ${escapeHtml(h.od)}–${escapeHtml(h.do)}${h.km ? ' · ' + h.km + ' km' : ''}${h.proj ? ' · ' + escapeHtml(h.proj.split(' — ')[0]) : ''}`
+        : `${escapeHtml(h.data)}${h.serwis ? ' · ' + escapeHtml(h.serwis) : ''}`;
       const prawa = h.koszt != null
         ? `<span class="fin" style="font-weight:700;color:var(--red)">-${h.koszt} zł</span>`
-        : `<span style="font-size:11px;color:var(--muted)">${h.data}</span>`;
+        : `<span style="font-size:11px;color:var(--muted)">${escapeHtml(h.data)}</span>`;
       // koszty (tankowanie/serwis) są klikalne → przechodzą do Wydatków
       const klik = (h.koszt != null) ? `onclick="openWydatekZAuta('${id}',${hi})" style="cursor:pointer"` : '';
-      html += `<div class="li" ${klik}><div class="li-icon" style="background:var(--blue-l)">${meta.ikona}</div><div class="li-body"><div class="li-title">${meta.label}${h.opis ? ' — ' + h.opis : ''}</div><div class="li-sub">${sub}</div></div><div class="li-right">${prawa}</div></div>`;
+      html += `<div class="li" ${klik}><div class="li-icon" style="background:var(--blue-l)">${meta.ikona}</div><div class="li-body"><div class="li-title">${escapeHtml(meta.label)}${h.opis ? ' — ' + escapeHtml(h.opis) : ''}</div><div class="li-sub">${sub}</div></div><div class="li-right">${prawa}</div></div>`;
     });
   }
 
@@ -4596,7 +4610,7 @@ const TAB_DEFS = {
   mojegodziny:{i:'⏱️',l:'Godziny'}, paski:{i:'🧾',l:'Paski'},
 };
 
-function renderTabbar() {
+function tabsForCurrentUser() {
   let tabs;
   if (fullAccess()) {
     tabs = ['dashboard','projekty','pracownicy','awarie','narzedzia','wydatki','zakupy','terminarz','kody','samochody'];
@@ -4612,6 +4626,11 @@ function renderTabbar() {
     if (can('projekty')) tabs.push('projekty');
     if (can('narzedzia')) tabs.push('narzedzia');
   }
+  return tabs;
+}
+
+function renderTabbar() {
+  const tabs = tabsForCurrentUser();
   document.getElementById('tabbar').innerHTML = tabs.map(t =>
     `<button class="tab" data-tab="${t}" onclick="switchTab('${t}')"><span class="ti">${TAB_DEFS[t].i}</span><span class="tl">${TAB_DEFS[t].l}</span></button>`).join('');
 }
@@ -5050,7 +5069,7 @@ function renderZakupy() {
     <div class="card" style="padding:0 14px">
       ${dostawcy.map(d => {
         const s = dostawcaSaldo(d.id);
-        return `<div class="li" onclick="openDostawca('${d.id}')"><div class="li-icon" style="background:#232a31;font-size:18px">🚚</div><div class="li-body"><div class="li-title">${d.nazwa}</div><div class="li-sub">${d.kontakt || 'brak kontaktu'}</div></div><div class="li-right"><div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'}">${s.razem > 0 ? s.razem.toLocaleString('pl-PL') + ' zł' : 'OK'}</div><div style="font-size:9px;color:var(--muted)">do rozliczenia</div></div></div>`;
+        return `<div class="li" onclick="openDostawca('${d.id}')"><div class="li-icon" style="background:#232a31;font-size:18px">🚚</div><div class="li-body"><div class="li-title">${escapeHtml(d.nazwa)}</div><div class="li-sub">${escapeHtml(d.kontakt || 'brak kontaktu')}</div></div><div class="li-right"><div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'}">${s.razem > 0 ? s.razem.toLocaleString('pl-PL') + ' zł' : 'OK'}</div><div style="font-size:9px;color:var(--muted)">do rozliczenia</div></div></div>`;
       }).join('') || '<div style="padding:20px 0;text-align:center;color:var(--muted);font-size:12px">Brak dostawców — dodaj przyciskiem ＋</div>'}
     </div>`;
 }
@@ -5095,12 +5114,12 @@ function deleteDostawca() {
 
 function fillCelSelect(sel) {
   sel.innerHTML = '<option value="">— ogólne (bez projektu) —</option>' +
-    '<optgroup label="Projekty">' + Object.values(DATA.projekty).map(p => `<option value="projekt:${p.id}">${p.nazwa}</option>`).join('') + '</optgroup>' +
-    '<optgroup label="Awarie">' + Object.values(DATA.awarie).map(a => `<option value="awaria:${a.id}">${a.opis.slice(0, 30)} (${a.blok})</option>`).join('') + '</optgroup>';
+    '<optgroup label="Projekty">' + Object.values(DATA.projekty).map(p => `<option value="projekt:${p.id}">${escapeHtml(p.nazwa)}</option>`).join('') + '</optgroup>' +
+    '<optgroup label="Awarie">' + Object.values(DATA.awarie).map(a => `<option value="awaria:${a.id}">${escapeHtml(a.opis.slice(0, 30))} (${escapeHtml(a.blok)})</option>`).join('') + '</optgroup>';
 }
 function openNoweWZ(presetDost) {
   const dSel = document.getElementById('nwz-dostawca');
-  dSel.innerHTML = Object.values(DATA.dostawcy).map(d => `<option value="${d.id}">${d.nazwa}</option>`).join('');
+  dSel.innerHTML = Object.values(DATA.dostawcy).map(d => `<option value="${d.id}">${escapeHtml(d.nazwa)}</option>`).join('');
   if (Object.keys(DATA.dostawcy).length === 0) { showToast('⚠️ Najpierw dodaj dostawcę'); openNowyDostawca(); return; }
   if (presetDost) dSel.value = presetDost;
   fillCelSelect(document.getElementById('nwz-cel'));
@@ -5125,7 +5144,7 @@ function openEditWZ(id) {
   const w = DATA.wz[id]; if (!w) return;
   if (w.fakturaId) { showToast('⚠️ WZ jest na fakturze — odepnij ją, aby edytować'); return; }
   const dSel = document.getElementById('nwz-dostawca');
-  dSel.innerHTML = Object.values(DATA.dostawcy).map(d => `<option value="${d.id}">${d.nazwa}</option>`).join('');
+  dSel.innerHTML = Object.values(DATA.dostawcy).map(d => `<option value="${d.id}">${escapeHtml(d.nazwa)}</option>`).join('');
   dSel.value = w.dostawca;
   fillCelSelect(document.getElementById('nwz-cel'));
   document.getElementById('nwz-edit-id').value = id;
@@ -5533,8 +5552,8 @@ function buildDostawcaDetail(id) {
   const s = dostawcaSaldo(id);
   document.getElementById('ddost-content').innerHTML = `
     <div style="background:#232a31;padding:14px">
-      <div style="font-size:16px;font-weight:800">${d.nazwa}</div>
-      <div style="font-size:12px;color:var(--sec)">${d.kontakt || 'brak kontaktu'}</div>
+      <div style="font-size:16px;font-weight:800">${escapeHtml(d.nazwa)}</div>
+      <div style="font-size:12px;color:var(--sec)">${escapeHtml(d.kontakt || 'brak kontaktu')}</div>
       <div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'};margin-top:6px">Do rozliczenia: ${s.razem.toLocaleString('pl-PL')} zł</div>
       <button onclick="openEditDostawca('${id}')" class="btn-s" style="margin-top:8px">✏️ Edytuj</button>
     </div>
@@ -5545,7 +5564,7 @@ function buildDostawcaDetail(id) {
       </div>
       <div class="sec-hdr"><h3 style="font-size:12px">📄 WZ niezafakturowane (${wzOtwarte.length})</h3></div>
       ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a">
-        <div style="flex:1;cursor:pointer" onclick="openEditWZ('${w.id}')"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł${w.vat != null ? ` <span style="font-weight:400;color:var(--muted)">(netto ${w.netto.toLocaleString('pl-PL')} + VAT ${w.vat}%)</span>` : ''}</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)} · ✏️ edytuj</div>${w.opis ? `<div style="font-size:10px;color:var(--sec);margin-top:2px">📦 ${w.opis.replace(/\n/g, ', ')}</div>` : ''}</div>
+        <div style="flex:1;cursor:pointer" onclick="openEditWZ('${w.id}')"><div style="font-size:12px;font-weight:700">${escapeHtml(w.nr || '(bez nr)')} · ${w.kwota.toLocaleString('pl-PL')} zł${w.vat != null ? ` <span style="font-weight:400;color:var(--muted)">(netto ${w.netto.toLocaleString('pl-PL')} + VAT ${w.vat}%)</span>` : ''}</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(w.data)} · ${escapeHtml(celLabel(w))} · ✏️ edytuj</div>${w.opis ? `<div style="font-size:10px;color:var(--sec);margin-top:2px">📦 ${escapeHtml(w.opis.replace(/\n/g, ', '))}</div>` : ''}</div>
         ${w.foto ? `<button onclick="podejrzyjFoto('${w.id}')" title="Zobacz zdjęcie" style="background:none;border:none;font-size:15px;cursor:pointer">🖼️</button>` : ''}
         <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>
       </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak — wszystko zafakturowane ✅</div>'}
@@ -5555,10 +5574,10 @@ function buildDostawcaDetail(id) {
         const wzTej = Object.values(DATA.wz).filter(w => w.fakturaId === f.id);
         return `<div class="card" style="padding:10px 12px">
           <div style="display:flex;align-items:center;gap:8px">
-            <div style="flex:1"><div style="font-size:13px;font-weight:800">${f.nr || '(bez nr)'}</div><div style="font-size:10px;color:var(--muted)">${wzTej.length} WZ · termin ${f.terminPlatnosci || '—'}${!f.zaplacono && dni !== null ? (dni < 0 ? ' · <span style="color:var(--red)">PO TERMINIE</span>' : ' · za ' + dni + ' dni') : ''}</div></div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:800">${escapeHtml(f.nr || '(bez nr)')}</div><div style="font-size:10px;color:var(--muted)">${wzTej.length} WZ · termin ${escapeHtml(f.terminPlatnosci || '—')}${!f.zaplacono && dni !== null ? (dni < 0 ? ' · <span style="color:var(--red)">PO TERMINIE</span>' : ' · za ' + dni + ' dni') : ''}</div></div>
             <div style="font-size:14px;font-weight:900;color:${f.zaplacono ? 'var(--green)' : 'var(--red)'}">${f.kwota.toLocaleString('pl-PL')} zł</div>
           </div>
-          ${f.zaplacono ? `<div style="font-size:10px;color:var(--green);margin-top:4px">✅ Zapłacono ${f.dataZaplaty || ''}</div>` : `<button onclick="oznaczFakturaZakZaplacona('${f.id}')" class="btn-g" style="width:100%;margin-top:8px">💸 Oznacz jako zapłaconą</button>`}
+          ${f.zaplacono ? `<div style="font-size:10px;color:var(--green);margin-top:4px">✅ Zapłacono ${escapeHtml(f.dataZaplaty || '')}</div>` : `<button onclick="oznaczFakturaZakZaplacona('${f.id}')" class="btn-g" style="width:100%;margin-top:8px">💸 Oznacz jako zapłaconą</button>`}
         </div>`;
       }).join('') || '<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak faktur</div>'}
     </div>`;
@@ -5576,7 +5595,7 @@ function openNowaFakturaZak(dostId) {
   el.innerHTML = wzOtwarte.map(w => `
     <label style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:#232a31;border-radius:8px;margin-bottom:6px;cursor:pointer">
       <input type="checkbox" onchange="toggleFZwz('${w.id}',this.checked)" style="accent-color:var(--blue)">
-      <div style="flex:1"><div style="font-size:12px;font-weight:700">${w.nr || '(bez nr)'} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:var(--muted)">${w.data} · ${celLabel(w)}</div></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700">${escapeHtml(w.nr || '(bez nr)')} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(w.data)} · ${escapeHtml(celLabel(w))}</div></div>
     </label>`).join('');
   document.getElementById('nfz-suma').textContent = '0 zł';
   openModal('modal-faktura-zak');
