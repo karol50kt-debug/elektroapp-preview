@@ -229,7 +229,7 @@ body.kier .kier-only{display:flex!important}
   <div style="background:linear-gradient(135deg,#1565c0,#0d47a1);border-radius:16px;padding:16px;margin-bottom:14px;color:#fff;position:relative;overflow:hidden">
     <div style="position:absolute;right:-14px;top:-18px;font-size:88px;opacity:.12;transform:rotate(12deg)">⚡</div>
     <div style="font-size:11px;opacity:.75" id="dash-date"></div>
-    <div style="font-size:20px;font-weight:900;margin-top:3px">Dzień dobry, Karol 👋</div>
+    <div style="font-size:20px;font-weight:900;margin-top:3px" id="dash-greeting">Dzień dobry 👋</div>
     <div style="font-size:12px;opacity:.85;margin-top:2px">ElektroSmart Instalacje</div>
   </div>
   <div class="kpi-grid">
@@ -4468,7 +4468,11 @@ function renderLoginTiles() {
   tilesEl.style.display = 'flex';
   empBtn.style.display = 'none';
   if (sub) sub.textContent = 'wybierz konto';
-  tilesEl.innerHTML = Object.values(DATA.uzytkownicy).map(u => {
+  tilesEl.innerHTML = Object.values(DATA.uzytkownicy).filter(u => {
+    if (u.admin) return true;
+    const w = DATA.pracownicy[u.pracownik];
+    return !w || w.status !== 'Nieaktywny';
+  }).map(u => {
     const bio = bioRegistered(u.id);
     return `
     <div class="login-tile" onclick="${bio ? `bioLogin('${u.id}')` : `pinStart('${u.id}')`}">
@@ -4602,6 +4606,8 @@ function pinCancel() {
 function setUser(u) {
   currentUser = u;
   document.querySelectorAll('.avatar').forEach(el => { el.textContent = u.inicjaly || ''; });
+  const greetEl = document.getElementById('dash-greeting');
+  if (greetEl) greetEl.textContent = `Dzień dobry, ${u.nazwa.split(' ')[0]} 👋`;
   document.body.classList.toggle('no-fin', !fullAccess());
   document.body.classList.toggle('employee', !fullAccess());
   document.body.classList.toggle('kier', isKierownik());
