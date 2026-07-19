@@ -4601,6 +4601,7 @@ function pinCancel() {
 
 function setUser(u) {
   currentUser = u;
+  document.querySelectorAll('.avatar').forEach(el => { el.textContent = u.inicjaly || ''; });
   document.body.classList.toggle('no-fin', !fullAccess());
   document.body.classList.toggle('employee', !fullAccess());
   document.body.classList.toggle('kier', isKierownik());
