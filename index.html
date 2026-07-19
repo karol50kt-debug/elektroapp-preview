@@ -308,6 +308,12 @@ body.kier .kier-only{display:flex!important}
     </div>
     <div class="fg"><label>Wartość (zł)</label><input class="fi" id="npr-wartosc" type="number" placeholder="0"></div>
     <div class="fg"><label>Stała trasa (km/dzień, opcjonalnie)</label><input class="fi" id="npr-km-trasa" type="number" placeholder="np. 22"></div>
+    <div style="font-size:11px;font-weight:800;color:var(--text);margin:4px 0 8px">📊 Plan budżetu (do wykresu "Realizacja planu")</div>
+    <div style="display:flex;gap:8px">
+      <div class="fg" style="flex:1"><label>Plan robocizna (zł)</label><input class="fi" id="npr-plan-ludzie" type="number" placeholder="0"></div>
+      <div class="fg" style="flex:1"><label>Plan materiały (zł)</label><input class="fi" id="npr-plan-material" type="number" placeholder="0"></div>
+    </div>
+    <div class="fg"><label>Planowany zysk (zł)</label><input class="fi" id="npr-plan-zysk" type="number" placeholder="0"></div>
     <div style="font-size:11px;color:var(--muted);margin:-6px 0 12px">ℹ️ Postęp (%) liczy się automatycznie z podetapów w zakładce „Ogólne" projektu.</div>
     <button class="btn-p" id="npr-submit-btn" onclick="saveProjekt()">Utwórz projekt</button>
   </div>
@@ -1964,6 +1970,9 @@ function openNewProjekt() {
   document.getElementById('npr-termin').value = '';
   document.getElementById('npr-wartosc').value = '';
   document.getElementById('npr-km-trasa').value = '';
+  document.getElementById('npr-plan-ludzie').value = '';
+  document.getElementById('npr-plan-material').value = '';
+  document.getElementById('npr-plan-zysk').value = '';
   document.getElementById('npr-submit-btn').textContent = 'Utwórz projekt';
   openModal('modal-projekt');
 }
@@ -1981,6 +1990,9 @@ function openEditProjekt(id) {
   document.getElementById('npr-termin').value = plToIso(p.terminWykonania || p.koniec);
   document.getElementById('npr-wartosc').value = p.wartosc;
   document.getElementById('npr-km-trasa').value = p.kmTrasa || '';
+  document.getElementById('npr-plan-ludzie').value = p.planLudzie || '';
+  document.getElementById('npr-plan-material').value = p.planMaterial || '';
+  document.getElementById('npr-plan-zysk').value = p.planZysk || '';
   document.getElementById('npr-submit-btn').textContent = 'Zapisz zmiany';
   openModal('modal-projekt');
 }
@@ -1997,10 +2009,13 @@ function saveProjekt() {
   const kmTrasa = kmTrasaVal ? Number(kmTrasaVal) : null;
   const start = isoToPl(document.getElementById('npr-start').value);
   const terminWykonania = isoToPl(document.getElementById('npr-termin').value);
+  const planLudzie = Number(document.getElementById('npr-plan-ludzie').value) || 0;
+  const planMaterial = Number(document.getElementById('npr-plan-material').value) || 0;
+  const planZysk = Number(document.getElementById('npr-plan-zysk').value) || 0;
 
   if (editId && DATA.projekty[editId]) {
     const p = DATA.projekty[editId];
-    Object.assign(p, { nazwa, klient, adres, status, wartosc, kmTrasa, start, terminWykonania, koniec: terminWykonania || p.koniec });
+    Object.assign(p, { nazwa, klient, adres, status, wartosc, kmTrasa, start, terminWykonania, koniec: terminWykonania || p.koniec, planLudzie, planMaterial, planZysk });
     if (status !== 'Zakończony') {
       const used = new Set(Object.values(DATA.projekty).filter(x => x.id !== p.id && x.status !== 'Zakończony').map(x => x.kolor));
       if (used.has(p.kolor)) {
@@ -2017,7 +2032,7 @@ function saveProjekt() {
   } else {
     const id = uid('p_');
     const c = assignProjectColor();
-    DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, kmTrasa, postep:0, start, koniec:terminWykonania, terminWykonania, kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, planLudzie:0, planMaterial:0, planZysk:0, opis:'', zaplacono:false, dataZaplaty:null, zadania:[] };
+    DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, kmTrasa, postep:0, start, koniec:terminWykonania, terminWykonania, kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, planLudzie, planMaterial, planZysk, opis:'', zaplacono:false, dataZaplaty:null, zadania:[] };
     showToast('✅ Projekt dodany!');
     renderProjektyList();
   }
