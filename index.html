@@ -1684,9 +1684,20 @@ function buildProjDetail(id, tab) {
     });
     html += `</div>`;
   } else if (tab === 'wydatki') {
+    const projWydatki = Object.values(DATA.wydatki).filter(e => e.proj === id).sort((a, b) => (b.data || '').split('.').reverse().join('').localeCompare((a.data || '').split('.').reverse().join('')));
     html += `<div style="padding:0 14px">
       ${(fullAccess() || isKierownik()) ? `<button onclick="openNewWydatek('${id}')" class="btn-s" style="width:100%;margin-bottom:12px">＋ Dodaj wydatek dla tego projektu</button>` : ''}
-      ${fullAccess() ? buildBudzetHtml(p) : `<div style="color:var(--muted);font-size:12px;padding:8px 0">Brak dostępu do podglądu budżetu.</div>`}
+      <div class="sec-hdr" style="margin-bottom:8px"><h3 style="font-size:12px">📋 Wydatki tego projektu</h3><span style="font-size:11px;color:var(--muted);font-weight:700">${projWydatki.length}</span></div>
+      ${projWydatki.length === 0 ? `<div style="color:var(--muted);font-size:12px;padding:8px 0;margin-bottom:8px">Brak zarejestrowanych wydatków.</div>` : projWydatki.map(e => {
+        const meta = WYD_TYP_META[e.typ] || WYD_TYP_META['Inne'];
+        const isIncome = e.typ === 'Przychód';
+        return `<div onclick="${fullAccess() ? `openEditWydatek('${e.id}')` : ''}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;${fullAccess() ? 'cursor:pointer' : ''}">
+          <div style="width:28px;height:28px;border-radius:8px;background:${meta.bg};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${meta.ikona}</div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:700">${escapeHtml(e.opis)}</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(e.typ)} · ${escapeHtml(e.data)}</div></div>
+          <div class="fin" style="font-size:12px;font-weight:800;color:${isIncome ? 'var(--green)' : 'var(--red)'}">${isIncome ? '+' : '-'}${e.kwota.toLocaleString('pl-PL')} zł</div>
+        </div>`;
+      }).join('')}
+      ${fullAccess() ? buildBudzetHtml(p) : ''}
     </div>`;
   } else if (tab === 'rentownosc') {
     const marginColor = margin >= 30 ? 'var(--green)' : margin >= 10 ? 'var(--orange)' : 'var(--red)';
