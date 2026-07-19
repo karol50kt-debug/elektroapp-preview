@@ -471,7 +471,7 @@ body.kier .kier-only{display:flex!important}
 
 <!-- ═══════ NARZĘDZIA ═══════ -->
 <div class="sv" id="sv-narzedzia">
-<div class="hdr"><div class="hdr-title">🔧 Narzędzia</div><div class="hdr-right"><button class="hdr-btn" onclick="openScanner()">📷</button><button class="hdr-btn" onclick="openNoweNarzedzie()">＋</button><div class="avatar">K</div></div></div>
+<div class="hdr"><div class="hdr-title">🔧 Narzędzia</div><div class="hdr-right"><button class="hdr-btn" onclick="openScanner()">📷</button><button class="hdr-btn admin-only" onclick="openNoweNarzedzie()">＋</button><div class="avatar">K</div></div></div>
 <div class="content" style="position:relative">
   <div class="kpi-scroll">
     <div class="kpi-sm" style="border-top-color:var(--blue)"><div class="v" style="color:var(--blue)" id="narz-kpi-total">0</div><div class="l">Łącznie</div></div>
@@ -625,11 +625,11 @@ body.kier .kier-only{display:flex!important}
 
 <!-- ═══════ SAMOCHODY ═══════ -->
 <div class="sv" id="sv-samochody">
-<div class="hdr"><div class="hdr-title">🚐 Samochody</div><div class="hdr-right"><button class="hdr-btn" onclick="openModal('modal-auto')">＋</button><div class="avatar">K</div></div></div>
+<div class="hdr"><div class="hdr-title">🚐 Samochody</div><div class="hdr-right"><button class="hdr-btn admin-only" onclick="openModal('modal-auto')">＋</button><div class="avatar">K</div></div></div>
 <div class="content" style="position:relative">
   <div class="kpi-scroll" id="auta-kpi"></div>
   <div id="auta-list"></div>
-  <button class="fab" onclick="openModal('modal-auto')">＋</button>
+  <button class="fab admin-only" onclick="openModal('modal-auto')">＋</button>
 </div>
 <div class="modal-ov" id="modal-auto" style="display:none" onclick="if(event.target===this)closeModal('modal-auto')">
   <div class="modal-sh"><button class="modal-close" onclick="closeModal('modal-auto')">✕</button><h3>🚐 Dodaj pojazd</h3>
@@ -2325,6 +2325,7 @@ function openZaliczkaModal(pracId) {
 }
 
 function saveZaliczka() {
+  if (!fullAccess()) return;
   const pracId = document.getElementById('nz-zal-prac').value;
   const kwota = Math.round((Number(document.getElementById('nz-zal-kwota').value) || 0) * 100) / 100;
   if (kwota <= 0) { showToast('⚠️ Podaj kwotę zaliczki'); return; }
@@ -2344,6 +2345,7 @@ function saveZaliczka() {
 }
 
 function deleteZaliczka(pracId, zid) {
+  if (!fullAccess()) return;
   DATA.zaliczki[pracId] = (DATA.zaliczki[pracId] || []).filter(z => z.id !== zid);
   saveState();
   showToast('🗑️ Zaliczka usunięta');
@@ -2680,6 +2682,7 @@ function augmentPaskiMock() {
 }
 
 function generujPaski() {
+  if (!fullAccess()) return;
   let ile = 0;
   Object.values(DATA.pracownicy).forEach(w => {
     const juz = (DATA.paski[w.id] || []).some(p => p.miesiac === PASEK_MIESIAC);
@@ -2696,6 +2699,7 @@ function generujPaski() {
 }
 
 function zatwierdzPasek(pracId, idx) {
+  if (!fullAccess()) return;
   const pasek = DATA.paski[pracId][idx];
   pasek.premia = Number(document.getElementById(`premia-${pracId}-${idx}`).value) || 0;
   pasek.status = 'zatwierdzony';
@@ -2708,6 +2712,7 @@ function zatwierdzPasek(pracId, idx) {
 }
 
 function przeliczPasekRoboczy(pracId, idx) {
+  if (!fullAccess()) return;
   const pasek = DATA.paski[pracId][idx];
   if (!pasek || pasek.status !== 'roboczy') return;
   const dni = pasekRozpisDni(pracId, pasek.mIdx, pasek.rok);
@@ -2720,6 +2725,7 @@ function przeliczPasekRoboczy(pracId, idx) {
 }
 
 function usunPasekRoboczy(pracId, idx) {
+  if (!fullAccess()) return;
   const pasek = DATA.paski[pracId][idx];
   if (!pasek || pasek.status !== 'roboczy') return;
   const w = DATA.pracownicy[pracId];
@@ -3381,6 +3387,7 @@ function renderNarzList() {
 }
 
 function openNoweNarzedzie() {
+  if (!fullAccess()) return;
   document.getElementById('nn-edit-id').value = '';
   document.getElementById('nn-heading').textContent = '🔧 Nowe narzędzie';
   document.getElementById('nn-submit').textContent = 'Dodaj narzędzie';
@@ -3389,6 +3396,7 @@ function openNoweNarzedzie() {
 }
 
 function saveNarzedzie() {
+  if (!fullAccess()) return;
   const marka = document.getElementById('nn-marka').value.trim();
   const model = document.getElementById('nn-model').value.trim();
   if (!marka && !model) { showToast('⚠️ Podaj markę lub model'); return; }
@@ -3412,6 +3420,7 @@ function saveNarzedzie() {
 }
 
 function openEditNarzedzie(id) {
+  if (!fullAccess()) return;
   const n = DATA.narzedzia[id]; if (!n) return;
   document.getElementById('nn-edit-id').value = id;
   document.getElementById('nn-heading').textContent = '✏️ Edytuj narzędzie';
@@ -3426,6 +3435,7 @@ function openEditNarzedzie(id) {
 }
 
 function deleteNarzedzie(id) {
+  if (!fullAccess()) return;
   const n = DATA.narzedzia[id]; if (!n) return;
   if (!confirm(`Usunąć narzędzie ${n.marka} ${n.model}?`)) return;
   delete DATA.narzedzia[id];
@@ -3435,6 +3445,7 @@ function deleteNarzedzie(id) {
 
 // Zmiana statusu narzędzia (opcjonalnie „komu" przy Pożyczone/W użyciu)
 function zmienStatusNarz(id, status) {
+  if (!fullAccess()) return;
   const n = DATA.narzedzia[id]; if (!n) return;
   if (status === 'Pożyczone' || status === 'W użyciu') {
     const komu = prompt(status === 'Pożyczone' ? 'Komu pożyczone?' : 'Kto używa?', n.komu || '');
@@ -3449,6 +3460,7 @@ function zmienStatusNarz(id, status) {
 }
 
 function saveNaprawa() {
+  if (!fullAccess()) return;
   const n = _narzCur ? DATA.narzedzia[_narzCur] : null;
   if (!n) { showToast('⚠️ Brak narzędzia'); return; }
   const opis = document.getElementById('np-nap-opis').value.trim();
@@ -3550,11 +3562,11 @@ function openNarz(id, opts = {}) {
           <div style="font-size:10px;color:var(--muted);margin-top:4px">${qrIsExisting ? 'Skanuj naklejkę producenta' : 'Wydrukuj i nakleij na narzędziu'}</div>
         </div>
       </div>
-      <div style="font-size:12px;font-weight:800;margin-bottom:6px">🔄 Status</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      <div class="admin-only" style="font-size:12px;font-weight:800;margin-bottom:6px">🔄 Status</div>
+      <div class="admin-only" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
         ${NARZ_STATUSY.map(s => `<button onclick="zmienStatusNarz('${id}','${s}')" style="flex:1;min-width:70px;padding:7px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:2px solid ${s === n.status ? (NARZ_META[s].fg) : 'var(--border)'};background:${s === n.status ? NARZ_META[s].bg : 'var(--white)'};color:${s === n.status ? NARZ_META[s].fg : 'var(--muted)'}">${s}</button>`).join('')}
       </div>
-      <div style="display:flex;gap:6px;margin-bottom:12px">
+      <div class="admin-only" style="display:flex;gap:6px;margin-bottom:12px">
         <button onclick="openNaprawaModal()" style="flex:1;padding:10px;background:var(--orange-l);color:var(--orange);border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🔨 Zgłoś naprawę</button>
         <button onclick="openEditNarzedzie('${id}')" class="btn-s" style="flex:1">✏️ Edytuj</button>
       </div>
@@ -3570,7 +3582,7 @@ function openNarz(id, opts = {}) {
           <div style="flex:1"><div style="font-size:12px;font-weight:600">${escapeHtml(r.opis)}</div><div style="font-size:10px;color:var(--muted)">🏪 ${escapeHtml(r.serwis || '—')}</div></div>
           <div class="fin" style="font-size:12px;font-weight:800;color:var(--red)">${r.koszt} zł</div>
         </div>`).join('')}
-      <button class="btn-r" style="width:100%;margin-top:14px" onclick="deleteNarzedzie('${id}')">🗑️ Usuń narzędzie</button>
+      <button class="btn-r admin-only" style="width:100%;margin-top:14px" onclick="deleteNarzedzie('${id}')">🗑️ Usuń narzędzie</button>
     </div>`;
 
   // Generuj QR (prymitywny z CSS)
@@ -4355,6 +4367,7 @@ function deleteAuto(id) {
 }
 
 function saveAuto() {
+  if (!fullAccess()) return;
   const marka = document.getElementById('na-marka').value.trim();
   const model = document.getElementById('na-model').value.trim();
   if (!marka && !model) { showToast('⚠️ Podaj markę i model'); return; }
@@ -4894,6 +4907,7 @@ function buildUstawienia() {
 }
 
 async function zmienPin(uid) {
+  if (!currentUser || !currentUser.admin) return;
   const u = DATA.uzytkownicy[uid];
   if (!u) return;
   const nowy = prompt(`Nowy 4-cyfrowy PIN dla: ${u.nazwa}`, '');
@@ -4906,6 +4920,7 @@ async function zmienPin(uid) {
 }
 
 function togglePerm(uid, perm) {
+  if (!currentUser || !currentUser.admin) return;
   const u = DATA.uzytkownicy[uid];
   if (!u || u.admin) return;
   u.uprawnienia[perm] = !u.uprawnienia[perm];
@@ -4915,6 +4930,7 @@ function togglePerm(uid, perm) {
 
 // Ustaw rolę konta: pracownik / kierownik / biuro (pełny dostęp)
 function ustawRoleKonta(uid, rola) {
+  if (!currentUser || !currentUser.admin) return;
   const u = DATA.uzytkownicy[uid];
   if (!u || u.admin) return;
   u.pelnyDostep = (rola === 'biuro');
@@ -5010,7 +5026,7 @@ function buildTerminarz() {
     <div onclick="termWykonaj(${i})" style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border);cursor:pointer">
       <div style="width:34px;text-align:center;font-size:11px;font-weight:800;color:var(--muted)">${String(e.dzien).padStart(2,'0')}.${String(termMonth+1).padStart(2,'0')}</div>
       <div style="width:26px;height:26px;border-radius:7px;background:${e.kolor}22;display:flex;align-items:center;justify-content:center;font-size:14px">${e.ikona}</div>
-      <div style="flex:1;font-size:12px;color:var(--text)">${e.tytul}</div>
+      <div style="flex:1;font-size:12px;color:var(--text)">${escapeHtml(e.tytul)}</div>
     </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Brak zdarzeń w tym miesiącu</div>';
 
   el.innerHTML = `
@@ -5039,7 +5055,7 @@ function termPokazDzien(d) {
   document.getElementById('modal-dzien-body').innerHTML = evsD.map(({ e, i }) => `
     <div onclick="closeModal('modal-dzien-detail');termWykonaj(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 8px;background:#232a31;border-radius:8px;margin-bottom:6px;cursor:pointer">
       <div style="width:32px;height:32px;border-radius:8px;background:${e.kolor}22;display:flex;align-items:center;justify-content:center;font-size:16px">${e.ikona}</div>
-      <div style="flex:1;font-size:13px;color:var(--text)">${e.tytul}</div>
+      <div style="flex:1;font-size:13px;color:var(--text)">${escapeHtml(e.tytul)}</div>
       <div style="color:var(--blue)">›</div>
     </div>`).join('');
   openModal('modal-dzien-detail');
