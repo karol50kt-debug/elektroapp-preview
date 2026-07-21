@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>ElektroApp v2.0 — Preview</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1f262d">
@@ -79,7 +79,7 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 /* FILTER */
 .frow{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
 .frow::-webkit-scrollbar{display:none}
-.ftab{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--muted)}
+.ftab{padding:8px 14px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--muted)}
 .ftab.active{background:var(--blue-d);color:#fff;border-color:var(--blue-d)}
 /* SEARCH */
 .search{display:flex;align-items:center;gap:8px;background:var(--white);border-radius:10px;padding:0 12px;border:1px solid var(--border);margin-bottom:10px;height:40px}
@@ -116,13 +116,13 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .fab{position:absolute;bottom:16px;right:16px;width:52px;height:52px;border-radius:26px;background:var(--blue-d);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(240,167,48,.3);cursor:pointer;border:none;z-index:5}
 /* CONTENT TABS */
 .ctabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:12px;flex-shrink:0}
-.ctab{padding:8px 12px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.ctab{padding:12px 12px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
 .ctab.active{color:var(--blue);border-bottom-color:var(--blue)}
 /* CAL */
 .cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px}
 .cal-hdr span{font-size:9px;color:var(--muted);text-align:center;font-weight:600}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cd{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;cursor:pointer;background:#232a31;color:var(--muted)}
+.cd{aspect-ratio:1;min-height:44px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;background:#232a31;color:var(--muted)}
 .cd.today{background:var(--blue-d);color:#fff}
 .cd.we{color:var(--border);background:transparent}
 .cd.empty{background:transparent}
@@ -205,7 +205,11 @@ body.kier .kier-only{display:flex!important}
   html,body{height:100%;overflow:hidden;position:fixed;width:100%;top:0;left:0}
   body{padding:0;background:var(--bg);align-items:stretch}
   .phone-label{display:none}
-  .phone{width:100%;height:100dvh;max-height:100dvh;border-radius:0;box-shadow:none}
+  .phone{width:100%;height:100dvh;max-height:100dvh;border-radius:0;box-shadow:none;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  /* Notch/Dynamic Island i pasek gestów Androida: dopchnij chrome appki poza obszar systemowy */
+  .status-bar{padding-top:env(safe-area-inset-top);height:calc(36px + env(safe-area-inset-top))}
+  .tabbar{padding-bottom:env(safe-area-inset-bottom);height:calc(64px + env(safe-area-inset-bottom))}
+  .login-ov{padding-top:calc(28px + env(safe-area-inset-top));padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 }
 /* SCAN */
 .scan-ov{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
@@ -814,6 +818,14 @@ body.kier .kier-only{display:flex!important}
     <button id="pin-bio-btn" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;padding:9px 18px;border-radius:22px">👆 Zaloguj odciskiem</button>
     <button onclick="pinCancel()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;margin-top:6px">← Wybierz inne konto</button>
   </div>
+  <!-- Ustawienie PIN przy pierwszym logowaniu (zamiast window.prompt) -->
+  <div id="login-pin-setup" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;text-align:center">
+    <div class="login-logo">🔐</div>
+    <div id="pin-setup-title" style="color:#fff;font-size:16px;font-weight:800"></div>
+    <div id="pin-setup-sub" style="color:rgba(255,255,255,.7);font-size:12px;margin-bottom:4px"></div>
+    <div class="pin-dots" id="pin-setup-dots"></div>
+    <div class="pin-pad" id="pin-setup-pad"></div>
+  </div>
 </div>
 <!-- Skaner QR kodu pracownika -->
 <div id="qr-scan-ov" style="display:none;position:absolute;inset:0;z-index:10000;background:#000;flex-direction:column;align-items:center;justify-content:center;gap:14px">
@@ -1229,11 +1241,9 @@ async function revokeDevice(token) {
 
 // Pracownik: przycisk ☁️ na nagłówku „Moje godziny"
 function employeeSyncTap() {
-  if (syncRole() === 'employee') {
-    if (confirm('To urządzenie jest połączone z danymi firmy.\n\nOK = odłącz (wróci do logowania kodem)\nAnuluj = zamknij')) disconnectSync();
-  } else {
-    loginEmployeeCode();
-  }
+  // disconnectSync() ma już własne potwierdzenie (confirmAction) — nie dublujemy go tutaj.
+  if (syncRole() === 'employee') disconnectSync();
+  else loginEmployeeCode();
 }
 
 // Pracownik: użyj kodu (z QR albo wpisany) → autoryzuj urządzenie
@@ -1291,20 +1301,70 @@ function stopQrScan() {
 }
 
 // Wymuś ustawienie PIN przy pierwszym logowaniu pracownika (konto oznaczone mustSetPin lub bez PIN)
+// Ekran w stylu appki (login-pin-setup) zamiast natywnego window.prompt().
+let pinSetupTarget = null, pinSetupBuffer = '', pinSetupFirstEntry = null;
+
 async function forcePinSetupIfNeeded() {
   const accs = Object.values(DATA.uzytkownicy);
   const acc = accs.find(u => !u.admin) || accs[0];
   if (!acc) return;
   if (!acc.mustSetPin && acc.pinHash) return;
-  let pin = '';
-  while (!/^\d{4}$/.test(pin)) {
-    pin = prompt(`Cześć ${acc.nazwa.split(' ')[0]}! Ustaw swój 4-cyfrowy PIN do logowania:`);
-    if (pin === null) return;  // anuluje — poprosimy ponownie przy próbie logowania
+  pinSetupStart(acc);
+}
+
+function pinSetupStart(acc) {
+  pinSetupTarget = acc;
+  pinSetupFirstEntry = null;
+  pinSetupBuffer = '';
+  document.getElementById('login-tiles').style.display = 'none';
+  document.getElementById('login-fresh').style.display = 'none';
+  document.getElementById('login-pin').style.display = 'none';
+  document.getElementById('login-pin-setup').style.display = 'flex';
+  document.getElementById('pin-setup-title').textContent = `Cześć ${acc.nazwa.split(' ')[0]}!`;
+  document.getElementById('pin-setup-sub').textContent = 'Ustaw swój 4-cyfrowy PIN do logowania';
+  document.getElementById('pin-setup-pad').innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k =>
+    k === '' ? '<div></div>' : `<button class="pin-key" onclick="pinSetupKey('${k}')">${k}</button>`).join('');
+  renderPinSetupDots();
+}
+
+function renderPinSetupDots() {
+  document.getElementById('pin-setup-dots').innerHTML = [0,1,2,3].map(i =>
+    `<div class="pin-dot${i < pinSetupBuffer.length ? ' filled' : ''}"></div>`).join('');
+}
+
+async function pinSetupKey(k) {
+  if (k === '⌫') { pinSetupBuffer = pinSetupBuffer.slice(0, -1); renderPinSetupDots(); return; }
+  if (pinSetupBuffer.length >= 4) return;
+  pinSetupBuffer += k;
+  renderPinSetupDots();
+  if (pinSetupBuffer.length !== 4) return;
+
+  if (pinSetupFirstEntry === null) {
+    // Pierwsze wpisanie — poproś o powtórzenie zamiast ufać jednorazowemu wpisowi
+    pinSetupFirstEntry = pinSetupBuffer;
+    pinSetupBuffer = '';
+    document.getElementById('pin-setup-sub').textContent = 'Powtórz PIN, żeby potwierdzić';
+    renderPinSetupDots();
+    return;
   }
-  await setPin(acc, pin);
+
+  if (pinSetupBuffer !== pinSetupFirstEntry) {
+    showToast('❌ PIN-y się różnią — spróbuj ponownie');
+    pinSetupFirstEntry = null;
+    pinSetupBuffer = '';
+    document.getElementById('pin-setup-sub').textContent = 'Ustaw swój 4-cyfrowy PIN do logowania';
+    renderPinSetupDots();
+    return;
+  }
+
+  const acc = pinSetupTarget;
+  await setPin(acc, pinSetupBuffer);
   delete acc.mustSetPin;
   saveState();
+  document.getElementById('login-pin-setup').style.display = 'none';
+  pinSetupTarget = null; pinSetupBuffer = ''; pinSetupFirstEntry = null;
   showToast('✅ PIN ustawiony — teraz zaloguj się nim');
+  renderLoginTiles();
 }
 
 // ═══════ PIN — hashowanie (SHA-256 + sól) zamiast jawnego tekstu ═══════
@@ -1700,7 +1760,7 @@ function buildProjDetail(id, tab) {
 
         <div class="sec-hdr" style="margin-bottom:8px"><h3 style="font-size:12px">✅ Zadania</h3><span style="font-size:11px;color:var(--muted);font-weight:700">${leafStats.done}/${leafStats.total}</span></div>
         ${zadania.map((z, i) => buildZadanieHtml(p, i)).join('') || `<div style="color:var(--muted);font-size:12px;padding:8px 0">Brak zadań — dodaj poniżej.</div>`}
-        ${(fullAccess() || isKierownik()) ? `<div style="display:flex;gap:6px;margin-top:10px">
+        ${(canManage()) ? `<div style="display:flex;gap:6px;margin-top:10px">
           <input class="fi" id="nz-${id}" placeholder="＋ Dodaj zadanie..." style="flex:1;padding:9px 10px;font-size:12px" onkeydown="if(event.key==='Enter')addZadanie('${id}')">
           <button onclick="addZadanie('${id}')" class="btn-s">Dodaj</button>
         </div>
@@ -1730,7 +1790,7 @@ function buildProjDetail(id, tab) {
   } else if (tab === 'wydatki') {
     const projWydatki = Object.values(DATA.wydatki).filter(e => e.proj === id).sort((a, b) => (b.data || '').split('.').reverse().join('').localeCompare((a.data || '').split('.').reverse().join('')));
     html += `<div style="padding:0 14px">
-      ${(fullAccess() || isKierownik()) ? `<button onclick="openNewWydatek('${id}')" class="btn-s" style="width:100%;margin-bottom:12px">＋ Dodaj wydatek dla tego projektu</button>` : ''}
+      ${(canManage()) ? `<button onclick="openNewWydatek('${id}')" class="btn-s" style="width:100%;margin-bottom:12px">＋ Dodaj wydatek dla tego projektu</button>` : ''}
       <div class="sec-hdr" style="margin-bottom:8px"><h3 style="font-size:12px">📋 Wydatki tego projektu</h3><span style="font-size:11px;color:var(--muted);font-weight:700">${projWydatki.length}</span></div>
       ${projWydatki.length === 0 ? `<div style="color:var(--muted);font-size:12px;padding:8px 0;margin-bottom:8px">Brak zarejestrowanych wydatków.</div>` : projWydatki.map(e => {
         const meta = WYD_TYP_META[e.typ] || WYD_TYP_META['Inne'];
@@ -1806,7 +1866,7 @@ function buildZadanieHtml(p, i) {
   // Zadania synchronizują się z backendem tylko dla fullAccess i kierownika — zwykły
   // pracownik z (rzadko nadawanym) uprawnieniem "projekty" widzi checklistę, ale nie edytuje,
   // żeby nie tworzyć zmian, które i tak zgubią się przy najbliższej synchronizacji.
-  const canEdit = fullAccess() || isKierownik();
+  const canEdit = canManage();
   return `
   <div style="background:var(--white);border:1px solid ${zDone ? p.kolor + '55' : 'var(--border)'};border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)">
     <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer" onclick="toggleZadanieOpen('${p.id}',${i})">
@@ -1839,7 +1899,7 @@ function toggleZadanieOpen(projId, i) {
 }
 
 function toggleZadanie(projId, i) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   const z = p.zadania[i];
   if (z.sub && z.sub.length > 0) {
@@ -1854,7 +1914,7 @@ function toggleZadanie(projId, i) {
 }
 
 function toggleSub(projId, i, j) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   p.zadania[i].sub[j].done = !p.zadania[i].sub[j].done;
   recalcPostep(p);
@@ -1862,7 +1922,7 @@ function toggleSub(projId, i, j) {
 }
 
 function addZadanie(projId) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   const input = document.getElementById('nz-' + projId);
   const nazwa = input.value.trim();
@@ -1881,7 +1941,7 @@ function toggleImportZadan(projId) {
 // Parsuje wklejony tekst: linia bez prefiksu "- " = nowe zadanie główne,
 // linia zaczynająca się od "- " = podzadanie ostatniego zadania głównego.
 function importZadania(projId) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   const raw = document.getElementById('imp-zad-text-' + projId).value;
   const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
@@ -1909,7 +1969,7 @@ function importZadania(projId) {
 }
 
 function addSub(projId, i) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   const input = document.getElementById(`ns-${projId}-${i}`);
   const nazwa = input.value.trim();
@@ -1921,7 +1981,7 @@ function addSub(projId, i) {
 }
 
 function removeZadanie(projId, i) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   p.zadania.splice(i, 1);
   recalcPostep(p);
@@ -1929,7 +1989,7 @@ function removeZadanie(projId, i) {
 }
 
 function removeSub(projId, i, j) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   p.zadania[i].sub.splice(j, 1);
   recalcPostep(p);
@@ -4557,6 +4617,9 @@ let pinTarget = null, pinBuffer = '';
 // Pełny dostęp = właściciel (admin) lub pracownik biurowy (pelnyDostep)
 function fullAccess() { return !!(currentUser && (currentUser.admin || currentUser.pelnyDostep)); }
 function isKierownik() { return !!(currentUser && currentUser.kierownik && !fullAccess()); }
+// Wspólna bramka dla akcji zarządczych (edycja projektu/zadań, dodawanie wydatków...) —
+// właściciel/biuro ORAZ kierownik, w odróżnieniu od zwykłego pracownika terenowego.
+function canManage() { return fullAccess() || isKierownik(); }
 
 function can(perm) {
   if (!currentUser) return false;
