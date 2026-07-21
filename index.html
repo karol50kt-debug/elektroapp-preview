@@ -4597,6 +4597,46 @@ function initGoogleSignInLogin(tries) {
   google.accounts.id.renderButton(el, { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with', width: 260 });
 }
 
+// ═══════ LOCKOUT PIN — limit nieudanych prób, trzymany per-konto w localStorage ═══════
+// Nie chroni to przed atakiem z wielu urządzeń/przeglądarek (localStorage jest per-urządzenie) —
+// prawdziwa granica to i tak backend, ale spowalnia najprostszy atak siłowy z jednego telefonu.
+const PIN_LOCK_PREFIX = 'elektroapp_pin_fails_';
+const PIN_LOCK_MAX_FAILS = 5;
+const PIN_LOCK_DURATIONS = [60, 120, 300, 600, 900]; // sekundy; ostatnia wartość powtarza się przy kolejnych seriach
+
+function pinLockState(uid) {
+  try {
+    const raw = localStorage.getItem(PIN_LOCK_PREFIX + uid);
+    if (!raw) return { fails: 0, lockUntil: 0, lockTier: 0 };
+    const st = JSON.parse(raw);
+    return { fails: st.fails || 0, lockUntil: st.lockUntil || 0, lockTier: st.lockTier || 0 };
+  } catch (e) { return { fails: 0, lockUntil: 0, lockTier: 0 }; }
+}
+function pinLockSave(uid, st) {
+  try { localStorage.setItem(PIN_LOCK_PREFIX + uid, JSON.stringify(st)); } catch (e) {}
+}
+function pinLockReset(uid) {
+  try { localStorage.removeItem(PIN_LOCK_PREFIX + uid); } catch (e) {}
+}
+function pinLockRemainingSec(uid) {
+  const rem = Math.ceil((pinLockState(uid).lockUntil - Date.now()) / 1000);
+  return rem > 0 ? rem : 0;
+}
+// Rejestruje nieudaną próbę; po osiągnięciu progu nakłada blokadę o rosnącym czasie
+// (kolejna "seria" 5 błędów = dłuższa blokada niż poprzednia).
+function pinLockRegisterFail(uid) {
+  const st = pinLockState(uid);
+  st.fails += 1;
+  if (st.fails >= PIN_LOCK_MAX_FAILS) {
+    const dur = PIN_LOCK_DURATIONS[Math.min(st.lockTier, PIN_LOCK_DURATIONS.length - 1)];
+    st.lockUntil = Date.now() + dur * 1000;
+    st.lockTier += 1;
+    st.fails = 0;
+  }
+  pinLockSave(uid, st);
+  return st;
+}
+
 function pinStart(uid) {
   pinTarget = DATA.uzytkownicy[uid];
   pinBuffer = '';
@@ -4609,6 +4649,8 @@ function pinStart(uid) {
   if (bioRegistered(uid)) { bioBtn.style.display = 'block'; bioBtn.onclick = () => bioLogin(uid); }
   else bioBtn.style.display = 'none';
   renderPinDots();
+  const remLock = pinLockRemainingSec(uid);
+  if (remLock > 0) showToast(`🔒 Konto zablokowane po zbyt wielu błędnych próbach — spróbuj za ${remLock}s`);
 }
 
 function renderPinDots() {
@@ -4617,14 +4659,30 @@ function renderPinDots() {
 }
 
 async function pinKey(k) {
+  if (!pinTarget) return;
+  const remLock = pinLockRemainingSec(pinTarget.id);
+  if (remLock > 0) {
+    showToast(`🔒 Zbyt wiele błędnych prób — spróbuj ponownie za ${remLock}s`);
+    return;
+  }
   if (k === '⌫') { pinBuffer = pinBuffer.slice(0, -1); renderPinDots(); return; }
   if (pinBuffer.length >= 4) return;
   pinBuffer += k;
   renderPinDots();
   if (pinBuffer.length === 4) {
     const ok = await verifyPin(pinTarget, pinBuffer);
-    if (ok) { setUser(pinTarget); }
-    else { pinBuffer = ''; renderPinDots(); showToast('❌ Błędny PIN'); }
+    const uid = pinTarget.id;
+    pinBuffer = '';
+    renderPinDots();
+    if (ok) {
+      pinLockReset(uid);
+      setUser(pinTarget);
+    } else {
+      const st = pinLockRegisterFail(uid);
+      const remAfter = pinLockRemainingSec(uid);
+      if (remAfter > 0) showToast(`🔒 Zbyt wiele błędnych prób. Zablokowano na ${remAfter}s`);
+      else showToast(`❌ Błędny PIN (pozostało ${PIN_LOCK_MAX_FAILS - st.fails} prób przed blokadą)`);
+    }
   }
 }
 
