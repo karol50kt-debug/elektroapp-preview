@@ -24,7 +24,19 @@
   --purple:#a98ee0;--purple-l:rgba(169,142,224,.16);
   --teal:#4fb8a8;--teal-l:rgba(79,184,168,.16);
   --bg:#14181d;--white:rgba(28,34,39,.9);--panel2:#1f262d;--border:#2b333a;
-  --text:#eef1f3;--muted:#7c858c;--sec:#a7b0b7;
+  --text:#eef1f3;--muted:#949da5;--sec:#a7b0b7;
+  --surface2:#232a31;--input-bg:#252d34;--input-bg-focus:#2a333b;--input-border:#3a434b;
+  --dim:#4a545c;--placeholder:#8a929a;
+}
+/* Jasny motyw — przełączany indywidualnie per konto (przycisk ☀️/🌙 w rogu ekranu).
+   Chrom (nagłówki, pasek statusu, dolny pasek zakładek pod spodem) zostaje ciemny w
+   obu motywach — to kolorowe/celowo-ciemne "obudowy", nie treść, więc nie muszą się
+   przełączać; zmieniają się tylko powierzchnie treści (tło, karty, tekst, formularze). */
+:root[data-theme="light"]{
+  --bg:#eef0f2;--white:#ffffff;--border:#dde1e6;
+  --text:#1a2128;--muted:#5b6670;--sec:#45505a;
+  --surface2:#e4e8eb;--input-bg:#ffffff;--input-bg-focus:#f5f7f8;--input-border:#c7ced4;
+  --dim:#8b939a;--placeholder:#97a0a7;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;padding:24px 0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
@@ -105,12 +117,12 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);margin-top:-4px}
 .fg{margin-bottom:12px}
 .fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;display:block}
-.fi{width:100%;border:1px solid #3a434b;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit;color:var(--text);background:#252d34}
-.fi:focus{border-color:var(--blue);background:#2a333b}
-.fi::placeholder,.fs::placeholder{color:#8a929a;opacity:1}
-.fs{width:100%;border:1px solid #3a434b;border-radius:8px;padding:9px 12px;font-size:13px;background:#252d34;font-family:inherit;color:var(--text)}
+.fi{width:100%;border:1px solid var(--input-border);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit;color:var(--text);background:var(--input-bg)}
+.fi:focus{border-color:var(--blue);background:var(--input-bg-focus)}
+.fi::placeholder,.fs::placeholder{color:var(--placeholder);opacity:1}
+.fs{width:100%;border:1px solid var(--input-border);border-radius:8px;padding:9px 12px;font-size:13px;background:var(--input-bg);font-family:inherit;color:var(--text)}
 .fs:focus{border-color:var(--blue);outline:none}
-.fs option{background:#252d34;color:var(--text)}
+.fs option{background:var(--input-bg);color:var(--text)}
 .btn-p{background:var(--blue-d);color:#fff;border:none;border-radius:20px;padding:11px 24px;font-size:14px;font-weight:700;width:100%;cursor:pointer;margin-top:8px}
 .btn-s{background:var(--blue-l);color:var(--blue);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
 .btn-r{background:var(--red-l);color:var(--red);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
@@ -125,7 +137,7 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px}
 .cal-hdr span{font-size:9px;color:var(--muted);text-align:center;font-weight:600}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cd{aspect-ratio:1;min-height:44px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;background:#232a31;color:var(--muted)}
+.cd{aspect-ratio:1;min-height:44px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;background:var(--surface2);color:var(--muted)}
 .cd.today{background:var(--blue-d);color:#fff}
 .cd.we{color:var(--border);background:transparent}
 .cd.empty{background:transparent}
@@ -223,11 +235,25 @@ body.kier .kier-only{display:flex!important}
 .sc-bl{bottom:0;left:0;border-bottom-width:4px;border-left-width:4px}
 .sc-br{bottom:0;right:0;border-bottom-width:4px;border-right-width:4px}
 </style>
+<script>
+// Wybór motywu PRZED pierwszym malowaniem strony — bez tego byłby widoczny błysk
+// domyślnego (ciemnego) motywu zanim główny skrypt na dole zdąży się uruchomić.
+// Na etapie ekranu logowania nie wiemy jeszcze, które konto się zaloguje, więc na
+// starcie stosujemy preferencję systemową; po zalogowaniu setUser() nadpisuje to
+// zapisanym wyborem TEGO konkretnego konta (patrz initTheme/toggleTheme niżej).
+(function () {
+  try {
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
 <div class="phone-label">ElektroApp v2.0 — React Native Preview</div>
 <div class="phone">
 <div class="screen">
+<button id="theme-toggle-btn" onclick="toggleTheme()" title="Zmień motyw (jasny/ciemny)" style="position:absolute;top:10px;right:12px;z-index:10000;width:30px;height:30px;border-radius:15px;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center"></button>
 
 <!-- ═══════ DASHBOARD ═══════ -->
 <div class="sv active" id="sv-dashboard">
@@ -245,7 +271,7 @@ body.kier .kier-only{display:flex!important}
     <div class="kpi" style="border-color:var(--red)" onclick="switchTab('awarie')"><div class="kpi-icon" style="background:var(--red-l)">🚨</div><div><div class="kpi-val" style="color:var(--red)" id="dash-kpi-awarie">2</div><div class="kpi-lbl">Otwarte awarie</div></div></div>
     <div class="kpi" style="border-color:var(--green)"><div class="kpi-icon" style="background:var(--green-l)">💰</div><div><div class="kpi-val" style="color:var(--green)" id="dash-kpi-przychody">0 zł</div><div class="kpi-lbl">Przychody</div></div></div>
     <div class="kpi" style="border-color:var(--orange)" onclick="switchTab('wydatki')"><div class="kpi-icon" style="background:var(--orange-l)">📊</div><div><div class="kpi-val" style="color:var(--orange)" id="dash-kpi-wydatki">0 zł</div><div class="kpi-lbl">Wydatki</div></div></div>
-    <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:#232a31">✅</div><div><div class="kpi-val" style="color:var(--muted)" id="dash-kpi-zakonczone">0</div><div class="kpi-lbl">Zakończone</div></div></div>
+    <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:var(--surface2)">✅</div><div><div class="kpi-val" style="color:var(--muted)" id="dash-kpi-zakonczone">0</div><div class="kpi-lbl">Zakończone</div></div></div>
   </div>
   <div id="dash-przypomnienia"></div>
   <div id="dash-przychod-prognoza" style="display:none;background:var(--green-l);border-radius:14px;padding:12px 14px;margin-bottom:14px"></div>
@@ -327,7 +353,7 @@ body.kier .kier-only{display:flex!important}
     </div>
     <div style="margin:-6px 0 12px">
       <span onclick="toggleRoboczyznaCalc()" style="font-size:11px;color:var(--blue);font-weight:700;cursor:pointer">🧮 Wylicz plan robocizny z godzin pracy</span>
-      <div id="npr-calc-box" style="display:none;background:#232a31;border-radius:8px;padding:10px;margin-top:8px">
+      <div id="npr-calc-box" style="display:none;background:var(--surface2);border-radius:8px;padding:10px;margin-top:8px">
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Kto będzie pracował:</div>
         <div id="npr-calc-prac-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;max-height:160px;overflow-y:auto"></div>
         <div style="display:flex;gap:8px;align-items:flex-end">
@@ -451,7 +477,7 @@ body.kier .kier-only{display:flex!important}
     <div id="sync-share-name" style="font-size:13px;font-weight:800;margin-bottom:6px"></div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Pracownik skanuje ten kod (albo wpisuje) raz na swoim telefonie: ekran logowania → „Mam kod pracownika". Widzi tylko swoje dane, bez finansów. Kod możesz w każdej chwili odłączyć w liście urządzeń.</div>
     <div id="sync-share-qr" style="display:flex;justify-content:center;margin-bottom:12px"></div>
-    <div id="sync-share-code" style="font-size:10px;word-break:break-all;background:#232a31;border-radius:8px;padding:10px;color:var(--sec);margin-bottom:10px"></div>
+    <div id="sync-share-code" style="font-size:10px;word-break:break-all;background:var(--surface2);border-radius:8px;padding:10px;color:var(--sec);margin-bottom:10px"></div>
     <button class="btn-p" onclick="copySyncCode()">📋 Kopiuj kod</button>
   </div>
 </div>
@@ -845,6 +871,35 @@ body.kier .kier-only{display:flex!important}
 </div>
 </div><!-- .screen -->
 <script>
+// ═══════ MOTYW (jasny/ciemny) — indywidualnie per konto ═══════
+// Zapisywany w localStorage per uid (ten sam wzorzec co odcisk palca — BIO_PREFIX),
+// więc na współdzielonym urządzeniu biurowym każde konto pamięta WŁASNY wybór.
+// Nowe/nigdy-nie-ustawione konto dostaje preferencję systemową (już zastosowaną
+// przez wczesny skrypt w <head>, żeby uniknąć błysku złego motywu).
+const THEME_KEY_PREFIX = 'elektroapp_theme_';
+
+function systemPrefersDark() {
+  try { return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+  catch (e) { return true; }
+}
+function themeStorageUid() { return (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : '_anon'; }
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+}
+function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem(THEME_KEY_PREFIX + themeStorageUid()); } catch (e) {}
+  applyTheme(saved || (systemPrefersDark() ? 'dark' : 'light'));
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  try { localStorage.setItem(THEME_KEY_PREFIX + themeStorageUid(), next); } catch (e) {}
+}
+
 // ═══════ DANE ═══════
 const DATA = {
   projekty: {
@@ -1783,7 +1838,7 @@ function buildProjDetail(id, tab) {
         </div>
       </div>
       <div style="padding:0 14px">
-        <div style="background:#232a31;border-radius:8px;overflow:hidden;margin-bottom:12px">
+        <div style="background:var(--surface2);border-radius:8px;overflow:hidden;margin-bottom:12px">
           <div style="background:${p.kolor};height:6px;width:${p.postep}%;transition:.6s ease"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:14px">
@@ -1792,7 +1847,7 @@ function buildProjDetail(id, tab) {
         </div>
         <div style="font-size:13px;color:var(--sec);line-height:1.5;margin-bottom:14px">${escapeHtml(p.opis)}</div>
 
-        <div class="fin" style="background:${p.zaplacono ? 'var(--green-l)' : '#232a31'};border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div class="fin" style="background:${p.zaplacono ? 'var(--green-l)' : 'var(--surface2)'};border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
           <div style="font-size:12px;font-weight:700;color:${p.zaplacono ? "var(--green)" : "var(--muted)"}">${p.zaplacono ? `✅ Zapłacono${p.dataZaplaty ? ' — ' + escapeHtml(p.dataZaplaty) : ''}` : '⏳ Nie zapłacono'}</div>
           <button onclick="toggleZaplacono('${id}')" class="btn-s admin-only" style="flex-shrink:0">${p.zaplacono ? 'Cofnij' : 'Oznacz jako zapłacone'}</button>
         </div>
@@ -1805,7 +1860,7 @@ function buildProjDetail(id, tab) {
         </div>
         <div style="margin-top:8px">
           <span onclick="toggleImportZadan('${id}')" style="font-size:11px;color:var(--blue);font-weight:700;cursor:pointer">📥 Importuj zadania (wklej tekst)</span>
-          <div id="imp-zad-box-${id}" style="display:none;background:#232a31;border-radius:8px;padding:10px;margin-top:8px">
+          <div id="imp-zad-box-${id}" style="display:none;background:var(--surface2);border-radius:8px;padding:10px;margin-top:8px">
             <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Jedna linia = jedno zadanie główne. Linia zaczynająca się od "- " = podzadanie poprzedniego zadania głównego.</div>
             <textarea class="fi" id="imp-zad-text-${id}" rows="6" style="resize:vertical;font-family:monospace;font-size:11px" placeholder="Parter — Montaż szaf${'\\n'}- wg rysunku 4.1: Montaż szafy LPD02"></textarea>
             <button class="btn-s" style="width:100%;margin-top:8px" onclick="importZadania('${id}')">Importuj</button>
@@ -1819,7 +1874,7 @@ function buildProjDetail(id, tab) {
       const w = DATA.pracownicy[wid];
       if (!w) return;
       const canSeeCost = fullAccess() || (currentUser && currentUser.pracownik === w.id);
-      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #2b333a" onclick="openPrac('${wid}')">
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)" onclick="openPrac('${wid}')">
         <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor}22;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:${w.kolor}">${escapeHtml(w.inicjaly)}</div>
         <div style="flex:1"><div style="font-weight:700;font-size:13px">${escapeHtml(w.imie)} ${escapeHtml(w.nazwisko)}</div><div style="font-size:11px;color:var(--muted)">${escapeHtml(w.rola)}${canSeeCost ? ` · ${w.stawka} zł/h` : ''}</div></div>
         <div style="font-size:12px;color:var(--blue)">›</div>
@@ -1834,7 +1889,7 @@ function buildProjDetail(id, tab) {
       ${projWydatki.length === 0 ? `<div style="color:var(--muted);font-size:12px;padding:8px 0;margin-bottom:8px">Brak zarejestrowanych wydatków.</div>` : projWydatki.map(e => {
         const meta = WYD_TYP_META[e.typ] || WYD_TYP_META['Inne'];
         const isIncome = e.typ === 'Przychód';
-        return `<div onclick="${fullAccess() ? `openEditWydatek('${e.id}')` : ''}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;${fullAccess() ? 'cursor:pointer' : ''}">
+        return `<div onclick="${fullAccess() ? `openEditWydatek('${e.id}')` : ''}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);${fullAccess() ? 'cursor:pointer' : ''}">
           <div style="width:28px;height:28px;border-radius:8px;background:${meta.bg};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${meta.ikona}</div>
           <div style="flex:1"><div style="font-size:12px;font-weight:700">${escapeHtml(e.opis)}</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(e.typ)} · ${escapeHtml(e.data)}</div></div>
           <div class="fin" style="font-size:12px;font-weight:800;color:${isIncome ? 'var(--green)' : 'var(--red)'}">${isIncome ? '+' : '-'}${e.kwota.toLocaleString('pl-PL')} zł</div>
@@ -1849,7 +1904,7 @@ function buildProjDetail(id, tab) {
         <div style="font-size:32px;font-weight:900;color:${marginColor}">${margin}%</div>
         <div style="font-size:12px;color:${marginColor};font-weight:700">Marża projektu</div>
       </div>
-      <div style="background:#232a31;border-radius:8px;padding:12px">
+      <div style="background:var(--surface2);border-radius:8px;padding:12px">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Wartość projektu</span><span style="font-weight:700;color:var(--green)">+${p.wartosc.toLocaleString('pl-PL')} zł</span></div>
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Koszty łącznie</span><span style="font-weight:700;color:var(--red)">-${koszty.toLocaleString('pl-PL')} zł</span></div>
         <div style="height:1px;background:var(--border);margin:8px 0"></div>
@@ -1913,14 +1968,14 @@ function buildZadanieHtml(p, i) {
       <span style="flex:1;font-size:13px;font-weight:700;${zDone ? 'color:var(--muted);text-decoration:line-through' : 'color:var(--text)'}">${escapeHtml(z.nazwa)}</span>
       ${hasSubs ? `<span style="font-size:10px;font-weight:800;background:${p.kolorL};color:${p.kolor};padding:2px 8px;border-radius:12px">${subDone}/${z.sub.length}</span>` : ''}
       <span style="font-size:11px;color:var(--muted);transform:rotate(${z.open ? 90 : 0}deg);transition:.2s">›</span>
-      ${canEdit ? `<button onclick="event.stopPropagation();removeZadanie('${p.id}',${i})" style="background:none;border:none;color:#4a545c;font-size:13px;cursor:pointer;flex-shrink:0;padding:2px">✕</button>` : ''}
+      ${canEdit ? `<button onclick="event.stopPropagation();removeZadanie('${p.id}',${i})" style="background:none;border:none;color:var(--dim);font-size:13px;cursor:pointer;flex-shrink:0;padding:2px">✕</button>` : ''}
     </div>
     ${z.open ? `
-    <div style="border-top:1px solid var(--border);padding:4px 12px 8px 22px;background:#232a31">
+    <div style="border-top:1px solid var(--border);padding:4px 12px 8px 22px;background:var(--surface2)">
       ${z.sub.map((s, j) => `
         <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
           <input type="checkbox" ${s.done ? 'checked' : ''} ${canEdit ? '' : 'disabled'} onchange="toggleSub('${p.id}',${i},${j})" style="accent-color:${p.kolor};width:15px;height:15px;flex-shrink:0">
-          <span style="flex:1;font-size:12px;${s.done ? 'color:#4a545c;text-decoration:line-through' : 'color:var(--sec)'}">${escapeHtml(s.nazwa)}</span>
+          <span style="flex:1;font-size:12px;${s.done ? 'color:var(--dim);text-decoration:line-through' : 'color:var(--sec)'}">${escapeHtml(s.nazwa)}</span>
           ${canEdit ? `<button onclick="event.preventDefault();removeSub('${p.id}',${i},${j})" style="background:none;border:none;color:var(--border);font-size:12px;cursor:pointer;padding:2px">✕</button>` : ''}
         </label>`).join('')}
       ${canEdit ? `<div style="display:flex;gap:6px;margin-top:4px">
@@ -2089,7 +2144,7 @@ function assignProjectColor(excludeId) {
 const PROJ_STATUS_BADGE = {
   'W realizacji': { bg:'var(--green-l)', fg:'var(--green)' },
   'Planowany':    { bg:'var(--blue-l)',  fg:'var(--blue)' },
-  'Zakończony':   { bg:'#232a31',        fg:'var(--muted)' },
+  'Zakończony':   { bg:'var(--surface2)',        fg:'var(--muted)' },
   'Wstrzymany':   { bg:'var(--orange-l)',fg:'var(--orange)' },
 };
 
@@ -2100,7 +2155,7 @@ function renderProjektyList() {
   if (listEl) {
     listEl.querySelectorAll(':scope > .li').forEach(li => li.remove());
     all.forEach(p => {
-      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#232a31', fg:'var(--muted)' };
+      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'var(--surface2)', fg:'var(--muted)' };
       const li = document.createElement('div');
       li.className = 'li';
       li.dataset.status = p.status;
@@ -2116,7 +2171,7 @@ function renderProjektyList() {
   if (dashEl) {
     const aktywne = all.filter(p => p.status === 'W realizacji').slice(0, 3);
     dashEl.innerHTML = aktywne.map(p => {
-      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#232a31', fg:'var(--muted)' };
+      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'var(--surface2)', fg:'var(--muted)' };
       return `<div class="li" onclick="openProjekt('${p.id}')"><div style="width:10px;height:10px;border-radius:5px;background:${p.kolor};flex-shrink:0"></div><div class="li-body"><div class="li-title">${escapeHtml(p.nazwa)}</div><div class="li-sub">${escapeHtml(p.klient)}</div></div><div class="li-right"><div class="fin" style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg}">${escapeHtml(p.status)}</span></div></div>`;
     }).join('') || `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak aktywnych projektów</div>`;
   }
@@ -2349,7 +2404,7 @@ const WYD_TYP_META = {
   'Narzędzia': { ikona:'🔧', bg:'var(--purple-l)' },
   'Przychód':  { ikona:'💵', bg:'var(--green-l)' },
   'Wynagrodzenia': { ikona:'💸', bg:'var(--teal-l)' },
-  'Inne':      { ikona:'📄', bg:'#232a31' },
+  'Inne':      { ikona:'📄', bg:'var(--surface2)' },
 };
 
 function renderWydatkiList() {
@@ -2679,9 +2734,9 @@ function buildZaliczkiSekcja(pracId) {
     <div style="padding:0 14px 14px">
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">💵 Zaliczki${sumaNieroz ? ` · nierozliczone: <span style="color:var(--orange)">${sumaNieroz.toLocaleString('pl-PL')} zł</span>` : ''}</div>
       ${list.slice().reverse().map(z => `
-        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #2b333a">
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
           <div style="flex:1"><div style="font-size:13px;font-weight:700">${z.kwota.toLocaleString('pl-PL')} zł ${z.rozliczona ? '<span style="font-size:10px;color:var(--green)">✅ rozliczona</span>' : '<span style="font-size:10px;color:var(--orange)">⏳ do rozliczenia</span>'}</div><div style="font-size:11px;color:var(--muted)">${escapeHtml(z.data)}${z.notatka ? ' · ' + escapeHtml(z.notatka) : ''}</div></div>
-          ${z.rozliczona ? '' : `<button onclick="deleteZaliczka('${pracId}','${z.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>`}
+          ${z.rozliczona ? '' : `<button onclick="deleteZaliczka('${pracId}','${z.id}')" style="background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer">✕</button>`}
         </div>`).join('')}
     </div>`;
 }
@@ -2712,7 +2767,7 @@ function buildKierownikWpisySekcja(pracId) {
           ? { nieobecny: true, powod: mine[0].powod }
           : { godz: Math.round(mine.reduce((s, x) => s + (x.godz || 0), 0) * 100) / 100, od: mine[0].od, do: mine[mine.length - 1].do };
         const label = agg.nieobecny ? '🚫 Nieobecny' : `${agg.godz}h${agg.od && agg.do ? ' · ' + agg.od + '–' + agg.do : ''}`;
-        return `<div onclick="openPracDayModal('${pracId}','${key}','kierownik')" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #2b333a;cursor:pointer">
+        return `<div onclick="openPracDayModal('${pracId}','${key}','kierownik')" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer">
           <div style="flex:1"><div style="font-size:13px;font-weight:700">${key.slice(8)}.${key.slice(5,7)}.${key.slice(0,4)}</div><div style="font-size:11px;color:var(--muted)">${label}</div></div>
           <span style="color:var(--blue)">›</span>
         </div>`;
@@ -2776,7 +2831,7 @@ const PASEK_MIESIAC = _MIES_PL[PASEK_MIDX] + ' ' + PASEK_ROK;
 
 function pasekBadge(status) {
   const map = { 'roboczy':['#fff3e0','var(--orange)','📝 Roboczy'], 'zatwierdzony':['#e3f2fd','var(--blue)','👁️ Zatwierdzony'], 'wypłacony':['#e8f5e9','var(--green)','✅ Wypłacony'] };
-  const [bg, fg, label] = map[status] || ["#232a31","var(--muted)",status];
+  const [bg, fg, label] = map[status] || ["var(--surface2)","var(--muted)",status];
   return `<span style="background:${bg};color:${fg};padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">${label}</span>`;
 }
 
@@ -2847,12 +2902,12 @@ function buildPasekDniHtml(pasek, pracId, idx, editable) {
     let tresc, kolor;
     if (x.nieobecny) { tresc = `🚫 Nieobecny${x.powod ? ' (' + x.powod + ')' : ''}`; kolor = 'var(--red)'; }
     else if (x.godz) { tresc = `${x.od && x.do ? x.od + '–' + x.do : ''} · ${x.godz}h`; kolor = 'var(--text)'; }
-    else { tresc = '—'; kolor = '#4a545c'; }
+    else { tresc = '—'; kolor = 'var(--dim)'; }
     const editAttr = editable ? `onclick="openPasekDzienEdit('${pracId}',${idx},${di})" style="cursor:pointer"` : '';
-    return `<div ${editAttr} style="display:grid;grid-template-columns:64px 1fr ${editable ? '20px' : ''};gap:8px;padding:4px 8px;font-size:11px;${isWeekend ? 'background:#232a31;' : ''}border-bottom:1px solid #f3f3f3;align-items:center">
-      <span style="color:${isWeekend ? '#4a545c' : 'var(--muted)'};font-weight:700">${dataTxt}</span>
+    return `<div ${editAttr} style="display:grid;grid-template-columns:64px 1fr ${editable ? '20px' : ''};gap:8px;padding:4px 8px;font-size:11px;${isWeekend ? 'background:var(--surface2);' : ''}border-bottom:1px solid #f3f3f3;align-items:center">
+      <span style="color:${isWeekend ? 'var(--dim)' : 'var(--muted)'};font-weight:700">${dataTxt}</span>
       <span style="color:${kolor};font-weight:${x.godz ? 700 : 400}">${tresc}</span>
-      ${editable ? '<span style="color:#4a545c;font-size:10px">✏️</span>' : ''}
+      ${editable ? '<span style="color:var(--dim);font-size:10px">✏️</span>' : ''}
     </div>`;
   }).join('');
   return `<details style="margin-top:8px">
@@ -3098,7 +3153,7 @@ function buildPasekZaliczkiHtml(pracId, pasek) {
     <div style="margin-top:8px;border-top:1px dashed var(--border);padding-top:8px">
       <div style="font-size:11px;font-weight:800;color:var(--orange);margin-bottom:4px">➖ Zaliczki pobrane w tym okresie</div>
       ${zal.map(z => `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:var(--sec)">${escapeHtml(z.data)}${z.notatka ? ' · ' + escapeHtml(z.notatka) : ''}</span><span style="font-weight:700;color:var(--orange)">-${z.kwota.toLocaleString('pl-PL')} zł</span></div>`).join('')}
-      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;border-top:1px solid #2b333a;margin-top:3px;padding-top:3px"><span>Razem zaliczki</span><span style="color:var(--orange)">-${suma.toLocaleString('pl-PL')} zł</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;border-top:1px solid var(--border);margin-top:3px;padding-top:3px"><span>Razem zaliczki</span><span style="color:var(--orange)">-${suma.toLocaleString('pl-PL')} zł</span></div>
     </div>`;
 }
 function zaliczkiSumaPaska(pracId, pasek) {
@@ -3187,7 +3242,7 @@ function pracCalNextMonth(id) { if (pracCalMonth < 11) pracCalMonth++; else { pr
 function buildPracDetail(id) {
   const w = DATA.pracownicy[id];
   const statusColor = w.status === 'Aktywny' ? 'var(--green)' : w.status === 'L4' ? 'var(--red)' : w.status === 'Nieaktywny' ? 'var(--muted)' : 'var(--orange)';
-  const statusBg = w.status === 'Aktywny' ? 'var(--green-l)' : w.status === 'L4' ? 'var(--red-l)' : w.status === 'Nieaktywny' ? '#2b333a' : 'var(--orange-l)';
+  const statusBg = w.status === 'Aktywny' ? 'var(--green-l)' : w.status === 'L4' ? 'var(--red-l)' : w.status === 'Nieaktywny' ? 'var(--border)' : 'var(--orange-l)';
 
   // Kalendarz budowany z prawdziwych wpisów DATA.czasPracy (klucze = pełne daty)
   const daysInMonth = new Date(pracCalYear, pracCalMonth + 1, 0).getDate();
@@ -3210,12 +3265,12 @@ function buildPracDetail(id) {
   for (let i = 0; i < startOffset; i++) calHtml += `<div></div>`;
   days.forEach(d => {
     if (d.nieobecny) {
-      calHtml += `<div onclick="openPracDayModal('${id}','${d.key}')" title="Nieobecny" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed #4a545c;color:#c62828">🚫</div>`;
+      calHtml += `<div onclick="openPracDayModal('${id}','${d.key}')" title="Nieobecny" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed var(--dim);color:#c62828">🚫</div>`;
       return;
     }
-    let bg = d.isWeekend ? '#232a31' : (d.proj ? d.proj.kolor + '33' : 'var(--border)');
+    let bg = d.isWeekend ? 'var(--surface2)' : (d.proj ? d.proj.kolor + '33' : 'var(--border)');
     let border = d.proj ? `2px solid ${d.proj.kolor}` : (d.isWeekend ? '1px solid var(--border)' : '1px solid #dde3ea');
-    let color = d.proj ? d.proj.kolor : (d.isWeekend ? '#4a545c' : '#aaa');
+    let color = d.proj ? d.proj.kolor : (d.isWeekend ? 'var(--dim)' : '#aaa');
     let clickAttr = d.proj ? `onclick="openPracDayModal('${id}','${d.key}')" title="${d.proj.nazwa}" style="cursor:pointer"` : '';
     calHtml += `<div ${clickAttr} style="border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:${bg};border:${border};color:${color}">${d.day}</div>`;
   });
@@ -3224,7 +3279,7 @@ function buildPracDetail(id) {
   // Legenda projektów (tylko te faktycznie przepracowane w tym miesiącu przez tego pracownika)
   const activeProjIds = [...new Set(days.filter(d => d.proj).map(d => d.proj.id))];
   let legendHtml = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
-    <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;border:2px dashed #4a545c;background:var(--border)"></div><span style="color:var(--sec)">🚫 Nieobecny</span></div>`;
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;border:2px dashed var(--dim);background:var(--border)"></div><span style="color:var(--sec)">🚫 Nieobecny</span></div>`;
   activeProjIds.forEach(pid => {
     const p = DATA.projekty[pid];
     if (p) legendHtml += `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:var(--sec)">${escapeHtml(p.nazwa.split(' — ')[0].substring(0,15))}</span></div>`;
@@ -3242,7 +3297,7 @@ function buildPracDetail(id) {
   const sumaHtml = Object.entries(godzPerProj).sort((a,b) => b[1]-a[1]).map(([pid, godz]) => {
     const p = DATA.projekty[pid];
     if (!p) return '';
-    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #2b333a;cursor:pointer">
+    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer">
       <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
       <div style="flex:1;font-size:12px;color:var(--text)">${escapeHtml(p.nazwa.split(' — ')[0])}</div>
       <div style="font-size:12px;font-weight:800;color:${p.kolor}">${godz}h</div>
@@ -3252,7 +3307,7 @@ function buildPracDetail(id) {
   // Projekty lista
   let projListHtml = w.projekty.map(pid => {
     const p = DATA.projekty[pid];
-    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2b333a;cursor:pointer">
+    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">
       <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
       <div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--text)">${escapeHtml(p.nazwa.split(' — ')[0])}</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(p.klient)}</div></div>
       <span style="font-size:9px;font-weight:700;background:${p.kolorL};color:${p.kolor};padding:2px 8px;border-radius:20px">${p.postep}%</span>
@@ -3440,14 +3495,14 @@ function openPracDayModal(pracId, dayKey, src) {
   const nieobecny = raw.find(x => x.entry.nieobecny);
   let html;
   if (nieobecny) {
-    html = `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:#232a31;border-radius:8px;color:var(--red);font-weight:700">
+    html = `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface2);border-radius:8px;color:var(--red);font-weight:700">
       <div style="flex:1">🚫 Nieobecny${nieobecny.entry.powod ? ' — ' + nieobecny.entry.powod : ''}</div>
       ${delBtn(nieobecny.entry, nieobecny.idx)}
     </div>`;
   } else {
     const hs = raw.filter(x => !x.entry.nieobecny);
     html = `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#232a31;border-radius:8px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:10px">
         <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${w.inicjaly}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700">${w.imie} ${w.nazwisko}</div>
@@ -3456,7 +3511,7 @@ function openPracDayModal(pracId, dayKey, src) {
       </div>` + hs.map(({ entry, idx }) => {
         const proj = DATA.projekty[entry.proj];
         const koszt = Math.round((w.stawka || 0) * (entry.godz || 0));
-        return `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:#232a31;border-radius:8px;margin-bottom:8px">
+        return `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:8px">
           <div style="flex:1">
             <div style="font-size:12px;font-weight:700;color:var(--text)">${proj ? proj.nazwa : '(bez projektu)'}</div>
             <div style="font-size:11px;color:var(--muted)">${entry.od && entry.do ? `${entry.od}–${entry.do} · ` : ''}${entry.godz}h${entry.wpisanyPrzez ? ` · wpisał: ${(DATA.pracownicy[entry.wpisanyPrzez] || {}).imie || entry.wpisanyPrzez}` : ''}</div>
@@ -3506,7 +3561,7 @@ function renderAwarieList() {
       li.dataset.status = a.status;
       li.dataset.text = `${a.opis} ${a.blok}`.toLowerCase();
       li.onclick = () => openAwaria(a.id);
-      li.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:${m.dot}"></div><div class="li-icon" style="background:${zak ? '#232a31' : m.bg}">${a.ikona || '⚡'}</div></div><div class="li-body"><div class="li-title">${escapeHtml(a.opis)}</div><div class="li-sub">${escapeHtml(a.blok.split(' ').slice(1).join(' ') || a.blok)} · ${escapeHtml(a.data)}</div></div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${escapeHtml(a.status)}</span>${zak && a.koszt ? `<div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">${a.koszt} zł</div>` : `<div style="font-size:10px;color:${m.fg};font-weight:700;margin-top:2px">${PRIORYTET_META[a.priorytet] || ''} ${escapeHtml(zak ? '' : a.priorytet)}</div>`}</div>`;
+      li.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:${m.dot}"></div><div class="li-icon" style="background:${zak ? 'var(--surface2)' : m.bg}">${a.ikona || '⚡'}</div></div><div class="li-body"><div class="li-title">${escapeHtml(a.opis)}</div><div class="li-sub">${escapeHtml(a.blok.split(' ').slice(1).join(' ') || a.blok)} · ${escapeHtml(a.data)}</div></div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${escapeHtml(a.status)}</span>${zak && a.koszt ? `<div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">${a.koszt} zł</div>` : `<div style="font-size:10px;color:${m.fg};font-weight:700;margin-top:2px">${PRIORYTET_META[a.priorytet] || ''} ${escapeHtml(zak ? '' : a.priorytet)}</div>`}</div>`;
       listEl.insertBefore(li, emptyEl);
     });
     applyFilter('awarie');
@@ -3581,7 +3636,7 @@ function buildAwariaDetail(id) {
   const priColors = { 'Wysoki':'var(--red)', 'Średni':'var(--orange)', 'Niski':'var(--green)', 'Krytyczny':'var(--purple)' };
 
   document.getElementById('dawaria-content').innerHTML = `
-    <div style="background:${statusBg[a.status]||"#232a31"};padding:14px;border-left:4px solid ${statusColors[a.status]||"var(--muted)"}">
+    <div style="background:${statusBg[a.status]||"var(--surface2)"};padding:14px;border-left:4px solid ${statusColors[a.status]||"var(--muted)"}">
       <div style="font-size:20px;margin-bottom:4px">${a.ikona}</div>
       <div style="font-size:14px;font-weight:800;color:var(--text)">${escapeHtml(a.opis)}</div>
       <div style="font-size:12px;color:var(--sec);margin-top:2px">📍 ${escapeHtml(a.blok)} · 📅 ${a.data}</div>
@@ -3842,7 +3897,7 @@ function openNarz(id, opts = {}) {
   const qrIsExisting = !!n.nr_ser;
 
   document.getElementById('dnarz-content').innerHTML = `
-    <div style="background:#232a31;padding:14px;display:flex;justify-content:space-between;align-items:flex-start">
+    <div style="background:var(--surface2);padding:14px;display:flex;justify-content:space-between;align-items:flex-start">
       <div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">${escapeHtml(n.marka)}</div>
       <div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(n.model)}</div>
       ${n.nr_ser ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:monospace">S/N: ${escapeHtml(n.nr_ser)}</div>` : ''}
@@ -3874,7 +3929,7 @@ function openNarz(id, opts = {}) {
           📱 Kod QR
           <span style="font-size:10px;background:${qrIsExisting?'var(--green-l)':'var(--blue-l)'};color:${qrIsExisting?'var(--green)':'var(--blue)'};padding:2px 8px;border-radius:20px;font-weight:700">${qrIsExisting?'✅ Z nr ser.':'🆕 Wygenerowany'}</span>
         </div>
-        <div style="text-align:center;padding:10px;background:#232a31;border-radius:8px">
+        <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:8px">
           <div id="qr-${id}" style="display:inline-block;margin-bottom:6px"></div>
           <div style="font-size:9px;color:var(--muted);font-family:monospace;word-break:break-all">${qrValue}</div>
           <div style="font-size:10px;color:var(--muted);margin-top:4px">${qrIsExisting ? 'Skanuj naklejkę producenta' : 'Wydrukuj i nakleij na narzędziu'}</div>
@@ -3893,7 +3948,7 @@ function openNarz(id, opts = {}) {
         <span style="color:var(--muted);font-weight:500">${naprawy.length} serwis${naprawy.length===1?'':'ów'} · ${naprawyCost} zł</span>
       </div>
       ${naprawy.length === 0 ? '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">Brak historii napraw ✅</div>' :
-        naprawy.map(r => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;align-items:flex-start">
+        naprawy.map(r => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start">
           <div style="background:var(--blue-l);border-radius:6px;padding:4px 8px;min-width:70px;text-align:center">
             <div style="font-size:10px;font-weight:700;color:var(--blue)">${r.data}</div>
           </div>
@@ -3993,7 +4048,7 @@ function pokazMapeKodow() {
   // lista pod mapą
   document.getElementById('mapa-body').innerHTML = bloki.map(b => {
     const otwarte = (b.awarie || []).filter(aid => DATA.awarie[aid] && DATA.awarie[aid].status !== 'Zakończona').length;
-    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2b333a">
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:16px">${otwarte ? '🔴' : '📍'}</div>
       <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700">${b.nazwa}</div><div style="font-size:10px;color:var(--muted)">${b.adres}${otwarte ? ` · <span style="color:var(--orange)">${otwarte} awarie</span>` : ''}</div></div>
       <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank" rel="noopener" class="btn-s" style="flex-shrink:0;text-decoration:none;padding:5px 10px;font-size:11px">🧭</a>
@@ -4044,7 +4099,7 @@ function openBlok(id, opts = {}) {
   const awarieHtml = b.awarie.map(aid => {
     const a = DATA.awarie[aid];
     const scol = { 'Zgłoszona':'var(--red)', 'W realizacji':'var(--orange)', 'Zakończona':'var(--green)' };
-    return `<div onclick="openAwaria('${aid}')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;cursor:pointer">
+    return `<div onclick="openAwaria('${aid}')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">
       <span>${a.ikona}</span>
       <div style="flex:1"><div style="font-size:12px;font-weight:600">${escapeHtml(a.opis)}</div><div style="font-size:10px;color:var(--muted)">${a.data}</div></div>
       <span style="font-size:10px;font-weight:700;color:${scol[a.status]}">${a.status}</span>
@@ -4052,7 +4107,7 @@ function openBlok(id, opts = {}) {
   }).join('');
 
   const kodyHtml = b.kody.map(k => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px">
+    <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
       <span style="font-size:16px">🔑</span>
       <div style="flex:1"><div style="font-size:11px;color:var(--muted)">${k.typ}</div><div style="font-size:15px;font-weight:800;letter-spacing:3px;color:var(--text)">${k.kod}</div></div>
       <button onclick="showToast('📋 Skopiowano: ${k.kod}')" style="background:var(--blue-l);color:var(--blue);border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer">Kopiuj</button>
@@ -4147,7 +4202,7 @@ function buildCzasCalendar() {
       // tylko nieobecności tego dnia, brak realnej pracy nad projektem
       bg = 'repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px)'; col = '#c62828'; top = `<div style="font-size:8px">🚫</div>`;
     } else {
-      bg = isWeekend ? '#2b333a' : '#232a31'; col = isWeekend ? '#4a545c' : '#aaa'; top = '';
+      bg = isWeekend ? 'var(--border)' : 'var(--surface2)'; col = isWeekend ? 'var(--dim)' : '#aaa'; top = '';
     }
     const cursor = wpisy.length > 0 ? 'cursor:pointer' : '';
 
@@ -4254,8 +4309,8 @@ function openCzasDayModal(dayKey) {
     const prac = DATA.pracownicy[w.prac];
     const delBtn = fullAccess() ? `<button onclick="deleteCzasPracyEntry('${dayKey}',${idx})" style="background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:4px 6px;flex-shrink:0" title="Usuń wpis">🗑️</button>` : '';
     if (w.nieobecny) {
-      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px;opacity:.75">
-        <div style="width:32px;height:32px;border-radius:16px;background:#4a545c;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:6px;opacity:.75">
+        <div style="width:32px;height:32px;border-radius:16px;background:var(--dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
         <div style="flex:1">
           <div style="font-size:12px;font-weight:700">${prac?prac.imie+' '+prac.nazwisko.charAt(0)+'.':'?'}</div>
           <div style="font-size:10px;color:var(--red)">🚫 Nieobecny${w.powod ? ' — ' + w.powod : ''}</div>
@@ -4266,8 +4321,8 @@ function openCzasDayModal(dayKey) {
     }
     const proj = DATA.projekty[w.proj];
     const koszt = prac ? prac.stawka * w.godz : 0;
-    html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px">
-      <div style="width:32px;height:32px;border-radius:16px;background:${prac?prac.kolor:'#4a545c'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
+      <div style="width:32px;height:32px;border-radius:16px;background:${prac?prac.kolor:'var(--dim)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
       <div style="flex:1">
         <div style="font-size:12px;font-weight:700">${prac?prac.imie+' '+prac.nazwisko.charAt(0)+'.':'?'}</div>
         <div style="font-size:10px;color:var(--muted)">${proj?proj.nazwa.split(' — ')[0]:''}</div>
@@ -4288,7 +4343,7 @@ function openCzasDayModal(dayKey) {
 function buildPracownikRow(w, prefix) {
   const canSeeCost = fullAccess() || (currentUser && currentUser.pracownik === w.id);
   return `
-    <div style="background:#232a31;border-radius:8px;padding:10px;margin-bottom:8px">
+    <div style="background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700;flex:1">${w.imie} ${w.nazwisko}</span>
         ${canSeeCost ? `<span style="font-size:11px;color:var(--muted)">${w.stawka} zł/h</span>` : ''}
@@ -4989,6 +5044,7 @@ function pinCancel() {
 
 function setUser(u) {
   currentUser = u;
+  initTheme();  // każde konto na tym urządzeniu ma własną zapamiętaną preferencję motywu
   document.querySelectorAll('.avatar').forEach(el => { el.textContent = u.inicjaly || ''; });
   const greetEl = document.getElementById('dash-greeting');
   if (greetEl) greetEl.textContent = `Dzień dobry, ${u.nazwa.split(' ')[0]} 👋`;
@@ -5013,6 +5069,7 @@ function setUser(u) {
 
 function logout() {
   currentUser = null;
+  initTheme();  // wraca do preferencji "tego urządzenia" (bez konta) na ekranie logowania
   pinCancel();
   document.getElementById('login-ov').style.display = 'flex';
   document.getElementById('notif-panel').classList.remove('open');
@@ -5148,14 +5205,14 @@ function buildMojeGodziny() {
     const isWeekend = dow === 0 || dow === 6;
     const wpis = wlasneDayAgg(id, key);
     if (wpis && wpis.nieobecny) {
-      calHtml += `<div onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed #4a545c;color:#c62828">🚫</div>`;
+      calHtml += `<div onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed var(--dim);color:#c62828">🚫</div>`;
       continue;
     }
     const proj = wpis ? DATA.projekty[wpis.proj] : null;
     if (wpis) { sumaH += wpis.godz; sumaZl += wpis.godz * w.stawka; }
-    const bg = proj ? proj.kolor + '33' : (isWeekend ? '#232a31' : 'var(--border)');
+    const bg = proj ? proj.kolor + '33' : (isWeekend ? 'var(--surface2)' : 'var(--border)');
     const border = proj ? `2px solid ${proj.kolor}` : '1px solid #dde3ea';
-    const color = proj ? proj.kolor : (isWeekend ? '#4a545c' : '#aaa');
+    const color = proj ? proj.kolor : (isWeekend ? 'var(--dim)' : '#aaa');
     const click = wpis ? `onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer"` : '';
     calHtml += `<div ${click} style="border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:${bg};border:${border};color:${color}">${i}</div>`;
   }
@@ -5264,7 +5321,7 @@ function buildUstawienia() {
         </div>
         ${(u.pelnyDostep || u.kierownik) ? `<div style="font-size:10px;color:var(--muted);padding:2px 0 4px">${u.pelnyDostep ? '🔓 Widzi wszystko, łącznie z finansami.' : '👷 Widzi zespół i projekty (bez kwot), dopisuje godziny/km/materiały.'}</div>` : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           ${Object.keys(PERM_LABELS).map(perm => `
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;background:#232a31;border-radius:8px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;background:var(--surface2);border-radius:8px">
               <input type="checkbox" ${u.uprawnienia[perm] ? 'checked' : ''} onchange="togglePerm('${u.id}','${perm}')" style="accent-color:var(--blue)">
               ${PERM_LABELS[perm]}
             </label>`).join('')}
@@ -5275,7 +5332,7 @@ function buildUstawienia() {
       <button class="btn-s" style="width:100%" onclick="enablePush()">${pushEnabled ? '✅ Push włączone na tym urządzeniu' : 'Włącz powiadomienia push na tym urządzeniu'}</button>
       <div style="font-size:11px;font-weight:800;color:var(--text);margin:12px 0 6px">Czego mają dotyczyć:</div>
       ${Object.keys(NOTIF_PREF_LABELS).map(k => `
-        <label style="display:flex;align-items:flex-start;gap:8px;font-size:11px;cursor:pointer;padding:7px 8px;background:#232a31;border-radius:8px;margin-bottom:6px">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:11px;cursor:pointer;padding:7px 8px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
           <input type="checkbox" ${NOTIF_PREFS[k] ? 'checked' : ''} onchange="toggleNotifPref('${k}')" style="accent-color:var(--blue);margin-top:1px">
           <span><strong>${NOTIF_PREF_LABELS[k].t}</strong><br><span style="color:var(--muted)">${NOTIF_PREF_LABELS[k].d}</span></span>
         </label>`).join('')}
@@ -5406,7 +5463,7 @@ function buildTerminarz() {
     const ikony = [...new Set(evsD.map(i => ev[i].ikona))];
     const ikonyHtml = ikony.slice(0, 3).map(ic => `<span style="font-size:10px;line-height:1">${ic}</span>`).join('') + (ikony.length > 3 ? `<span style="font-size:8px;color:var(--muted)">+${ikony.length - 3}</span>` : '');
     const today = d === dzisD;
-    cal += `<div ${evsD.length ? `onclick="termPokazDzien(${d})" style="cursor:pointer;` : 'style="'}border-radius:6px;padding:3px 1px 2px;text-align:center;min-height:40px;background:${today ? 'var(--blue-l)' : (evsD.length ? '#232a31' : 'transparent')};border:1px solid ${today ? 'var(--blue)' : 'var(--border)'}">
+    cal += `<div ${evsD.length ? `onclick="termPokazDzien(${d})" style="cursor:pointer;` : 'style="'}border-radius:6px;padding:3px 1px 2px;text-align:center;min-height:40px;background:${today ? 'var(--blue-l)' : (evsD.length ? 'var(--surface2)' : 'transparent')};border:1px solid ${today ? 'var(--blue)' : 'var(--border)'}">
       <div style="font-size:11px;font-weight:${today ? 800 : 600};color:${today ? 'var(--blue)' : 'var(--text)'}">${d}</div>
       <div style="display:flex;gap:1px;justify-content:center;flex-wrap:wrap;margin-top:1px;min-height:12px">${ikonyHtml}</div>
     </div>`;
@@ -5446,7 +5503,7 @@ function termPokazDzien(d) {
   const dataLabel = `${String(d).padStart(2,'0')}.${String(termMonth+1).padStart(2,'0')}.${termYear}`;
   document.getElementById('modal-dzien-title').textContent = '📅 ' + dataLabel;
   document.getElementById('modal-dzien-body').innerHTML = evsD.map(({ e, i }) => `
-    <div onclick="closeModal('modal-dzien-detail');termWykonaj(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 8px;background:#232a31;border-radius:8px;margin-bottom:6px;cursor:pointer">
+    <div onclick="closeModal('modal-dzien-detail');termWykonaj(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 8px;background:var(--surface2);border-radius:8px;margin-bottom:6px;cursor:pointer">
       <div style="width:32px;height:32px;border-radius:8px;background:${e.kolor}22;display:flex;align-items:center;justify-content:center;font-size:16px">${e.ikona}</div>
       <div style="flex:1;font-size:13px;color:var(--text)">${escapeHtml(e.tytul)}</div>
       <div style="color:var(--blue)">›</div>
@@ -5489,7 +5546,7 @@ function renderZakupy() {
     <div class="card" style="padding:0 14px">
       ${dostawcy.map(d => {
         const s = dostawcaSaldo(d.id);
-        return `<div class="li" onclick="openDostawca('${d.id}')"><div class="li-icon" style="background:#232a31;font-size:18px">🚚</div><div class="li-body"><div class="li-title">${escapeHtml(d.nazwa)}</div><div class="li-sub">${escapeHtml(d.kontakt || 'brak kontaktu')}</div></div><div class="li-right"><div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'}">${s.razem > 0 ? s.razem.toLocaleString('pl-PL') + ' zł' : 'OK'}</div><div style="font-size:9px;color:var(--muted)">do rozliczenia</div></div></div>`;
+        return `<div class="li" onclick="openDostawca('${d.id}')"><div class="li-icon" style="background:var(--surface2);font-size:18px">🚚</div><div class="li-body"><div class="li-title">${escapeHtml(d.nazwa)}</div><div class="li-sub">${escapeHtml(d.kontakt || 'brak kontaktu')}</div></div><div class="li-right"><div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'}">${s.razem > 0 ? s.razem.toLocaleString('pl-PL') + ' zł' : 'OK'}</div><div style="font-size:9px;color:var(--muted)">do rozliczenia</div></div></div>`;
       }).join('') || '<div style="padding:20px 0;text-align:center;color:var(--muted);font-size:12px">Brak dostawców — dodaj przyciskiem ＋</div>'}
     </div>`;
 }
@@ -5975,7 +6032,7 @@ function buildDostawcaDetail(id) {
   const faktury = Object.values(DATA.fakturyZakupowe).filter(f => f.dostawca === id);
   const s = dostawcaSaldo(id);
   document.getElementById('ddost-content').innerHTML = `
-    <div style="background:#232a31;padding:14px">
+    <div style="background:var(--surface2);padding:14px">
       <div style="font-size:16px;font-weight:800">${escapeHtml(d.nazwa)}</div>
       <div style="font-size:12px;color:var(--sec)">${escapeHtml(d.kontakt || 'brak kontaktu')}</div>
       <div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'};margin-top:6px">Do rozliczenia: ${s.razem.toLocaleString('pl-PL')} zł</div>
@@ -5987,10 +6044,10 @@ function buildDostawcaDetail(id) {
         <button class="btn-p" style="flex:1;margin-top:0" onclick="openNowaFakturaZak('${id}')">🧾 Nowa faktura</button>
       </div>
       <div class="sec-hdr"><h3 style="font-size:12px">📄 WZ niezafakturowane (${wzOtwarte.length})</h3></div>
-      ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a">
+      ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
         <div style="flex:1;cursor:pointer" onclick="openEditWZ('${w.id}')"><div style="font-size:12px;font-weight:700">${escapeHtml(w.nr || '(bez nr)')} · ${w.kwota.toLocaleString('pl-PL')} zł${w.vat != null ? ` <span style="font-weight:400;color:var(--muted)">(netto ${w.netto.toLocaleString('pl-PL')} + VAT ${w.vat}%)</span>` : ''}</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(w.data)} · ${escapeHtml(celLabel(w))} · ✏️ edytuj</div>${w.opis ? `<div style="font-size:10px;color:var(--sec);margin-top:2px">📦 ${escapeHtml(w.opis.replace(/\n/g, ', '))}</div>` : ''}</div>
         ${w.foto ? `<button onclick="podejrzyjFoto('${w.id}')" title="Zobacz zdjęcie" style="background:none;border:none;font-size:15px;cursor:pointer">🖼️</button>` : ''}
-        <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>
+        <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer">✕</button>
       </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak — wszystko zafakturowane ✅</div>'}
       <div class="sec-hdr" style="margin-top:14px"><h3 style="font-size:12px">🧾 Faktury zakupowe (${faktury.length})</h3></div>
       ${faktury.map(f => {
@@ -6017,7 +6074,7 @@ function openNowaFakturaZak(dostId) {
   _fzWZwybrane = new Set();
   const el = document.getElementById('nfz-wz-lista');
   el.innerHTML = wzOtwarte.map(w => `
-    <label style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:#232a31;border-radius:8px;margin-bottom:6px;cursor:pointer">
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:var(--surface2);border-radius:8px;margin-bottom:6px;cursor:pointer">
       <input type="checkbox" onchange="toggleFZwz('${w.id}',this.checked)" style="accent-color:var(--blue)">
       <div style="flex:1"><div style="font-size:12px;font-weight:700">${escapeHtml(w.nr || '(bez nr)')} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(w.data)} · ${escapeHtml(celLabel(w))}</div></div>
     </label>`).join('');
@@ -6171,7 +6228,7 @@ function renderPrzypomnienia() {
   _przypCache = lista;
   if (lista.length === 0) { el.innerHTML = ''; return; }
   const wagaKolor = w => w >= 4 ? 'var(--red)' : w === 3 ? 'var(--orange)' : w === 2 ? 'var(--blue)' : 'var(--muted)';
-  const wagaBg = w => w >= 4 ? 'var(--red-l)' : w === 3 ? 'var(--orange-l)' : w === 2 ? 'var(--blue-l)' : '#232a31';
+  const wagaBg = w => w >= 4 ? 'var(--red-l)' : w === 3 ? 'var(--orange-l)' : w === 2 ? 'var(--blue-l)' : 'var(--surface2)';
   el.innerHTML = `
     <div class="sec-hdr" style="margin-top:4px"><h3>🔔 Do pilnowania (${lista.length})</h3></div>
     <div class="card" style="padding:8px 10px">
@@ -6188,6 +6245,7 @@ function wykonajPrzyp(i) { if (_przypCache[i] && _przypCache[i].akcja) _przypCac
 
 // ═══════ INIT ═══════
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   loadState();
   migratePins();
   if (SYNC_TOKEN) syncPull().then(ok => { if (ok) { migratePins(); renderLoginTiles(); } if (currentTab === 'ustawienia') buildUstawienia(); });
