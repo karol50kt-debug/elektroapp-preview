@@ -5957,6 +5957,23 @@ function zbierzPrzypomnienia() {
     }
   });
 
+  // Insight: aktywne projekty przekraczające zaplanowany budżet robocizny/materiałów —
+  // dane (kosztyRobocizna/kosztyMaterialy vs planLudzie/planMaterial) już istnieją per
+  // projekt (wykres "Realizacja planu" w szczegółach), ale wcześniej trzeba było otworzyć
+  // każdy projekt osobno, żeby to zobaczyć. Tylko "W realizacji" — po zakończeniu to już
+  // historia, nie coś do decyzji teraz.
+  Object.values(DATA.projekty).forEach(p => {
+    if (p.status !== 'W realizacji') return;
+    const przekroczenia = [
+      ['robocizny', p.kosztyRobocizna || 0, p.planLudzie || 0],
+      ['materiałów', p.kosztyMaterialy || 0, p.planMaterial || 0],
+    ].filter(([, wydano, plan]) => plan > 0 && wydano > plan);
+    przekroczenia.forEach(([co, wydano, plan]) => {
+      const proc = Math.round((wydano / plan - 1) * 100);
+      push(3, '📊', `„${p.nazwa}” przekracza plan ${co} o ${(wydano - plan).toLocaleString('pl-PL')} zł (+${proc}%)`, () => openProjekt(p.id));
+    });
+  });
+
   // 17 — faktury sprzedażowe (awarie) z terminem płatności
   Object.values(DATA.awarie).forEach(a => {
     if (a.kwotaFaktura > 0 && a.terminPlatnosci) {
