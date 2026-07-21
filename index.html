@@ -1013,6 +1013,10 @@ const MERGE_COLLS = ['projekty', 'pracownicy', 'uzytkownicy', 'bloki', 'awarie',
 let SYNC_DEL = {}, SYNC_FP = {};
 try { SYNC_DEL = JSON.parse(localStorage.getItem('elektroapp_sync_del') || '{}'); } catch (e) { SYNC_DEL = {}; }
 try { SYNC_FP = JSON.parse(localStorage.getItem('elektroapp_sync_fp') || '{}'); } catch (e) { SYNC_FP = {}; }
+// Rekordy zmienione lokalnie, ale jeszcze NIE potwierdzone przez serwer (przetrwa nieudany
+// POST — w odróżnieniu od SYNC_FP, czyszczone dopiero po udanej odpowiedzi w syncPush()).
+let SYNC_PENDING = {};
+try { SYNC_PENDING = JSON.parse(localStorage.getItem('elektroapp_sync_pending') || '{}'); } catch (e) { SYNC_PENDING = {}; }
 
 function stripUpd(o) { if (!o || typeof o !== 'object') return o; const c = {}; for (const k in o) if (k !== '_upd') c[k] = o[k]; return c; }
 function hashStr(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h.toString(36); }
@@ -1027,16 +1031,37 @@ function stampChanges() {
       const rec = cur[id];
       if (!rec || typeof rec !== 'object') continue;
       const key = coll + ':' + id, fp = recFP(rec);
-      if (SYNC_FP[key] !== fp) { rec._upd = now; SYNC_FP[key] = fp; }
+      if (SYNC_FP[key] !== fp) { rec._upd = now; SYNC_FP[key] = fp; SYNC_PENDING[key] = true; }
     }
     for (const key of Object.keys(SYNC_FP)) {
-      if (key.startsWith(coll + ':')) { const id = key.slice(coll.length + 1); if (!(id in cur)) { SYNC_DEL[key] = now; delete SYNC_FP[key]; } }
+      if (key.startsWith(coll + ':')) { const id = key.slice(coll.length + 1); if (!(id in cur)) { SYNC_DEL[key] = now; delete SYNC_FP[key]; delete SYNC_PENDING[key]; } }
     }
   }
   const limit = now - 45 * 86400000;
   for (const k in SYNC_DEL) if (SYNC_DEL[k] < limit) delete SYNC_DEL[k];
   localStorage.setItem('elektroapp_sync_del', JSON.stringify(SYNC_DEL));
   localStorage.setItem('elektroapp_sync_fp', JSON.stringify(SYNC_FP));
+  localStorage.setItem('elektroapp_sync_pending', JSON.stringify(SYNC_PENDING));
+}
+
+// Payload do wysłania: kolekcje scalane po rekordach (MERGE_COLLS) przycięte do tych,
+// które faktycznie czekają na potwierdzenie — reszta (czasPracy/paski/zaliczki/...) leci
+// w całości, bo ich scalanie na serwerze jest kluczowane inaczej (dzień/pracownik, nie
+// coll:id), więc bezpieczne przycinanie wymagałoby osobnego śledzenia zmian per klucz.
+function buildSyncPayload() {
+  const out = {};
+  for (const coll of MERGE_COLLS) {
+    const cur = DATA[coll] || {};
+    const trimmed = {};
+    for (const id of Object.keys(cur)) {
+      if (SYNC_PENDING[coll + ':' + id]) trimmed[id] = cur[id];
+    }
+    out[coll] = trimmed;
+  }
+  for (const coll of Object.keys(DATA)) {
+    if (!MERGE_COLLS.includes(coll)) out[coll] = DATA[coll];
+  }
+  return out;
 }
 
 // Wchłoń stan z serwera (już scalony); odśwież odciski, żeby nie wykryć fałszywych zmian
@@ -1065,18 +1090,24 @@ async function syncPush() {
   _syncBusy = true;
   try {
     stampChanges();
+    const pendingKeys = Object.keys(SYNC_PENDING);
     const r = await fetch(SYNC_API + '/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SYNC_TOKEN },
-      body: JSON.stringify({ data: DATA, del: SYNC_DEL }),
+      body: JSON.stringify({ data: buildSyncPayload(), del: SYNC_DEL }),
     });
     if (r.ok) {
       const j = await r.json();
       if (j.data) adoptServerData(j.data, j.del);
+      // Dopiero teraz, po potwierdzeniu przez serwer, zdejmij flagę "czeka na wysłanie" —
+      // jeśli fetch rzuci wyjątek albo serwer odpowie błędem, SYNC_PENDING zostaje i te same
+      // rekordy pojadą w następnej próbie, nawet gdy stampChanges() ich już ponownie nie wykryje.
+      for (const k of pendingKeys) delete SYNC_PENDING[k];
+      localStorage.setItem('elektroapp_sync_pending', JSON.stringify(SYNC_PENDING));
       SYNC_LAST_AT = j.updated_at;
       localStorage.setItem('elektroapp_sync_last_at', String(SYNC_LAST_AT));
     }
-  } catch (e) { /* offline — spróbujemy przy kolejnym zapisie */ }
+  } catch (e) { /* offline — SYNC_PENDING nietknięty, spróbujemy przy kolejnym zapisie */ }
   _syncBusy = false;
 }
 
