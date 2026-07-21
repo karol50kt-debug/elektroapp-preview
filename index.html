@@ -38,7 +38,7 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .hdr-right{display:flex;gap:8px;align-items:center}
 .avatar{width:34px;height:34px;border-radius:17px;background:rgba(255,255,255,.2);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hdr-btn{background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 10px;color:#fff;font-size:15px;cursor:pointer}
-.content{flex:1;min-height:0;overflow-y:auto;padding:14px;background-color:var(--bg);background-image:url('logo-watermark.png');background-position:center 15%;background-size:380px auto;background-repeat:no-repeat}
+.content{flex:1;min-height:0;overflow-y:auto;padding:14px;background-color:var(--bg);background-image:url('logo-watermark.webp');background-position:center 15%;background-size:380px auto;background-repeat:no-repeat}
 .content::-webkit-scrollbar{width:3px}
 .content::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:3px}
 /* TABBAR */
@@ -157,7 +157,7 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .sv{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;position:relative}
 .sv.active{display:flex}
 /* LOGIN */
-.login-ov{position:absolute;inset:0;background-color:#14181d;background-image:linear-gradient(rgba(10,12,14,.55),rgba(10,12,14,.8)),url('login-bg.jpg');background-position:center,center;background-size:cover,cover;background-repeat:no-repeat,no-repeat;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;overflow-y:auto}
+.login-ov{position:absolute;inset:0;background-color:#14181d;background-image:linear-gradient(rgba(10,12,14,.55),rgba(10,12,14,.8)),url('login-bg.webp');background-position:center,center;background-size:cover,cover;background-repeat:no-repeat,no-repeat;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;overflow-y:auto}
 .login-logo{font-size:44px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
 .login-title{color:#fff;font-size:22px;font-weight:900;letter-spacing:.5px}
 .login-sub{color:rgba(255,255,255,.75);font-size:12px;margin-bottom:8px}
@@ -291,7 +291,7 @@ body.kier .kier-only{display:flex!important}
     <div class="ftab" onclick="setFtab(this,'projekty')">Wstrzymany</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-projekty">
-    <div class="li-empty" id="empty-projekty" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
+    <div class="li-empty" id="empty-projekty" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
 </div>
 <!-- Detail projekt -->
@@ -472,7 +472,7 @@ body.kier .kier-only{display:flex!important}
     <select class="fs" id="aw-miesiac-filtr" onchange="renderAwarieList()" style="flex:1;font-size:12px;padding:7px 10px"></select>
   </div>
   <div class="card" style="padding:0 14px" id="list-awarie">
-    <div class="li-empty" id="empty-awarie" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
+    <div class="li-empty" id="empty-awarie" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
   <button class="fab" onclick="openNewAwaria()">＋</button>
 </div>
@@ -514,7 +514,7 @@ body.kier .kier-only{display:flex!important}
     <div class="ftab" onclick="setFtab(this,'narz')">W użyciu</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-narz">
-    <div class="li-empty" id="empty-narz" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak narzędzi — dodaj pierwsze przyciskiem ＋</div>
+    <div class="li-empty" id="empty-narz" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak narzędzi — dodaj pierwsze przyciskiem ＋</div>
   </div>
   <!-- Scanner overlay -->
   <div class="scan-ov" id="scan-ov" style="display:none">
@@ -586,7 +586,7 @@ body.kier .kier-only{display:flex!important}
     <div class="ftab" onclick="setFtab(this,'wyd')">Inne</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-wyd">
-    <div class="li-empty" id="empty-wyd" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
+    <div class="li-empty" id="empty-wyd" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
   <button class="fab" onclick="openNewWydatek()">＋</button>
 </div>
@@ -3837,7 +3837,7 @@ function renderKodyList() {
       ? `<span class="badge" style="background:var(--orange-l);color:var(--orange)">${otwarte} ${otwarte === 1 ? 'awaria' : 'awarie'}</span>`
       : `<span class="badge" style="background:var(--green-l);color:var(--green)">OK</span>`;
     return `<div class="li" onclick="openBlok('${b.id}')"><div class="li-icon" style="background:${BLOK_KOLORY[i % BLOK_KOLORY.length]};font-size:18px">${BLOK_IKONY[i % BLOK_IKONY.length]}</div><div class="li-body"><div class="li-title">${b.nazwa}</div><div class="li-sub">${b.adres} · ${(b.kody || []).length} ${(b.kody || []).length === 1 ? 'kod' : 'kody'}</div></div><div class="li-right">${badge}</div></div>`;
-  }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>`;
+  }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>`;
 
   const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   setTxt('kody-kpi-obiekty', all.length);
@@ -3956,7 +3956,7 @@ function openBlok(id, opts = {}) {
       <div style="font-size:12px;font-weight:800;margin-bottom:8px;color:var(--text)">🔑 Kody dostępu (${b.kody.length})</div>
       ${kodyHtml}
       <div style="font-size:12px;font-weight:800;margin:14px 0 8px;color:var(--text)">🚨 Awarie (${b.awarie.length})</div>
-      ${awarieHtml || '<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center"><img src="empty-ok.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak awarii — wszystko OK</div>'}
+      ${awarieHtml || '<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center"><img src="empty-ok.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak awarii — wszystko OK</div>'}
     </div>`;
 
   openDet('det-blok');
@@ -4065,7 +4065,7 @@ function renderCzasList() {
     .sort((a, b) => b.localeCompare(a));
 
   if (keys.length === 0) {
-    listEl.innerHTML = `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów w tym miesiącu</div>`;
+    listEl.innerHTML = `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów w tym miesiącu</div>`;
     return;
   }
 
@@ -4471,7 +4471,7 @@ function buildAutoDetail(id) {
     <div class="card" style="padding:0 14px">`;
 
   if (a.historia.length === 0) {
-    html += `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów</div>`;
+    html += `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów</div>`;
   } else {
     a.historia.forEach((h, hi) => {
       const meta = AUTO_TYP_META[h.typ] || { ikona:'📄', label:h.typ };
