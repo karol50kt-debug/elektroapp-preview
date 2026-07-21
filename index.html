@@ -8,9 +8,12 @@
 <meta name="theme-color" content="#1f262d">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Samodzielnie hostowane (nie CDN): usuwa zależność supply-chain i pozwala
+     service workerowi cache'ować te pliki na offline (CDN, jako inny origin,
+     nigdy wcześniej nie było cache'owane). Wersje: qrcodejs 1.0.0, Leaflet 1.9.4. -->
+<script src="vendor/qrcode.min.js"></script>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<script src="vendor/leaflet.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
@@ -5461,6 +5464,10 @@ function wzPrzeliczBrutto() {
   }
 }
 // ═══════ IMPORT WZ Z PLIKU PDF (pdf.js — dokładny tekst, bez błędów OCR) ═══════
+// pdf.js/tesseract.js (poniżej) nadal ładowane z cdnjs, bez SRI — w odróżnieniu od
+// Leaflet/qrcodejs (już self-hosted w vendor/) te dwa są duże, ładowane leniwie
+// tylko przy realnym imporcie/OCR, i już dziś mają swój własny fallback na brak
+// sieci — niższy priorytet, ale wart tego samego traktowania później.
 let _pdfjsLoading = null;
 function loadPdfjs() {
   if (window.pdfjsLib) return Promise.resolve();
