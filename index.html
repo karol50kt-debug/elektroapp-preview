@@ -4009,12 +4009,18 @@ function pokazMapeKodow() {
     _mapaLeaflet = L.map('mapa-leaflet', { zoomControl: true });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(_mapaLeaflet);
     const grupa = [];
+    // Heatmapa: rozmiar pinezki rośnie z LICZBĄ WSZYSTKICH awarii w historii tego bloku
+    // (nie tylko otwartych) — pokazuje, gdzie problemy się kumulują w czasie, nie tylko
+    // co jest otwarte teraz. Kolor jak dotąd: czerwony = są otwarte, niebieski = brak.
+    const maxAwarii = Math.max(1, ...zPunktami.map(b => (b.awarie || []).length));
     zPunktami.forEach(b => {
+      const wszystkie = (b.awarie || []).length;
       const otwarte = (b.awarie || []).filter(aid => DATA.awarie[aid] && DATA.awarie[aid].status !== 'Zakończona').length;
       const kolor = otwarte ? '#c62828' : '#1565c0';
-      const icon = L.divIcon({ className: '', html: `<div style="background:${kolor};width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`, iconSize: [20, 20], iconAnchor: [10, 20] });
+      const size = Math.round(18 + 22 * Math.sqrt(wszystkie / maxAwarii));
+      const icon = L.divIcon({ className: '', html: `<div style="background:${kolor};width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);color:#fff;font-size:${Math.max(9,Math.round(size*0.4))}px;font-weight:800">${wszystkie || ''}</span></div>`, iconSize: [size, size], iconAnchor: [size / 2, size] });
       const m = L.marker([b.lat, b.lng], { icon }).addTo(_mapaLeaflet);
-      m.bindPopup(`<div onclick="mapaOtworzBlok('${b.id}')" style="cursor:pointer"><strong>${b.nazwa}</strong><br>${b.adres}${otwarte ? `<br><span style="color:#c62828">${otwarte} otwarte awarie</span>` : ''}</div><br><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank">🧭 Nawiguj</a>`);
+      m.bindPopup(`<div onclick="mapaOtworzBlok('${b.id}')" style="cursor:pointer"><strong>${b.nazwa}</strong><br>${b.adres}<br>${wszystkie} awarii łącznie${otwarte ? ` · <span style="color:#c62828">${otwarte} otwarte</span>` : ''}</div><br><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank">🧭 Nawiguj</a>`);
       grupa.push([b.lat, b.lng]);
     });
     // KLUCZOWE: najpierw wymuś przeliczenie rozmiaru kontenera, DOPIERO potem dopasuj widok —
