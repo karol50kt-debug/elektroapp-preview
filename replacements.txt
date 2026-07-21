@@ -1,0 +1,129 @@
+"adres":"3 Maja 20, Siedlce"==>"adres":"ul. Przykładowa 1, Miasto Przykładowe"
+"nazwa":"3 Maja 20"==>"nazwa":"Budynek 1"
+3 Maja 20==>Budynek 1
+"adres":"3 maja 43, Siedlce"==>"adres":"ul. Przykładowa 2, Miasto Przykładowe"
+"nazwa":"3 maja 43"==>"nazwa":"Budynek 2"
+3 maja 43==>Budynek 2
+"adres":"3 maja 37, Siedlce"==>"adres":"ul. Przykładowa 3, Miasto Przykładowe"
+"nazwa":"3 maja 37"==>"nazwa":"Budynek 3"
+3 maja 37==>Budynek 3
+"adres":"Gospodarcza 6 A/B/C, Siedlce"==>"adres":"ul. Przykładowa 4, Miasto Przykładowe"
+"nazwa":"Gospodarcza 6 A/B/C"==>"nazwa":"Budynek 4"
+Gospodarcza 6 A/B/C==>Budynek 4
+"adres":"Maczka 10, Siedlce"==>"adres":"ul. Przykładowa 5, Miasto Przykładowe"
+"nazwa":"Maczka 10"==>"nazwa":"Budynek 5"
+Maczka 10==>Budynek 5
+"adres":"Maczka 12, Siedlce"==>"adres":"ul. Przykładowa 6, Miasto Przykładowe"
+"nazwa":"Maczka 12"==>"nazwa":"Budynek 6"
+Maczka 12==>Budynek 6
+"adres":"Pescantina 8, Siedlce"==>"adres":"ul. Przykładowa 7, Miasto Przykładowe"
+"nazwa":"Pescantina 8"==>"nazwa":"Budynek 7"
+Pescantina 8==>Budynek 7
+"adres":"Pescantina 10, Siedlce"==>"adres":"ul. Przykładowa 8, Miasto Przykładowe"
+"nazwa":"Pescantina 10"==>"nazwa":"Budynek 8"
+Pescantina 10==>Budynek 8
+"adres":"Sokołowska 27, Siedlce"==>"adres":"ul. Przykładowa 9, Miasto Przykładowe"
+"nazwa":"Sokołowska 27"==>"nazwa":"Budynek 9"
+Sokołowska 27==>Budynek 9
+"adres":"Sokołowska 35A, Siedlce"==>"adres":"ul. Przykładowa 11, Miasto Przykładowe"
+"nazwa":"Sokołowska 35A"==>"nazwa":"Budynek 11"
+Sokołowska 35A==>Budynek 11
+"adres":"Sokołowska 35, Siedlce"==>"adres":"ul. Przykładowa 10, Miasto Przykładowe"
+"nazwa":"Sokołowska 35"==>"nazwa":"Budynek 10"
+Sokołowska 35==>Budynek 10
+"adres":"Sokołowska 37A, Siedlce"==>"adres":"ul. Przykładowa 12, Miasto Przykładowe"
+"nazwa":"Sokołowska 37A"==>"nazwa":"Budynek 12"
+Sokołowska 37A==>Budynek 12
+"adres":"Sokołowska 81, Siedlce"==>"adres":"ul. Przykładowa 13, Miasto Przykładowe"
+"nazwa":"Sokołowska 81"==>"nazwa":"Budynek 13"
+Sokołowska 81==>Budynek 13
+"adres":"Sokołowska 87, Siedlce"==>"adres":"ul. Przykładowa 14, Miasto Przykładowe"
+"nazwa":"Sokołowska 87"==>"nazwa":"Budynek 14"
+Sokołowska 87==>Budynek 14
+"adres":"Żytnia 28, Siedlce"==>"adres":"ul. Przykładowa 15, Miasto Przykładowe"
+"nazwa":"Żytnia 28"==>"nazwa":"Budynek 15"
+Żytnia 28==>Budynek 15
+"adres":"Wiatraczna 5, Siedlce"==>"adres":"ul. Przykładowa 16, Miasto Przykładowe"
+"nazwa":"Wiatraczna 5"==>"nazwa":"Budynek 16"
+Wiatraczna 5==>Budynek 16
+"adres":"Sekulska 5, Siedlce"==>"adres":"ul. Przykładowa 17, Miasto Przykładowe"
+"nazwa":"Sekulska 5"==>"nazwa":"Budynek 17"
+Sekulska 5==>Budynek 17
+"adres":"Wyszyńskiego 21A, Siedlce"==>"adres":"ul. Przykładowa 18, Miasto Przykładowe"
+"nazwa":"Wyszyńskiego 21A"==>"nazwa":"Budynek 18"
+Wyszyńskiego 21A==>Budynek 18
+"adres":"Wyszyńskiego 23, Siedlce"==>"adres":"ul. Przykładowa 19, Miasto Przykładowe"
+"nazwa":"Wyszyńskiego 23"==>"nazwa":"Budynek 19"
+Wyszyńskiego 23==>Budynek 19
+"kod":"120 KLUCZ 2707"==>"kod":"0000"
+"kod":"143 klucz 2707"==>"kod":"0000"
+"kod":"Kl.1 30 Klucz 1919 Kl.2 30 Klucz 1304 Kl.3 30 Klucz 4132 Kl.4 40 Klucz 2909 Kl.5 200 Klucz 0000"==>"kod":"0000"
+"kod":"Dzwonek 6128 Dzwonek"==>"kod":"0000"
+"kod":"100 Klucz 2303 Kl.8 200 Klucz 2303"==>"kod":"0000"
+"kod":"A 100 Klucz 2301 B 200 Klucz 2301"==>"kod":"0000"
+"kod":"200 Klucz 2301"==>"kod":"0000"
+"kod":"#1906#"==>"kod":"0000"
+"kod":"150 Klucz 1500"==>"kod":"0000"
+"kod":"196 Klucz 1906"==>"kod":"0000"
+"kod":"Kl. 1 150 Klucz 1500 Kl.inne 100 Klucz 1401"==>"kod":"0000"
+"kod":"Kl.1 200 Klucz 2002 Kl.2 200 Klucz 2002 Kl.3 150 Klucz 1500"==>"kod":"0000"
+"kod":"100 Klucz 1401"==>"kod":"0000"
+"kod":"200 Klucz 0409"==>"kod":"0000"
+"lat":52.17,"lng":22.29==>"lat":50,"lng":20
+"lat":52.1638371,"lng":22.280917==>"lat":50.0,"lng":20.0
+"lat":52.1636748,"lng":22.2743569==>"lat":50.001,"lng":20.001
+"lat":52.1634801,"lng":22.2766994==>"lat":50.002,"lng":20.002
+"lat":52.1757857,"lng":22.297913==>"lat":50.003,"lng":20.003
+"lat":52.1580771,"lng":22.2512554==>"lat":50.004,"lng":20.004
+"lat":52.1583473,"lng":22.2497839==>"lat":50.005,"lng":20.005
+"lat":52.1583862,"lng":22.2415429==>"lat":50.006,"lng":20.006
+"lat":52.1579968,"lng":22.2421236==>"lat":50.007,"lng":20.007
+"lat":52.1729673,"lng":22.2719438==>"lat":50.008,"lng":20.008
+"lat":52.1730203,"lng":22.2715782==>"lat":50.009,"lng":20.009
+"lat":52.1727717,"lng":22.2714189==>"lat":50.01,"lng":20.01
+"lat":52.1735086,"lng":22.2715488==>"lat":50.011,"lng":20.011
+"lat":52.1791065,"lng":22.2692321==>"lat":50.012,"lng":20.012
+"lat":52.1792382,"lng":22.2684434==>"lat":50.013,"lng":20.013
+"lat":52.1783276,"lng":22.2681508==>"lat":50.014,"lng":20.014
+"lat":52.1670815,"lng":22.2842835==>"lat":50.015,"lng":20.015
+"lat":52.1625893,"lng":22.2826852==>"lat":50.016,"lng":20.016
+"lat":52.1635314,"lng":22.2889916==>"lat":50.017,"lng":20.017
+"lat":52.1627378,"lng":22.2897734==>"lat":50.018,"lng":20.018
+"nazwa":"Karol"==>"nazwa":"Właściciel Demo"
+"pin":"2580"==>"pin":"0000"
+"nazwa":"Tomek"==>"nazwa":"Pracownik 1"
+"imie":"Tomek"==>"imie":"Pracownik 1"
+"nazwa":"Maciek Sosna"==>"nazwa":"Pracownik 2"
+"imie":"Maciek","nazwisko":"Sosna"==>"imie":"Pracownik 2","nazwisko":""
+"nazwa":"Patryk od dzyna"==>"nazwa":"Pracownik 3"
+"imie":"Patryk","nazwisko":"od dzyna"==>"imie":"Pracownik 3","nazwisko":""
+"nazwa":"Piotrek świecki"==>"nazwa":"Pracownik 4"
+"imie":"Piotrek","nazwisko":"świecki"==>"imie":"Pracownik 4","nazwisko":""
+"nazwa":"Michal Krolik"==>"nazwa":"Pracownik 5"
+"imie":"Michal","nazwisko":"Krolik"==>"imie":"Pracownik 5","nazwisko":""
+"nazwa":"Arek"==>"nazwa":"Pracownik 6"
+"imie":"Arek"==>"imie":"Pracownik 6"
+48884943058==>
+48576144228==>
+883 449 233==>
+'Arek Nowak'==>null
+'Maciek Sosna'==>null
+Maciek Sosna==>Pracownik 2
+Patryk od dzyna==>Pracownik 3
+Piotrek świecki==>Pracownik 4
+Michal Krolik==>Pracownik 5
+Karol==>Właściciel Demo
+Tomek==>Pracownik 1
+Arek==>Pracownik 6
+pin:'2580'==>pin:'0000'
+// Współrzędne bloków (geokodowane z OpenStreetMap — Siedlce)==>// Współrzędne bloków (dane demo — realne dane zastąpione syntetycznymi 2026-07-20)
+Szkoła Dąbrowska stany==>Klient 6
+Szkoła grala dąbrowizna==>Klient 7
+Szkoła skórzec==>Klient 10
+Pieczarkami Cabaj==>Klient 2
+Skwara warszawa==>Klient 5
+Borki kosy 29==>Klient 9
+Wewnetrzny==>Klient 4
+Wspólnoty==>Klient 8
+Chomka==>Klient 3
+Mariusz==>Klient 1
