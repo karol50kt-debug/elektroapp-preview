@@ -182,6 +182,18 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 @keyframes successDotIn{to{opacity:1}}
 @keyframes successEmojiPop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
 .success-pop-text{font-size:14px;font-weight:700;text-align:center;line-height:1.35}
+/* Pulsujący czerwony obrys — aktywny projekt po terminie lub nad budżetem */
+@keyframes pulseWarnRing{0%,100%{box-shadow:0 0 0 0 rgba(226,104,92,.5)}50%{box-shadow:0 0 0 5px rgba(226,104,92,0)}}
+.li-pulse-warn{animation:pulseWarnRing 1.8s ease-in-out infinite;border-radius:10px}
+/* Slide-in dla nowo dodanego elementu listy (projekt, pracownik) */
+@keyframes liSlideIn{0%{transform:translateX(-18px);opacity:0}100%{transform:translateX(0);opacity:1}}
+.li-slide-in{animation:liSlideIn .35s ease-out}
+/* Shake formularza przy błędzie walidacji */
+@keyframes shakeX{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+.shake-x{animation:shakeX .4s cubic-bezier(.36,.07,.19,.97)}
+@media (prefers-reduced-motion:reduce){
+  .li-pulse-warn,.li-slide-in,.shake-x{animation:none}
+}
 /* SCREEN TABS */
 .sv{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;position:relative}
 .sv.active{display:flex}
@@ -1769,6 +1781,71 @@ function showToast(msg) {
   el.classList.add('show');
   clearTimeout(_successPopTimer);
   _successPopTimer = setTimeout(() => el.classList.remove('show'), 1500);
+  if (kind === 'warn') shakeOpenModal();
+}
+
+// Potrząśnięcie otwartym formularzem (modalem) przy błędzie walidacji — wywoływane
+// automatycznie z showToast() dla każdego komunikatu ⚠️/❌, bez potrzeby ręcznego
+// wpinania w dziesiątki miejsc walidacji w całej appce.
+function shakeOpenModal() {
+  const sheet = Array.from(document.querySelectorAll('.modal-ov'))
+    .find(m => m.style.display !== 'none')
+    ?.querySelector('.modal-sh');
+  if (!sheet) return;
+  sheet.classList.remove('shake-x');
+  void sheet.offsetWidth;
+  sheet.classList.add('shake-x');
+}
+
+// Konfetti — krótki, lekki wybuch cząsteczek na canvasie dla dużych "wygranych"
+// (projekt zakończony na czas i w budżecie, ostatnia otwarta awaria zamknięta).
+function fireConfetti() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;z-index:10002;pointer-events:none';
+  const dpr = window.devicePixelRatio || 1;
+  const w = innerWidth, h = innerHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const colors = ['#f0a730', '#5db47c', '#4fb8a8', '#a98ee0', '#e2685c'];
+  const particles = Array.from({ length: 90 }, () => ({
+    x: w / 2, y: h / 3,
+    vx: (Math.random() - 0.5) * 10, vy: Math.random() * -9 - 3,
+    size: 5 + Math.random() * 5, color: colors[Math.floor(Math.random() * colors.length)],
+    rot: Math.random() * Math.PI * 2, vr: (Math.random() - 0.5) * 0.3,
+    rect: Math.random() < 0.5,
+  }));
+  const gravity = 0.28, maxFrames = 110;
+  let frame = 0;
+  (function tick() {
+    frame++;
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+      p.vy += gravity; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, 1 - frame / maxFrames);
+      if (p.rect) ctx.fillRect(-p.size / 2, -p.size / 3, p.size, p.size * 0.6);
+      else { ctx.beginPath(); ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+    });
+    if (frame < maxFrames) requestAnimationFrame(tick);
+    else canvas.remove();
+  })();
+}
+
+// Nowy element na liście (projekt, pracownik) — slide-in zamiast nagłego pojawienia się.
+function animateNewItem(containerId, id) {
+  requestAnimationFrame(() => {
+    const el = document.querySelector(`#${containerId} [data-id="${id}"]`);
+    if (!el) return;
+    el.classList.add('li-slide-in');
+    el.addEventListener('animationend', () => el.classList.remove('li-slide-in'), { once: true });
+  });
 }
 
 // ═══════ PROJEKTY ═══════
@@ -2190,6 +2267,7 @@ function updateProjektStatus(projId, newStatus) {
     }
   }
   showToast(`✅ Status zmieniony na: ${newStatus}`);
+  if (newStatus === 'Zakończony' && projektZakonczonyDobrze(p)) fireConfetti();
   saveState();
   buildProjDetail(projId, currentProjTab);
   renderProjektyList();
@@ -2217,6 +2295,24 @@ const PROJ_STATUS_BADGE = {
   'Wstrzymany':   { bg:'var(--orange-l)',fg:'var(--orange)' },
 };
 
+// Aktywny projekt nad budżetem robocizny/materiałów LUB po terminie realizacji —
+// ta sama logika co insighty na pulpicie (zbierzPrzypomnienia), tylko tu decyduje
+// czy karta projektu na liście ma pulsować na czerwono.
+function projektJestProblemowy(p) {
+  if (p.status !== 'W realizacji') return false;
+  const nadBudzetem = (p.planLudzie > 0 && (p.kosztyRobocizna || 0) > p.planLudzie) ||
+                      (p.planMaterial > 0 && (p.kosztyMaterialy || 0) > p.planMaterial);
+  const poTerminie = p.terminWykonania && p.postep < 100 && dniDo(p.terminWykonania) !== null && dniDo(p.terminWykonania) < 0;
+  return nadBudzetem || poTerminie;
+}
+// Projekt zakończony NA CZAS i W BUDŻECIE — spełnia oba warunki, więc zasługuje na konfetti.
+function projektZakonczonyDobrze(p) {
+  const terminOk = !p.terminWykonania || dniDo(p.terminWykonania) === null || dniDo(p.terminWykonania) >= 0;
+  const budzetOk = (!p.planLudzie || (p.kosztyRobocizna || 0) <= p.planLudzie) &&
+                   (!p.planMaterial || (p.kosztyMaterialy || 0) <= p.planMaterial);
+  return terminOk && budzetOk;
+}
+
 function renderProjektyList() {
   const all = Object.values(DATA.projekty);
   const listEl = document.getElementById('list-projekty');
@@ -2226,7 +2322,8 @@ function renderProjektyList() {
     all.forEach(p => {
       const badge = PROJ_STATUS_BADGE[p.status] || { bg:'var(--surface2)', fg:'var(--muted)' };
       const li = document.createElement('div');
-      li.className = 'li';
+      li.className = 'li' + (projektJestProblemowy(p) ? ' li-pulse-warn' : '');
+      li.dataset.id = p.id;
       li.dataset.status = p.status;
       li.dataset.text = `${p.nazwa} ${p.klient} ${p.adres || ''}`.toLowerCase();
       li.onclick = () => openProjekt(p.id);
@@ -2461,6 +2558,7 @@ function saveProjekt() {
     DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, kmTrasa, postep:0, start, koniec:terminWykonania, terminWykonania, kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, planLudzie, planMaterial, planZysk, opis:'', zaplacono:false, dataZaplaty:null, zadania:[] };
     showToast('✅ Projekt dodany!');
     renderProjektyList();
+    animateNewItem('list-projekty', id);
   }
   saveState();
   closeModal('modal-projekt');
@@ -2707,6 +2805,7 @@ async function savePracownik() {
   const status = document.getElementById('np-status').value;
   const aktywny = status === 'Aktywny';
   const inicjaly = ((imie[0] || '') + (nazwisko[0] || imie[1] || '')).toUpperCase();
+  let noweWid = null;
 
   if (editId && DATA.pracownicy[editId]) {
     Object.assign(DATA.pracownicy[editId], { imie, nazwisko, tel, rola, stawka, status, aktywny, inicjaly });
@@ -2718,6 +2817,7 @@ async function savePracownik() {
   } else {
     const nums = Object.keys(DATA.pracownicy).map(k => parseInt(k.replace(/\D/g, '')) || 0);
     const wid = 'w' + (Math.max(0, ...nums) + 1);
+    noweWid = wid;
     const kolory = ['#1565c0','#2e7d32','#e65100','#6a1b9a','#00838f','#c62828','#37474f','#ad1457','#4527a0','#9e9d24'];
     DATA.pracownicy[wid] = { id: wid, imie, nazwisko, rola, stawka, tel, status, aktywny, inicjaly, kolor: kolory[Object.keys(DATA.pracownicy).length % kolory.length], projekty: [] };
     // utwórz konto logowania z losowym PIN-em
@@ -2733,6 +2833,7 @@ async function savePracownik() {
   }
   saveState();
   renderPracList();
+  if (noweWid) animateNewItem('prac-list', noweWid);
   renderLoginTiles();
   closeModal('modal-pracownik');
 }
@@ -2858,7 +2959,7 @@ function renderPracList() {
     const [bg, fg] = statMeta[w.status] || statMeta['Aktywny'];
     const np = (w.projekty || []).length;
     const stawkaTxt = pelny ? ` · ${w.stawka} zł/h` : '';
-    return `<div class="li" onclick="openPrac('${w.id}')"><div class="li-icon" style="background:${w.kolor}22;font-size:15px;font-weight:800;color:${w.kolor}">${w.inicjaly}</div><div class="li-body"><div class="li-title">${w.imie} ${w.nazwisko}</div><div class="li-sub">${w.rola}${stawkaTxt}${w.tel ? ' · 📞 ' + w.tel : ''}</div></div><div class="li-right"><span class="badge" style="background:${bg};color:${fg}">${w.status}</span>${np ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">${np} ${np === 1 ? 'projekt' : 'proj.'}</div>` : ''}</div></div>`;
+    return `<div class="li" data-id="${w.id}" onclick="openPrac('${w.id}')"><div class="li-icon" style="background:${w.kolor}22;font-size:15px;font-weight:800;color:${w.kolor}">${w.inicjaly}</div><div class="li-body"><div class="li-title">${w.imie} ${w.nazwisko}</div><div class="li-sub">${w.rola}${stawkaTxt}${w.tel ? ' · 📞 ' + w.tel : ''}</div></div><div class="li-right"><span class="badge" style="background:${bg};color:${fg}">${w.status}</span>${np ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">${np} ${np === 1 ? 'projekt' : 'proj.'}</div>` : ''}</div></div>`;
   }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px">Brak pracowników</div>`;
 
   if (kpiEl) {
@@ -3752,6 +3853,8 @@ function updateAwariaStatus(id, newStatus, btn) {
   saveState();
   showToast('Status zmieniony: ' + newStatus);
   if (NOTIF_PREFS.awarie) addNotif('🚨', `Awaria „${DATA.awarie[id].opis}" — status: ${newStatus}`);
+  // Ostatnia otwarta awaria właśnie zamknięta — zero awarii w toku, warto to uczcić.
+  if (newStatus === 'Zakończona' && Object.values(DATA.awarie).every(a => a.status === 'Zakończona')) fireConfetti();
 }
 
 // Zapis pól z detalu awarii (przycisk "Zapisz" w nagłówku)
