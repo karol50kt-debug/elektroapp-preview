@@ -252,6 +252,8 @@ body.kier .kier-only{display:flex!important}
   <div class="card" style="padding:10px 14px" id="dash-projekty-list"></div>
   <div class="sec-hdr"><h3>Otwarte awarie</h3><a onclick="switchTab('awarie')">Wszystkie →</a></div>
   <div class="card" style="padding:10px 14px" id="dash-awarie-list"></div>
+  <div class="sec-hdr"><h3>🏆 Najlepsi klienci</h3></div>
+  <div class="card" style="padding:10px 14px" id="dash-top-klienci"></div>
 </div>
 <!-- Modal Dodaj Dzień -->
 <div class="modal-ov" id="modal-dzien" style="display:none" onclick="if(event.target===this)closeModal('modal-dzien')">
@@ -2120,6 +2122,29 @@ function renderProjektyList() {
   if (kpiEl) kpiEl.textContent = all.filter(p => p.status === 'W realizacji').length;
   const zakEl = document.getElementById('dash-kpi-zakonczone');
   if (zakEl) zakEl.textContent = all.filter(p => p.status === 'Zakończony').length;
+
+  renderTopKlienci(all);
+}
+
+// Insight: ranking klientów wg łącznej wartości zleconych projektów — pokazuje,
+// kto realnie generuje przychód firmy, zamiast trzeba było to liczyć w głowie
+// przeglądając listę projektów.
+function renderTopKlienci(all) {
+  const el = document.getElementById('dash-top-klienci');
+  if (!el) return;
+  const suma = {};
+  all.forEach(p => {
+    const klient = (p.klient || '').trim();
+    if (!klient || !p.wartosc) return;
+    suma[klient] = (suma[klient] || 0) + p.wartosc;
+  });
+  const top = Object.entries(suma).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  el.innerHTML = top.length ? top.map(([klient, wartosc], i) => `
+    <div class="li" style="cursor:default">
+      <div style="width:22px;height:22px;border-radius:11px;background:var(--blue-l);color:var(--blue);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i + 1}</div>
+      <div class="li-body"><div class="li-title">${escapeHtml(klient)}</div></div>
+      <div class="li-right"><div style="font-size:12px;font-weight:700;color:var(--blue)">${wartosc.toLocaleString('pl-PL')} zł</div></div>
+    </div>`).join('') : `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak danych — dodaj wartość do projektów</div>`;
 }
 
 // Konwersje dat: DD.MM.RRRR (przechowywane) ↔ YYYY-MM-DD (input type=date)
@@ -5972,6 +5997,17 @@ function zbierzPrzypomnienia() {
       const proc = Math.round((wydano / plan - 1) * 100);
       push(3, '📊', `„${p.nazwa}” przekracza plan ${co} o ${(wydano - plan).toLocaleString('pl-PL')} zł (+${proc}%)`, () => openProjekt(p.id));
     });
+  });
+
+  // Insight: aktywne projekty po terminie realizacji (terminWykonania minął, a postęp<100%).
+  // Dane (terminWykonania, postep) już istnieją, ale nikt wcześniej nie zestawiał ich razem —
+  // trzeba było pamiętać terminy albo przeglądać każdy projekt z osobna.
+  Object.values(DATA.projekty).forEach(p => {
+    if (p.status !== 'W realizacji' || !p.terminWykonania || p.postep >= 100) return;
+    const dni = dniDo(p.terminWykonania);
+    if (dni !== null && dni < 0) {
+      push(4, '⏰', `„${p.nazwa}” jest ${-dni} dni po terminie realizacji (${p.terminWykonania}, postęp ${p.postep || 0}%)`, () => openProjekt(p.id));
+    }
   });
 
   // 17 — faktury sprzedażowe (awarie) z terminem płatności
