@@ -248,6 +248,7 @@ body.kier .kier-only{display:flex!important}
     <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:#232a31">✅</div><div><div class="kpi-val" style="color:var(--muted)" id="dash-kpi-zakonczone">0</div><div class="kpi-lbl">Zakończone</div></div></div>
   </div>
   <div id="dash-przypomnienia"></div>
+  <div id="dash-przychod-prognoza" style="display:none;background:var(--green-l);border-radius:14px;padding:12px 14px;margin-bottom:14px"></div>
   <div class="sec-hdr"><h3>Aktywne projekty</h3><a onclick="switchTab('projekty')">Wszystkie →</a></div>
   <div class="card" style="padding:10px 14px" id="dash-projekty-list"></div>
   <div class="sec-hdr"><h3>Otwarte awarie</h3><a onclick="switchTab('awarie')">Wszystkie →</a></div>
@@ -2124,6 +2125,40 @@ function renderProjektyList() {
   if (zakEl) zakEl.textContent = all.filter(p => p.status === 'Zakończony').length;
 
   renderTopKlienci(all);
+  renderPrzychodPrognoza(all);
+}
+
+// Insight: prognoza przychodu na bieżący miesiąc — szacowana metodą liniową w czasie
+// (standardowa technika rozpoznawania przychodu wg % realizacji): wartość aktywnego
+// projektu rozkładamy proporcjonalnie na dni między start a terminWykonania/koniec,
+// sumujemy część przypadającą na dni z bieżącego miesiąca. To szacunek, nie fakturowana
+// kwota — stąd zawsze z zastrzeżeniem "szacunkowo" w opisie.
+function renderPrzychodPrognoza(all) {
+  const el = document.getElementById('dash-przychod-prognoza');
+  if (!el) return;
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  let prognoza = 0, liczbaProjektow = 0;
+  all.forEach(p => {
+    if (p.status !== 'W realizacji' || !p.wartosc) return;
+    const start = parseDataPL(p.start);
+    const end = parseDataPL(p.terminWykonania || p.koniec);
+    if (!start || !end || end <= start) return;
+    const overlapStart = new Date(Math.max(start, monthStart));
+    const overlapEnd = new Date(Math.min(end, monthEnd));
+    if (overlapEnd <= overlapStart) return;
+    const overlapDays = (overlapEnd - overlapStart) / 86400000;
+    const totalDays = (end - start) / 86400000;
+    prognoza += p.wartosc * (overlapDays / totalDays);
+    liczbaProjektow++;
+  });
+  if (liczbaProjektow === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  const miesiacNazwa = now.toLocaleDateString('pl-PL', { month: 'long' });
+  el.innerHTML = `<div style="font-size:11px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.3px">📈 Szacowany przychód — ${escapeHtml(miesiacNazwa)}</div>
+    <div style="font-size:22px;font-weight:900;color:var(--green);margin-top:2px">${Math.round(prognoza).toLocaleString('pl-PL')} zł</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">Szacunek na podstawie ${liczbaProjektow} ${liczbaProjektow === 1 ? 'aktywnego projektu' : 'aktywnych projektów'} i ich harmonogramu — nie zastępuje faktur</div>`;
 }
 
 // Insight: ranking klientów wg łącznej wartości zleconych projektów — pokazuje,
