@@ -162,10 +162,7 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 /* STATUS PILLS */
 .spill{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
 .spill button{flex:1;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:2px solid;cursor:pointer;min-width:70px}
-/* TOAST */
-.toast{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;opacity:0;transition:.3s;pointer-events:none;z-index:99}
-.toast.show{opacity:1}
-/* SUCCESS POP (centered confirmation "cloud") */
+/* TOAST — centered confirmation "cloud" dla WSZYSTKICH komunikatów (sukces/błąd/info) */
 .success-pop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10001;pointer-events:none;opacity:0;transition:opacity .25s}
 .success-pop.show{opacity:1}
 .success-pop-cloud{position:relative;background:var(--white);color:var(--text);border-radius:26px;padding:22px 30px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 14px 44px rgba(0,0,0,.4);transform:scale(.4);max-width:78vw}
@@ -175,9 +172,15 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .success-pop.show .success-pop-cloud{animation:successPopIn .45s cubic-bezier(.34,1.56,.64,1) forwards}
 @keyframes successPopIn{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
 .success-pop-circle{fill:none;stroke:#2ecc71;stroke-width:3;stroke-dasharray:151;stroke-dashoffset:151;animation:successCircleDraw .5s ease-out .12s forwards}
+.success-pop-circle.warn{stroke:var(--red)}
 .success-pop-check{fill:none;stroke:#2ecc71;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:36;stroke-dashoffset:36;animation:successCheckDraw .3s ease-out .48s forwards}
+.success-pop-excl-bar{stroke:var(--red);stroke-width:4;stroke-linecap:round;stroke-dasharray:14;stroke-dashoffset:14;animation:successCheckDraw .25s ease-out .42s forwards}
+.success-pop-excl-dot{fill:var(--red);opacity:0;animation:successDotIn .2s ease-out .66s forwards}
+.success-pop-emoji{font-size:40px;line-height:1;animation:successEmojiPop .4s cubic-bezier(.34,1.56,.64,1) .05s both}
 @keyframes successCircleDraw{to{stroke-dashoffset:0}}
 @keyframes successCheckDraw{to{stroke-dashoffset:0}}
+@keyframes successDotIn{to{opacity:1}}
+@keyframes successEmojiPop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
 .success-pop-text{font-size:14px;font-weight:700;text-align:center;line-height:1.35}
 /* SCREEN TABS */
 .sv{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;position:relative}
@@ -1707,21 +1710,32 @@ function escapeHtml(str) {
   return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
-// ═══════ TOAST ═══════
-function showToast(msg) {
-  if (msg.startsWith('✅')) { showSuccessPop(msg.replace(/^✅\s*/, '')); return; }
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  t.style.opacity = '1';
-  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 400); }, 2500);
-}
-
-// ═══════ SUCCESS POP (centered confirmation "cloud", replaces toast for ✅ messages) ═══════
+// ═══════ TOAST (centered confirmation "cloud" dla WSZYSTKICH komunikatów) ═══════
+const _EMOJI_RE = /^\p{Extended_Pictographic}️?/u;
 let _successPopTimer = null;
-function showSuccessPop(msg) {
+function showToast(msg) {
   const el = document.getElementById('success-pop');
-  el.querySelector('.success-pop-text').textContent = msg;
+  const cloud = document.getElementById('success-pop-cloud');
+  const iconEl = document.getElementById('success-pop-icon');
+
+  const m = msg.match(_EMOJI_RE);
+  const emoji = m ? m[0] : '';
+  const text = m ? msg.slice(m[0].length).trim() : msg;
+
+  let kind = 'info';
+  if (emoji === '✅') kind = 'success';
+  else if (emoji === '⚠️' || emoji === '❌') kind = 'warn';
+
+  cloud.className = 'success-pop-cloud ' + kind;
+  if (kind === 'success') {
+    iconEl.innerHTML = '<svg width="52" height="52" viewBox="0 0 52 52"><circle class="success-pop-circle" cx="26" cy="26" r="24"/><path class="success-pop-check" d="M14 27l7 7 16-16"/></svg>';
+  } else if (kind === 'warn') {
+    iconEl.innerHTML = '<svg width="52" height="52" viewBox="0 0 52 52"><circle class="success-pop-circle warn" cx="26" cy="26" r="24"/><line class="success-pop-excl-bar" x1="26" y1="16" x2="26" y2="30"/><circle class="success-pop-excl-dot" cx="26" cy="37" r="2"/></svg>';
+  } else {
+    iconEl.innerHTML = `<div class="success-pop-emoji">${emoji || '💬'}</div>`;
+  }
+
+  el.querySelector('.success-pop-text').textContent = text || msg;
   el.classList.remove('show');
   void el.offsetWidth; // wymuś reflow, żeby animacja odtworzyła się przy powtórnym wywołaniu
   el.classList.add('show');
@@ -6298,15 +6312,10 @@ document.addEventListener('DOMContentLoaded', () => {
   pushHistoryGuard();
 });
 </script>
-<!-- Toast -->
-<div id="toast" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;transition:opacity .4s;max-width:80%;text-align:center"></div>
-<!-- Success pop (centered confirmation "cloud", zastępuje toast dla wiadomości ✅) -->
+<!-- Success pop (centered confirmation "cloud") — jedyna forma komunikatów showToast() -->
 <div id="success-pop" class="success-pop">
-  <div class="success-pop-cloud">
-    <svg width="52" height="52" viewBox="0 0 52 52">
-      <circle class="success-pop-circle" cx="26" cy="26" r="24"/>
-      <path class="success-pop-check" d="M14 27l7 7 16-16"/>
-    </svg>
+  <div class="success-pop-cloud" id="success-pop-cloud">
+    <div id="success-pop-icon"></div>
     <div class="success-pop-text"></div>
   </div>
 </div>
