@@ -1126,9 +1126,9 @@ function syncNow() {
   syncPull().then(() => { syncPush(); showToast('✅ Zsynchronizowano'); if (currentTab === 'ustawienia') buildUstawienia(); });
 }
 
-function disconnectSync() {
+async function disconnectSync() {
   const emp = syncRole() === 'employee';
-  if (!confirm(emp ? 'Odłączyć to urządzenie od danych firmy? Będzie trzeba ponownie wpisać kod od szefa.' : 'Odłączyć synchronizację na tym urządzeniu? Dane lokalne zostaną.')) return;
+  if (!(await confirmAction(emp ? 'Odłączyć to urządzenie od danych firmy? Będzie trzeba ponownie wpisać kod od szefa.' : 'Odłączyć synchronizację na tym urządzeniu? Dane lokalne zostaną.'))) return;
   SYNC_TOKEN = null; SYNC_USER = null;
   localStorage.removeItem('elektroapp_sync_token');
   localStorage.removeItem('elektroapp_sync_user');
@@ -1215,7 +1215,7 @@ async function refreshDevices() {
 }
 
 async function revokeDevice(token) {
-  if (!confirm('Odłączyć ten telefon? Natychmiast straci dostęp do danych firmy.')) return;
+  if (!(await confirmAction('Odłączyć ten telefon? Natychmiast straci dostęp do danych firmy.'))) return;
   try {
     await fetch(SYNC_API + '/api/devices/revoke', {
       method: 'POST',
@@ -1451,6 +1451,23 @@ function closeModal(id) {
   document.getElementById(id).style.display = 'none';
   document.body.style.overflow = '';
   if (currentOpenModalId === id) currentOpenModalId = null;
+}
+
+// ═══════ POTWIERDZENIE AKCJI NISZCZĄCEJ (styl appki zamiast natywnego confirm()) ═══════
+function confirmAction(message) {
+  return new Promise(resolve => {
+    document.getElementById('modal-confirm-msg').textContent = message;
+    const yes = document.getElementById('modal-confirm-yes');
+    const no = document.getElementById('modal-confirm-no');
+    const finish = (result) => {
+      closeModal('modal-confirm-ov');
+      yes.onclick = null; no.onclick = null;
+      resolve(result);
+    };
+    yes.onclick = () => finish(true);
+    no.onclick = () => finish(false);
+    openModal('modal-confirm-ov');
+  });
 }
 
 // ═══════ FIZYCZNY/GESTOWY PRZYCISK "WSTECZ" W TELEFONIE ═══════
@@ -2396,11 +2413,11 @@ async function savePracownik() {
   closeModal('modal-pracownik');
 }
 
-function deletePracownik() {
+async function deletePracownik() {
   const id = document.getElementById('np-edit-id').value;
   const w = DATA.pracownicy[id];
   if (!w) return;
-  if (!confirm(`Usunąć pracownika ${w.imie} ${w.nazwisko}? Jego historia godzin i pasków pozostanie w danych, ale zniknie z listy. Do ukrycia bez utraty danych lepiej ustawić status „Nieaktywny”.`)) return;
+  if (!(await confirmAction(`Usunąć pracownika ${w.imie} ${w.nazwisko}? Jego historia godzin i pasków pozostanie w danych, ale zniknie z listy. Do ukrycia bez utraty danych lepiej ustawić status „Nieaktywny”.`))) return;
   delete DATA.pracownicy[id];
   const uid = Object.keys(DATA.uzytkownicy).find(k => DATA.uzytkownicy[k].pracownik === id);
   if (uid) delete DATA.uzytkownicy[uid];
@@ -2825,12 +2842,12 @@ function przeliczPasekRoboczy(pracId, idx) {
   buildPaskiAdmin();
 }
 
-function usunPasekRoboczy(pracId, idx) {
+async function usunPasekRoboczy(pracId, idx) {
   if (!fullAccess()) return;
   const pasek = DATA.paski[pracId][idx];
   if (!pasek || pasek.status !== 'roboczy') return;
   const w = DATA.pracownicy[pracId];
-  if (!confirm(`Usunąć roboczy pasek ${w.imie} ${w.nazwisko}? Będzie można wygenerować nowy.`)) return;
+  if (!(await confirmAction(`Usunąć roboczy pasek ${w.imie} ${w.nazwisko}? Będzie można wygenerować nowy.`))) return;
   DATA.paski[pracId].splice(idx, 1);
   showToast('🗑️ Usunięto pasek roboczy');
   saveState();
@@ -3132,13 +3149,13 @@ function buildPorownanieHtml(pracId) {
 }
 
 // ═══════ USUWANIE WPISÓW GODZIN (z trzech magazynów, z uprawnieniami) ═══════
-function deleteCzasPracyEntry(dayKey, idx) {
+async function deleteCzasPracyEntry(dayKey, idx) {
   if (!fullAccess()) return;
   const arr = DATA.czasPracy[dayKey];
   if (!arr || !arr[idx]) return;
   const e = arr[idx];
   const etykieta = e.nieobecny ? '🚫 Nieobecny' : `${e.godz}h`;
-  if (!confirm(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`)) return;
+  if (!(await confirmAction(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`))) return;
   arr.splice(idx, 1);
   if (arr.length === 0) delete DATA.czasPracy[dayKey];
   saveState();
@@ -3149,14 +3166,14 @@ function deleteCzasPracyEntry(dayKey, idx) {
   if (detPrac && detPrac.classList.contains('open') && lastReopen['det-prac']) lastReopen['det-prac']();
 }
 
-function deleteCzasPracyWlasneEntry(pracId, dayKey, idx) {
+async function deleteCzasPracyWlasneEntry(pracId, dayKey, idx) {
   const isOwn = currentUser && currentUser.pracownik === pracId;
   if (!fullAccess() && !isOwn) return;
   const arr = wlasneWpisy(pracId, dayKey);
   if (!arr[idx]) return;
   const e = arr[idx];
   const etykieta = e.nieobecny ? '🚫 Nieobecny' : `${e.godz}h`;
-  if (!confirm(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`)) return;
+  if (!(await confirmAction(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`))) return;
   arr.splice(idx, 1);
   if (!DATA.czasPracyWlasne[pracId]) DATA.czasPracyWlasne[pracId] = {};
   if (arr.length === 0) delete DATA.czasPracyWlasne[pracId][dayKey];
@@ -3169,14 +3186,14 @@ function deleteCzasPracyWlasneEntry(pracId, dayKey, idx) {
   if (detPrac && detPrac.classList.contains('open') && lastReopen['det-prac']) lastReopen['det-prac']();
 }
 
-function deleteCzasPracyKierownikEntry(pracId, dayKey, idx) {
+async function deleteCzasPracyKierownikEntry(pracId, dayKey, idx) {
   const raw = dniKierRaw(pracId, dayKey);
   const target = raw.find(x => x.idx === idx);
   if (!target) return;
   const canDelete = fullAccess() || target.entry.wpisanyPrzez === (currentUser && currentUser.pracownik);
   if (!canDelete) return;
   const etykieta = target.entry.nieobecny ? '🚫 Nieobecny' : `${target.entry.godz}h`;
-  if (!confirm(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`)) return;
+  if (!(await confirmAction(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`))) return;
   DATA.czasPracyKierownik[dayKey].splice(target.idx, 1);
   if (DATA.czasPracyKierownik[dayKey].length === 0) delete DATA.czasPracyKierownik[dayKey];
   saveState();
@@ -3431,10 +3448,10 @@ function saveAwariaDetail() {
   showToast('✅ Zapisano zmiany');
 }
 
-function deleteAwaria(id) {
+async function deleteAwaria(id) {
   const a = DATA.awarie[id];
   if (!a) return;
-  if (!confirm(`Usunąć awarię „${a.opis}”? Tej operacji nie można cofnąć.`)) return;
+  if (!(await confirmAction(`Usunąć awarię „${a.opis}”? Tej operacji nie można cofnąć.`))) return;
   // usuń referencję z bloku
   Object.values(DATA.bloki).forEach(b => { b.awarie = (b.awarie || []).filter(x => x !== id); });
   delete DATA.awarie[id];
@@ -3535,10 +3552,10 @@ function openEditNarzedzie(id) {
   openModal('modal-narzedzie');
 }
 
-function deleteNarzedzie(id) {
+async function deleteNarzedzie(id) {
   if (!fullAccess()) return;
   const n = DATA.narzedzia[id]; if (!n) return;
-  if (!confirm(`Usunąć narzędzie ${n.marka} ${n.model}?`)) return;
+  if (!(await confirmAction(`Usunąć narzędzie ${n.marka} ${n.model}?`))) return;
   delete DATA.narzedzia[id];
   saveState(); renderNarzList();
   goBack(); showToast('🗑️ Narzędzie usunięte');
@@ -4457,10 +4474,10 @@ function saveAutoWpis() {
   showToast('✅ Wpis zapisany');
 }
 
-function deleteAuto(id) {
+async function deleteAuto(id) {
   const a = DATA.samochody[id];
   if (!a) return;
-  if (!confirm(`Usunąć pojazd ${a.marka} ${a.model} (${a.rej})? Historia użytkowania zostanie utracona.`)) return;
+  if (!(await confirmAction(`Usunąć pojazd ${a.marka} ${a.model} (${a.rej})? Historia użytkowania zostanie utracona.`))) return;
   delete DATA.samochody[id];
   saveState();
   renderSamochodyList();
@@ -5294,12 +5311,12 @@ function saveDostawca() {
   else { const nid = uid('d_'); DATA.dostawcy[nid] = { id: nid, nazwa, kontakt }; }
   saveState(); renderZakupy(); closeModal('modal-dostawca'); showToast('✅ Zapisano dostawcę');
 }
-function deleteDostawca() {
+async function deleteDostawca() {
   const id = document.getElementById('nd-dost-id').value;
   const d = DATA.dostawcy[id]; if (!d) return;
   const maWZ = Object.values(DATA.wz).some(w => w.dostawca === id);
   if (maWZ) { showToast('⚠️ Dostawca ma powiązane WZ — najpierw je usuń'); return; }
-  if (!confirm(`Usunąć dostawcę ${d.nazwa}?`)) return;
+  if (!(await confirmAction(`Usunąć dostawcę ${d.nazwa}?`))) return;
   delete DATA.dostawcy[id];
   saveState(); renderZakupy(); closeModal('modal-dostawca');
   if (document.getElementById('det-dostawca').classList.contains('open')) goBack();
@@ -5719,10 +5736,10 @@ function saveWZ() {
   if (document.getElementById('det-dostawca').classList.contains('open')) openDostawca(dostawca);
   closeModal('modal-wz'); showToast(editId ? '✅ Zmiany zapisane' : '✅ WZ zapisane');
 }
-function deleteWZ(id) {
+async function deleteWZ(id) {
   const wz = DATA.wz[id]; if (!wz) return;
   if (wz.fakturaId) { showToast('⚠️ WZ jest już na fakturze — odepnij ją najpierw'); return; }
-  if (!confirm(`Usunąć WZ ${wz.nr || ''} (${wz.kwota} zł)?`)) return;
+  if (!(await confirmAction(`Usunąć WZ ${wz.nr || ''} (${wz.kwota} zł)?`))) return;
   if (wz.celTyp === 'projekt' && DATA.projekty[wz.cel]) DATA.projekty[wz.cel].kosztyMaterialy = Math.max(0, (DATA.projekty[wz.cel].kosztyMaterialy || 0) - Math.round(wz.kwota));
   if (wz.celTyp === 'awaria' && DATA.awarie[wz.cel]) DATA.awarie[wz.cel].koszt = Math.max(0, (DATA.awarie[wz.cel].koszt || 0) - Math.round(wz.kwota));
   const dostawca = wz.dostawca;
@@ -5957,6 +5974,17 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 <!-- Toast -->
 <div id="toast" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;transition:opacity .4s;max-width:80%;text-align:center"></div>
+<!-- Modal potwierdzenia akcji niszczącej -->
+<div class="modal-ov" id="modal-confirm-ov" style="display:none;z-index:9998" onclick="if(event.target===this)document.getElementById('modal-confirm-no').click()">
+  <div class="modal-sh">
+    <h3>⚠️ Potwierdź</h3>
+    <div id="modal-confirm-msg" style="font-size:13px;color:var(--text);line-height:1.5;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-s" id="modal-confirm-no" style="flex:1">Anuluj</button>
+      <button class="btn-r" id="modal-confirm-yes" style="flex:1">Usuń</button>
+    </div>
+  </div>
+</div>
 </div><!-- .phone -->
 </body>
 </html>
