@@ -255,6 +255,8 @@ body.kier .kier-only{display:flex!important}
   <div class="card" style="padding:10px 14px" id="dash-awarie-list"></div>
   <div class="sec-hdr"><h3>🏆 Najlepsi klienci</h3></div>
   <div class="card" style="padding:10px 14px" id="dash-top-klienci"></div>
+  <div class="sec-hdr"><h3>💪 Wartość na godzinę pracy</h3></div>
+  <div class="card" style="padding:10px 14px" id="dash-rentownosc-zespolu"></div>
 </div>
 <!-- Modal Dodaj Dzień -->
 <div class="modal-ov" id="modal-dzien" style="display:none" onclick="if(event.target===this)closeModal('modal-dzien')">
@@ -2126,6 +2128,50 @@ function renderProjektyList() {
 
   renderTopKlienci(all);
   renderPrzychodPrognoza(all);
+  renderRentownoscZespolu();
+}
+
+// Insight: wartość generowana na godzinę pracy per pracownik — zestawia stawkę (koszt/h)
+// z udziałem w wartości projektów, do których wpisał godziny. Udział w projekcie liczony
+// proporcjonalnie do godzin: jeśli pracownik przepracował 30% godzin danego projektu,
+// przypisujemy mu 30% jego wartości. To orientacyjny wskaźnik (projekty mają różną
+// marżowość niezależnie od godzin), nie dokładny rachunek kosztów.
+function renderRentownoscZespolu() {
+  const el = document.getElementById('dash-rentownosc-zespolu');
+  if (!el) return;
+  const godzPracownikProjekt = {}, godzProjekt = {}, godzPracownik = {};
+  Object.values(DATA.czasPracy || {}).forEach(dzien => {
+    (dzien || []).forEach(w => {
+      if (!w.proj || !w.godz) return;
+      const key = w.prac + '|' + w.proj;
+      godzPracownikProjekt[key] = (godzPracownikProjekt[key] || 0) + w.godz;
+      godzProjekt[w.proj] = (godzProjekt[w.proj] || 0) + w.godz;
+      godzPracownik[w.prac] = (godzPracownik[w.prac] || 0) + w.godz;
+    });
+  });
+  const wynik = [];
+  Object.values(DATA.pracownicy || {}).forEach(w => {
+    const totalGodz = godzPracownik[w.id];
+    if (!totalGodz) return;
+    let wartoscUdzial = 0;
+    Object.keys(godzPracownikProjekt).forEach(key => {
+      if (!key.startsWith(w.id + '|')) return;
+      const proj = key.slice(w.id.length + 1);
+      const p = DATA.projekty[proj];
+      if (!p || !p.wartosc || !godzProjekt[proj]) return;
+      wartoscUdzial += p.wartosc * (godzPracownikProjekt[key] / godzProjekt[proj]);
+    });
+    if (wartoscUdzial <= 0) return;
+    wynik.push({ w, wartoscNaGodz: wartoscUdzial / totalGodz, totalGodz });
+  });
+  wynik.sort((a, b) => b.wartoscNaGodz - a.wartoscNaGodz);
+  const top = wynik.slice(0, 5);
+  el.innerHTML = top.length ? top.map(({ w, wartoscNaGodz, totalGodz }) => `
+    <div class="li" style="cursor:default">
+      <div class="li-icon" style="background:${w.kolor}22;color:${w.kolor};font-weight:800;font-size:12px">${escapeHtml(w.inicjaly || '')}</div>
+      <div class="li-body"><div class="li-title">${escapeHtml(w.imie)} ${escapeHtml(w.nazwisko || '')}</div><div class="li-sub">stawka ${w.stawka || 0} zł/h · ${Math.round(totalGodz)}h wpisanych</div></div>
+      <div class="li-right"><div style="font-size:12px;font-weight:700;color:var(--blue)">~${Math.round(wartoscNaGodz).toLocaleString('pl-PL')} zł/h</div></div>
+    </div>`).join('') : `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak wystarczających danych (godziny + wartość projektów)</div>`;
 }
 
 // Insight: prognoza przychodu na bieżący miesiąc — szacowana metodą liniową w czasie
