@@ -2,15 +2,18 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>ElektroApp v2.0 — Preview</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1f262d">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Samodzielnie hostowane (nie CDN): usuwa zależność supply-chain i pozwala
+     service workerowi cache'ować te pliki na offline (CDN, jako inny origin,
+     nigdy wcześniej nie było cache'owane). Wersje: qrcodejs 1.0.0, Leaflet 1.9.4. -->
+<script src="vendor/qrcode.min.js"></script>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<script src="vendor/leaflet.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
@@ -21,7 +24,19 @@
   --purple:#a98ee0;--purple-l:rgba(169,142,224,.16);
   --teal:#4fb8a8;--teal-l:rgba(79,184,168,.16);
   --bg:#14181d;--white:rgba(28,34,39,.9);--panel2:#1f262d;--border:#2b333a;
-  --text:#eef1f3;--muted:#7c858c;--sec:#a7b0b7;
+  --text:#eef1f3;--muted:#949da5;--sec:#a7b0b7;
+  --surface2:#232a31;--input-bg:#252d34;--input-bg-focus:#2a333b;--input-border:#3a434b;
+  --dim:#4a545c;--placeholder:#8a929a;
+}
+/* Jasny motyw — przełączany indywidualnie per konto (przycisk ☀️/🌙 w rogu ekranu).
+   Chrom (nagłówki, pasek statusu, dolny pasek zakładek pod spodem) zostaje ciemny w
+   obu motywach — to kolorowe/celowo-ciemne "obudowy", nie treść, więc nie muszą się
+   przełączać; zmieniają się tylko powierzchnie treści (tło, karty, tekst, formularze). */
+:root[data-theme="light"]{
+  --bg:#eef0f2;--white:#ffffff;--border:#dde1e6;
+  --text:#1a2128;--muted:#5b6670;--sec:#45505a;
+  --surface2:#e4e8eb;--input-bg:#ffffff;--input-bg-focus:#f5f7f8;--input-border:#c7ced4;
+  --dim:#8b939a;--placeholder:#97a0a7;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;padding:24px 0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
@@ -35,7 +50,7 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .hdr-right{display:flex;gap:8px;align-items:center}
 .avatar{width:34px;height:34px;border-radius:17px;background:rgba(255,255,255,.2);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hdr-btn{background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 10px;color:#fff;font-size:15px;cursor:pointer}
-.content{flex:1;min-height:0;overflow-y:auto;padding:14px;background-color:var(--bg);background-image:url('logo-watermark.png');background-position:center 15%;background-size:380px auto;background-repeat:no-repeat}
+.content{flex:1;min-height:0;overflow-y:auto;padding:14px;background-color:var(--bg);background-image:url('logo-watermark.webp');background-position:center 15%;background-size:380px auto;background-repeat:no-repeat}
 .content::-webkit-scrollbar{width:3px}
 .content::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:3px}
 /* TABBAR */
@@ -79,7 +94,7 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 /* FILTER */
 .frow{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
 .frow::-webkit-scrollbar{display:none}
-.ftab{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--muted)}
+.ftab{padding:8px 14px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--muted)}
 .ftab.active{background:var(--blue-d);color:#fff;border-color:var(--blue-d)}
 /* SEARCH */
 .search{display:flex;align-items:center;gap:8px;background:var(--white);border-radius:10px;padding:0 12px;border:1px solid var(--border);margin-bottom:10px;height:40px}
@@ -102,12 +117,12 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);margin-top:-4px}
 .fg{margin-bottom:12px}
 .fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;display:block}
-.fi{width:100%;border:1px solid #3a434b;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit;color:var(--text);background:#252d34}
-.fi:focus{border-color:var(--blue);background:#2a333b}
-.fi::placeholder,.fs::placeholder{color:#8a929a;opacity:1}
-.fs{width:100%;border:1px solid #3a434b;border-radius:8px;padding:9px 12px;font-size:13px;background:#252d34;font-family:inherit;color:var(--text)}
+.fi{width:100%;border:1px solid var(--input-border);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;font-family:inherit;color:var(--text);background:var(--input-bg)}
+.fi:focus{border-color:var(--blue);background:var(--input-bg-focus)}
+.fi::placeholder,.fs::placeholder{color:var(--placeholder);opacity:1}
+.fs{width:100%;border:1px solid var(--input-border);border-radius:8px;padding:9px 12px;font-size:13px;background:var(--input-bg);font-family:inherit;color:var(--text)}
 .fs:focus{border-color:var(--blue);outline:none}
-.fs option{background:#252d34;color:var(--text)}
+.fs option{background:var(--input-bg);color:var(--text)}
 .btn-p{background:var(--blue-d);color:#fff;border:none;border-radius:20px;padding:11px 24px;font-size:14px;font-weight:700;width:100%;cursor:pointer;margin-top:8px}
 .btn-s{background:var(--blue-l);color:var(--blue);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
 .btn-r{background:var(--red-l);color:var(--red);border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
@@ -116,13 +131,13 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 .fab{position:absolute;bottom:16px;right:16px;width:52px;height:52px;border-radius:26px;background:var(--blue-d);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(240,167,48,.3);cursor:pointer;border:none;z-index:5}
 /* CONTENT TABS */
 .ctabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:12px;flex-shrink:0}
-.ctab{padding:8px 12px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.ctab{padding:12px 12px;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
 .ctab.active{color:var(--blue);border-bottom-color:var(--blue)}
 /* CAL */
 .cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px}
 .cal-hdr span{font-size:9px;color:var(--muted);text-align:center;font-weight:600}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cd{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;cursor:pointer;background:#232a31;color:var(--muted)}
+.cd{aspect-ratio:1;min-height:44px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;background:var(--surface2);color:var(--muted)}
 .cd.today{background:var(--blue-d);color:#fff}
 .cd.we{color:var(--border);background:transparent}
 .cd.empty{background:transparent}
@@ -147,14 +162,43 @@ body{background:#0d0f11;display:flex;flex-direction:column;align-items:center;pa
 /* STATUS PILLS */
 .spill{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
 .spill button{flex:1;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:2px solid;cursor:pointer;min-width:70px}
-/* TOAST */
-.toast{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;opacity:0;transition:.3s;pointer-events:none;z-index:99}
-.toast.show{opacity:1}
+/* TOAST — centered confirmation "cloud" dla WSZYSTKICH komunikatów (sukces/błąd/info) */
+.success-pop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10001;pointer-events:none;opacity:0;transition:opacity .25s}
+.success-pop.show{opacity:1}
+.success-pop-cloud{position:relative;background:var(--white);color:var(--text);border-radius:26px;padding:22px 30px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 14px 44px rgba(0,0,0,.4);transform:scale(.4);max-width:78vw}
+.success-pop-cloud::before,.success-pop-cloud::after{content:'';position:absolute;background:var(--white);border-radius:50%}
+.success-pop-cloud::before{width:22px;height:22px;bottom:-7px;left:26px}
+.success-pop-cloud::after{width:14px;height:14px;bottom:-13px;left:14px}
+.success-pop.show .success-pop-cloud{animation:successPopIn .45s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes successPopIn{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+.success-pop-circle{fill:none;stroke:#2ecc71;stroke-width:3;stroke-dasharray:151;stroke-dashoffset:151;animation:successCircleDraw .5s ease-out .12s forwards}
+.success-pop-circle.warn{stroke:var(--red)}
+.success-pop-check{fill:none;stroke:#2ecc71;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:36;stroke-dashoffset:36;animation:successCheckDraw .3s ease-out .48s forwards}
+.success-pop-excl-bar{stroke:var(--red);stroke-width:4;stroke-linecap:round;stroke-dasharray:14;stroke-dashoffset:14;animation:successCheckDraw .25s ease-out .42s forwards}
+.success-pop-excl-dot{fill:var(--red);opacity:0;animation:successDotIn .2s ease-out .66s forwards}
+.success-pop-emoji{font-size:40px;line-height:1;animation:successEmojiPop .4s cubic-bezier(.34,1.56,.64,1) .05s both}
+@keyframes successCircleDraw{to{stroke-dashoffset:0}}
+@keyframes successCheckDraw{to{stroke-dashoffset:0}}
+@keyframes successDotIn{to{opacity:1}}
+@keyframes successEmojiPop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
+.success-pop-text{font-size:14px;font-weight:700;text-align:center;line-height:1.35}
+/* Pulsujący czerwony obrys — aktywny projekt po terminie lub nad budżetem */
+@keyframes pulseWarnRing{0%,100%{box-shadow:0 0 0 0 rgba(226,104,92,.5)}50%{box-shadow:0 0 0 5px rgba(226,104,92,0)}}
+.li-pulse-warn{animation:pulseWarnRing 1.8s ease-in-out infinite;border-radius:10px}
+/* Slide-in dla nowo dodanego elementu listy (projekt, pracownik) */
+@keyframes liSlideIn{0%{transform:translateX(-18px);opacity:0}100%{transform:translateX(0);opacity:1}}
+.li-slide-in{animation:liSlideIn .35s ease-out}
+/* Shake formularza przy błędzie walidacji */
+@keyframes shakeX{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+.shake-x{animation:shakeX .4s cubic-bezier(.36,.07,.19,.97)}
+@media (prefers-reduced-motion:reduce){
+  .li-pulse-warn,.li-slide-in,.shake-x{animation:none}
+}
 /* SCREEN TABS */
 .sv{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;position:relative}
 .sv.active{display:flex}
 /* LOGIN */
-.login-ov{position:absolute;inset:0;background-color:#14181d;background-image:linear-gradient(rgba(10,12,14,.55),rgba(10,12,14,.8)),url('login-bg.jpg');background-position:center,center;background-size:cover,cover;background-repeat:no-repeat,no-repeat;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;overflow-y:auto}
+.login-ov{position:absolute;inset:0;background-color:#14181d;background-image:linear-gradient(rgba(10,12,14,.55),rgba(10,12,14,.8)),url('login-bg.webp');background-position:center,center;background-size:cover,cover;background-repeat:no-repeat,no-repeat;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;overflow-y:auto}
 .login-logo{font-size:44px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
 .login-title{color:#fff;font-size:22px;font-weight:900;letter-spacing:.5px}
 .login-sub{color:rgba(255,255,255,.75);font-size:12px;margin-bottom:8px}
@@ -205,7 +249,39 @@ body.kier .kier-only{display:flex!important}
   html,body{height:100%;overflow:hidden;position:fixed;width:100%;top:0;left:0}
   body{padding:0;background:var(--bg);align-items:stretch}
   .phone-label{display:none}
+  .phone{width:100%;height:100dvh;max-height:100dvh;border-radius:0;box-shadow:none;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  /* Notch/Dynamic Island i pasek gestów Androida: dopchnij chrome appki poza obszar systemowy */
+  .status-bar{padding-top:env(safe-area-inset-top);height:calc(36px + env(safe-area-inset-top))}
+  .tabbar{padding-bottom:env(safe-area-inset-bottom);height:calc(64px + env(safe-area-inset-bottom))}
+  .login-ov{padding-top:calc(28px + env(safe-area-inset-top));padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+}
+/* PEŁNY EKRAN OD TABLETU WZWYŻ — ta sama zasada co na telefonie (bez ramki-makiety),
+   plus automatyczne przejście z dolnego paska zakładek na boczny sidebar. */
+@media (min-width:561px){
+  html,body{height:100%;overflow:hidden;position:fixed;width:100%;top:0;left:0}
+  body{padding:0;background:var(--bg);align-items:stretch}
+  .phone-label{display:none}
   .phone{width:100%;height:100dvh;max-height:100dvh;border-radius:0;box-shadow:none}
+}
+@media (min-width:760px){
+  /* .tabbar zostaje tam, gdzie jest w DOM (wewnątrz .screen), ale wizualnie "wypina się"
+     z przewijanego obszaru .screen jako stały pasek przy lewej krawędzi całego okna —
+     dzięki position:fixed ucieka spod .screen{overflow:hidden}, nie trzeba przenosić DOM. */
+  .screen{padding-left:68px}
+  .content{max-width:1000px;margin:0 auto}
+  .modal-ov{left:68px}
+  .tabbar{position:fixed;top:0;left:0;bottom:0;z-index:55;height:auto;width:68px;flex-direction:column;align-items:stretch;flex-shrink:0;border-top:none;border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden;padding:10px 0;gap:2px}
+  .tabbar .tab{flex:0 0 auto;width:100%;min-height:56px;border-radius:0;padding:6px 2px}
+  .tabbar .tab .tl{display:none}
+  .tabbar .tab.active{background:var(--blue-l)}
+}
+@media (min-width:1100px){
+  .screen{padding-left:226px}
+  .modal-ov{left:226px}
+  .tabbar{width:226px;padding:16px 10px}
+  .tabbar .tab{flex-direction:row;justify-content:flex-start;gap:12px;padding:11px 14px;border-radius:10px;min-height:46px}
+  .tabbar .tab .ti{font-size:19px}
+  .tabbar .tab .tl{display:block;font-size:12.5px}
 }
 /* SCAN */
 .scan-ov{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
@@ -216,11 +292,25 @@ body.kier .kier-only{display:flex!important}
 .sc-bl{bottom:0;left:0;border-bottom-width:4px;border-left-width:4px}
 .sc-br{bottom:0;right:0;border-bottom-width:4px;border-right-width:4px}
 </style>
+<script>
+// Wybór motywu PRZED pierwszym malowaniem strony — bez tego byłby widoczny błysk
+// domyślnego (ciemnego) motywu zanim główny skrypt na dole zdąży się uruchomić.
+// Na etapie ekranu logowania nie wiemy jeszcze, które konto się zaloguje, więc na
+// starcie stosujemy preferencję systemową; po zalogowaniu setUser() nadpisuje to
+// zapisanym wyborem TEGO konkretnego konta (patrz initTheme/toggleTheme niżej).
+(function () {
+  try {
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
 <div class="phone-label">ElektroApp v2.0 — React Native Preview</div>
 <div class="phone">
 <div class="screen">
+<button id="theme-toggle-btn" onclick="toggleTheme()" title="Zmień motyw (jasny/ciemny)" style="position:absolute;top:10px;right:12px;z-index:10000;width:30px;height:30px;border-radius:15px;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center"></button>
 
 <!-- ═══════ DASHBOARD ═══════ -->
 <div class="sv active" id="sv-dashboard">
@@ -238,13 +328,18 @@ body.kier .kier-only{display:flex!important}
     <div class="kpi" style="border-color:var(--red)" onclick="switchTab('awarie')"><div class="kpi-icon" style="background:var(--red-l)">🚨</div><div><div class="kpi-val" style="color:var(--red)" id="dash-kpi-awarie">2</div><div class="kpi-lbl">Otwarte awarie</div></div></div>
     <div class="kpi" style="border-color:var(--green)"><div class="kpi-icon" style="background:var(--green-l)">💰</div><div><div class="kpi-val" style="color:var(--green)" id="dash-kpi-przychody">0 zł</div><div class="kpi-lbl">Przychody</div></div></div>
     <div class="kpi" style="border-color:var(--orange)" onclick="switchTab('wydatki')"><div class="kpi-icon" style="background:var(--orange-l)">📊</div><div><div class="kpi-val" style="color:var(--orange)" id="dash-kpi-wydatki">0 zł</div><div class="kpi-lbl">Wydatki</div></div></div>
-    <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:#232a31">✅</div><div><div class="kpi-val" style="color:var(--muted)" id="dash-kpi-zakonczone">0</div><div class="kpi-lbl">Zakończone</div></div></div>
+    <div class="kpi" style="border-color:var(--muted)"><div class="kpi-icon" style="background:var(--surface2)">✅</div><div><div class="kpi-val" style="color:var(--muted)" id="dash-kpi-zakonczone">0</div><div class="kpi-lbl">Zakończone</div></div></div>
   </div>
   <div id="dash-przypomnienia"></div>
+  <div id="dash-przychod-prognoza" style="display:none;background:var(--green-l);border-radius:14px;padding:12px 14px;margin-bottom:14px"></div>
   <div class="sec-hdr"><h3>Aktywne projekty</h3><a onclick="switchTab('projekty')">Wszystkie →</a></div>
   <div class="card" style="padding:10px 14px" id="dash-projekty-list"></div>
   <div class="sec-hdr"><h3>Otwarte awarie</h3><a onclick="switchTab('awarie')">Wszystkie →</a></div>
   <div class="card" style="padding:10px 14px" id="dash-awarie-list"></div>
+  <div class="sec-hdr"><h3>🏆 Najlepsi klienci</h3></div>
+  <div class="card" style="padding:10px 14px" id="dash-top-klienci"></div>
+  <div class="sec-hdr"><h3>💪 Wartość na godzinę pracy</h3></div>
+  <div class="card" style="padding:10px 14px" id="dash-rentownosc-zespolu"></div>
 </div>
 <!-- Modal Dodaj Dzień -->
 <div class="modal-ov" id="modal-dzien" style="display:none" onclick="if(event.target===this)closeModal('modal-dzien')">
@@ -284,7 +379,7 @@ body.kier .kier-only{display:flex!important}
     <div class="ftab" onclick="setFtab(this,'projekty')">Wstrzymany</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-projekty">
-    <div class="li-empty" id="empty-projekty" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
+    <div class="li-empty" id="empty-projekty" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
 </div>
 <!-- Detail projekt -->
@@ -315,7 +410,7 @@ body.kier .kier-only{display:flex!important}
     </div>
     <div style="margin:-6px 0 12px">
       <span onclick="toggleRoboczyznaCalc()" style="font-size:11px;color:var(--blue);font-weight:700;cursor:pointer">🧮 Wylicz plan robocizny z godzin pracy</span>
-      <div id="npr-calc-box" style="display:none;background:#232a31;border-radius:8px;padding:10px;margin-top:8px">
+      <div id="npr-calc-box" style="display:none;background:var(--surface2);border-radius:8px;padding:10px;margin-top:8px">
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Kto będzie pracował:</div>
         <div id="npr-calc-prac-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;max-height:160px;overflow-y:auto"></div>
         <div style="display:flex;gap:8px;align-items:flex-end">
@@ -439,7 +534,7 @@ body.kier .kier-only{display:flex!important}
     <div id="sync-share-name" style="font-size:13px;font-weight:800;margin-bottom:6px"></div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Pracownik skanuje ten kod (albo wpisuje) raz na swoim telefonie: ekran logowania → „Mam kod pracownika". Widzi tylko swoje dane, bez finansów. Kod możesz w każdej chwili odłączyć w liście urządzeń.</div>
     <div id="sync-share-qr" style="display:flex;justify-content:center;margin-bottom:12px"></div>
-    <div id="sync-share-code" style="font-size:10px;word-break:break-all;background:#232a31;border-radius:8px;padding:10px;color:var(--sec);margin-bottom:10px"></div>
+    <div id="sync-share-code" style="font-size:10px;word-break:break-all;background:var(--surface2);border-radius:8px;padding:10px;color:var(--sec);margin-bottom:10px"></div>
     <button class="btn-p" onclick="copySyncCode()">📋 Kopiuj kod</button>
   </div>
 </div>
@@ -465,7 +560,7 @@ body.kier .kier-only{display:flex!important}
     <select class="fs" id="aw-miesiac-filtr" onchange="renderAwarieList()" style="flex:1;font-size:12px;padding:7px 10px"></select>
   </div>
   <div class="card" style="padding:0 14px" id="list-awarie">
-    <div class="li-empty" id="empty-awarie" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
+    <div class="li-empty" id="empty-awarie" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
   <button class="fab" onclick="openNewAwaria()">＋</button>
 </div>
@@ -507,7 +602,7 @@ body.kier .kier-only{display:flex!important}
     <div class="ftab" onclick="setFtab(this,'narz')">W użyciu</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-narz">
-    <div class="li-empty" id="empty-narz" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak narzędzi — dodaj pierwsze przyciskiem ＋</div>
+    <div class="li-empty" id="empty-narz" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak narzędzi — dodaj pierwsze przyciskiem ＋</div>
   </div>
   <!-- Scanner overlay -->
   <div class="scan-ov" id="scan-ov" style="display:none">
@@ -579,7 +674,7 @@ body.kier .kier-only{display:flex!important}
     <div class="ftab" onclick="setFtab(this,'wyd')">Inne</div>
   </div>
   <div class="card" style="padding:0 14px" id="list-wyd">
-    <div class="li-empty" id="empty-wyd" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
+    <div class="li-empty" id="empty-wyd" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>
   </div>
   <button class="fab" onclick="openNewWydatek()">＋</button>
 </div>
@@ -814,6 +909,14 @@ body.kier .kier-only{display:flex!important}
     <button id="pin-bio-btn" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;padding:9px 18px;border-radius:22px">👆 Zaloguj odciskiem</button>
     <button onclick="pinCancel()" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;margin-top:6px">← Wybierz inne konto</button>
   </div>
+  <!-- Ustawienie PIN przy pierwszym logowaniu (zamiast window.prompt) -->
+  <div id="login-pin-setup" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;text-align:center">
+    <div class="login-logo">🔐</div>
+    <div id="pin-setup-title" style="color:#fff;font-size:16px;font-weight:800"></div>
+    <div id="pin-setup-sub" style="color:rgba(255,255,255,.7);font-size:12px;margin-bottom:4px"></div>
+    <div class="pin-dots" id="pin-setup-dots"></div>
+    <div class="pin-pad" id="pin-setup-pad"></div>
+  </div>
 </div>
 <!-- Skaner QR kodu pracownika -->
 <div id="qr-scan-ov" style="display:none;position:absolute;inset:0;z-index:10000;background:#000;flex-direction:column;align-items:center;justify-content:center;gap:14px">
@@ -825,6 +928,35 @@ body.kier .kier-only{display:flex!important}
 </div>
 </div><!-- .screen -->
 <script>
+// ═══════ MOTYW (jasny/ciemny) — indywidualnie per konto ═══════
+// Zapisywany w localStorage per uid (ten sam wzorzec co odcisk palca — BIO_PREFIX),
+// więc na współdzielonym urządzeniu biurowym każde konto pamięta WŁASNY wybór.
+// Nowe/nigdy-nie-ustawione konto dostaje preferencję systemową (już zastosowaną
+// przez wczesny skrypt w <head>, żeby uniknąć błysku złego motywu).
+const THEME_KEY_PREFIX = 'elektroapp_theme_';
+
+function systemPrefersDark() {
+  try { return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+  catch (e) { return true; }
+}
+function themeStorageUid() { return (typeof currentUser !== 'undefined' && currentUser) ? currentUser.id : '_anon'; }
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+}
+function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem(THEME_KEY_PREFIX + themeStorageUid()); } catch (e) {}
+  applyTheme(saved || (systemPrefersDark() ? 'dark' : 'light'));
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  try { localStorage.setItem(THEME_KEY_PREFIX + themeStorageUid(), next); } catch (e) {}
+}
+
 // ═══════ DANE ═══════
 const DATA = {
   projekty: {
@@ -862,9 +994,9 @@ const DATA = {
   },
   narzedzia: {
     t1: { id:'t1', marka:'Makita', model:'DHP484Z', nr_ser:'MAK-2022-4841', status:'Dostępne', wartosc:650, data_zakupu:'15.03.2022', gwarancja_do:'15.03.2024', komu:null, ikona:'🔧' },
-    t2: { id:'t2', marka:'Bosch', model:'GBH 2-28 F', nr_ser:null, status:'Pożyczone', wartosc:890, data_zakupu:'20.06.2021', gwarancja_do:'20.06.2023', komu:'Arek Nowak', ikona:'🔨', naprawy:[{data:'10.01.2023',opis:'Wymiana szczotek',serwis:'Bosch Service',koszt:120},{data:'05.08.2022',opis:'Naprawa mechanizmu udarowego',serwis:'Serwis Narzędzi Wrocław',koszt:280}] },
+    t2: { id:'t2', marka:'Bosch', model:'GBH 2-28 F', nr_ser:null, status:'Pożyczone', wartosc:890, data_zakupu:'20.06.2021', gwarancja_do:'20.06.2023', komu:null, ikona:'🔨', naprawy:[{data:'10.01.2023',opis:'Wymiana szczotek',serwis:'Bosch Service',koszt:120},{data:'05.08.2022',opis:'Naprawa mechanizmu udarowego',serwis:'Serwis Narzędzi Wrocław',koszt:280}] },
     t3: { id:'t3', marka:'Fluke', model:'117 Multimeter', nr_ser:'FLK-2023-117', status:'Dostępne', wartosc:1200, data_zakupu:'01.09.2023', gwarancja_do:'01.09.2026', komu:null, ikona:'📏', naprawy:[{data:'15.11.2023',opis:'Kalibracja',serwis:'Fluke Authorized Service',koszt:190}] },
-    t4: { id:'t4', marka:'Knipex', model:'Zestaw szczypiec', nr_ser:'KNP-SET-01', status:'W użyciu', wartosc:450, data_zakupu:'10.12.2020', gwarancja_do:null, komu:'Maciek Sosna', ikona:'🪛' },
+    t4: { id:'t4', marka:'Knipex', model:'Zestaw szczypiec', nr_ser:'KNP-SET-01', status:'W użyciu', wartosc:450, data_zakupu:'10.12.2020', gwarancja_do:null, komu:null, ikona:'🪛' },
     t5: { id:'t5', marka:'Stanley', model:'Poziomnica 60cm', nr_ser:null, status:'Dostępne', wartosc:120, data_zakupu:'01.06.2023', gwarancja_do:'01.06.2024', komu:null, ikona:'📐' },
     t6: { id:'t6', marka:'Milwaukee', model:'M18 FUEL', nr_ser:'MIL-M18-2024', status:'Dostępne', wartosc:1450, data_zakupu:'05.01.2024', gwarancja_do:'05.01.2027', komu:null, ikona:'🔋', naprawy:[{data:'20.03.2024',opis:'Wymiana akumulatora',serwis:'Milwaukee Service',koszt:190}] },
   },
@@ -913,7 +1045,7 @@ const DATA = {
   // konfiguruje się w zakładce Ustawienia. Pracownik NIGDY nie widzi finansów firmy
   // (widzi tylko własne wynagrodzenie na swoim pasku).
   uzytkownicy: {
-    u0: { id:'u0', nazwa:'Karol', rola:'Właściciel', pin:'2580', pracownik:null, inicjaly:'K', kolor:'#0d47a1', admin:true },
+    u0: { id:'u0', nazwa:'Właściciel Demo', rola:'Właściciel', pin:'0000', pracownik:null, inicjaly:'WD', kolor:'#0d47a1', admin:true },
     uw1: { id:'uw1', nazwa:'Mariusz Kowalczyk', rola:'Elektryk', pin:'1111', pracownik:'w1', inicjaly:'MK', kolor:'#1565c0', admin:false, uprawnienia:{ godziny:true, paski:true, kody:true, awarie:true, projekty:false, narzedzia:false } },
     uw2: { id:'uw2', nazwa:'Tomasz Wiśniewski', rola:'Elektryk', pin:'2222', pracownik:'w2', inicjaly:'TW', kolor:'#2e7d32', admin:false, uprawnienia:{ godziny:true, paski:true, kody:true, awarie:true, projekty:false, narzedzia:false } },
     uw3: { id:'uw3', nazwa:'Marcin Dąbrowski', rola:'Monter', pin:'3333', pracownik:'w3', inicjaly:'MD', kolor:'#c62828', admin:false, uprawnienia:{ godziny:true, paski:true, kody:false, awarie:false, projekty:false, narzedzia:false } },
@@ -946,8 +1078,8 @@ const DATA = {
 const MIGRACJA_APPSHEET = {"uzytkownicy":{"u0":{"id":"u0","nazwa":"Właściciel Demo","rola":"Właściciel","pin":"0000","pracownik":null,"inicjaly":"WD","kolor":"#0d47a1","admin":true},"uw1":{"id":"uw1","nazwa":"Pracownik 1","rola":"Elektryk","pin":"1111","pracownik":"w1","inicjaly":"P1","kolor":"#1565c0","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw2":{"id":"uw2","nazwa":"Pracownik 2","rola":"Elektryk","pin":"2222","pracownik":"w2","inicjaly":"P2","kolor":"#2e7d32","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw3":{"id":"uw3","nazwa":"Pracownik 3","rola":"Elektryk","pin":"3333","pracownik":"w3","inicjaly":"P3","kolor":"#e65100","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw4":{"id":"uw4","nazwa":"Pracownik 4","rola":"Elektryk","pin":"4444","pracownik":"w4","inicjaly":"P4","kolor":"#6a1b9a","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw5":{"id":"uw5","nazwa":"Pracownik 5","rola":"Elektryk","pin":"5555","pracownik":"w5","inicjaly":"P5","kolor":"#00838f","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}},"uw6":{"id":"uw6","nazwa":"Pracownik 6","rola":"Elektryk","pin":"6666","pracownik":"w6","inicjaly":"P6","kolor":"#c62828","admin":false,"uprawnienia":{"godziny":true,"paski":true,"kody":true,"awarie":true,"projekty":false,"narzedzia":false}}},"pracownicy":{"w3":{"id":"w3","imie":"Patryk","nazwisko":"","rola":"Elektryk","stawka":30,"tel":"","status":"Aktywny","inicjaly":"P","kolor":"#e65100","projekty":["p5","p6","p7","p3","p4","p9","p10","p11"]},"w1":{"id":"w1","imie":"Tomek","nazwisko":"","rola":"Elektryk","stawka":28,"tel":"488 494 3058","status":"Aktywny","inicjaly":"T","kolor":"#1565c0","projekty":["p3","p2","p1","p4","p5"]},"w2":{"id":"w2","imie":"Maciek Sosna","nazwisko":"","rola":"Elektryk","stawka":32,"tel":"485 761 4422","status":"Aktywny","inicjaly":"MS","kolor":"#2e7d32","projekty":["p3","p2","p1","p4","p5","p6","p7","p9","p10","p11"]},"w4":{"id":"w4","imie":"Piotrek Świecki","nazwisko":"","rola":"Elektryk","stawka":30,"tel":"","status":"Aktywny","inicjaly":"PŚ","kolor":"#6a1b9a","projekty":["p6","p5","p8","p7","p4","p10","p12"]},"w5":{"id":"w5","imie":"Michał Królik","nazwisko":"","rola":"Elektryk","stawka":30,"tel":"","status":"Aktywny","inicjaly":"MK","kolor":"#00838f","projekty":["p6"]},"w6":{"id":"w6","imie":"Arek","nazwisko":"","rola":"Elektryk","stawka":27,"tel":"883 449 233","status":"Aktywny","inicjaly":"A","kolor":"#c62828","projekty":["p7","p5","p8","p3","p4","p9","p10","p11","p12"]}},"projekty":{"p1":{"id":"p1","nazwa":"Mariusz","klient":"Mariusz","adres":"","status":"Zakończony","wartosc":25000,"postep":100,"start":"20.04.2026","koniec":"30.04.2026","terminWykonania":"30.04.2026","kolor":"#1565c0","kolorL":"#e3f2fd","pracownicy":["w1","w2"],"kosztyRobocizna":3300,"kosztyMaterialy":10994.01,"planLudzie":6720,"planMaterial":12500,"planZysk":5780,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p2":{"id":"p2","nazwa":"Pieczarkami Cab.","klient":"Pieczarkami Cab.","adres":"","status":"Zakończony","wartosc":6426,"postep":100,"start":"13.04.2026","koniec":"08.05.2026","terminWykonania":"08.05.2026","kolor":"#2e7d32","kolorL":"#e8f5e9","pracownicy":["w1","w2"],"kosztyRobocizna":3552.56,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":6426,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p3":{"id":"p3","nazwa":"Chomka","klient":"Chomka","adres":"","status":"Zakończony","wartosc":0,"postep":100,"start":"01.04.2026","koniec":"08.04.2026","terminWykonania":"08.04.2026","kolor":"#e65100","kolorL":"#fff3e0","pracownicy":["w3","w1","w2","w6"],"kosztyRobocizna":2285,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p4":{"id":"p4","nazwa":"Wewnętrzny","klient":"Wewnętrzny","adres":"","status":"W trakcie","wartosc":0,"postep":0,"start":"","koniec":"","terminWykonania":"","kolor":"#6a1b9a","kolorL":"#f3e5f5","pracownicy":["w3","w1","w2","w4","w6"],"kosztyRobocizna":1006,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p5":{"id":"p5","nazwa":"Skwara Warszawska","klient":"Skwara Warszawska","adres":"","status":"Zakończony","wartosc":30000,"postep":100,"start":"07.05.2026","koniec":"29.05.2026","terminWykonania":"29.05.2026","kolor":"#00838f","kolorL":"#e0f7fa","pracownicy":["w3","w1","w2","w4","w6"],"kosztyRobocizna":12188,"kosztyMaterialy":1271.09,"planLudzie":22680,"planMaterial":2940,"planZysk":4380,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p6":{"id":"p6","nazwa":"Szkoła Dąbrowski","klient":"Szkoła Dąbrowski","adres":"","status":"Zakończony","wartosc":12222,"postep":100,"start":"20.05.2026","koniec":"22.05.2026","terminWykonania":"22.05.2026","kolor":"#c62828","kolorL":"#ffebee","pracownicy":["w3","w2","w4","w5"],"kosztyRobocizna":3046,"kosztyMaterialy":863.54,"planLudzie":0,"planMaterial":0,"planZysk":12222,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p7":{"id":"p7","nazwa":"Szkoła Grala Dąbrowski","klient":"Szkoła Grala Dąbrowski","adres":"","status":"Poprawki","wartosc":20722.12,"postep":0,"start":"10.06.2026","koniec":"24.06.2026","terminWykonania":"24.06.2026","kolor":"#37474f","kolorL":"#eceff1","pracownicy":["w3","w2","w4","w6"],"kosztyRobocizna":8555.5,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":20722.12,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p8":{"id":"p8","nazwa":"Wspólnoty","klient":"Wspólnoty","adres":"","status":"W trakcie","wartosc":0,"postep":0,"start":"","koniec":"","terminWykonania":"","kolor":"#ad1457","kolorL":"#fce4ec","pracownicy":["w4","w6"],"kosztyRobocizna":465,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":0,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p9":{"id":"p9","nazwa":"Borki Kosy 29","klient":"Borki Kosy 29","adres":"","status":"Zakończony","wartosc":6000,"postep":100,"start":"26.06.2026","koniec":"26.06.2026","terminWykonania":"26.06.2026","kolor":"#4527a0","kolorL":"#ede7f6","pracownicy":["w3","w2","w6"],"kosztyRobocizna":979,"kosztyMaterialy":1551.6,"planLudzie":1800,"planMaterial":800,"planZysk":3400,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p10":{"id":"p10","nazwa":"Szkoła Skórzec","klient":"Szkoła Skórzec","adres":"","status":"W trakcie","wartosc":31667.5,"postep":0,"start":"25.06.2026","koniec":"","terminWykonania":"","kolor":"#9e9d24","kolorL":"#f9fbe7","pracownicy":["w3","w2","w4","w6"],"kosztyRobocizna":8223,"kosztyMaterialy":0,"planLudzie":0,"planMaterial":0,"planZysk":31667.5,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p11":{"id":"p11","nazwa":"Szkoła Zbuczyn","klient":"Szkoła Zbuczyn","adres":"","status":"W trakcie","wartosc":0,"postep":0,"start":"14.07.2026","koniec":"31.07.2026","terminWykonania":"31.07.2026","kolor":"#0277bd","kolorL":"#e1f5fe","pracownicy":["w3","w2","w6"],"kosztyRobocizna":1943,"kosztyMaterialy":0,"planLudzie":13650,"planMaterial":0,"planZysk":-13650,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]},"p12":{"id":"p12","nazwa":"Wiśniew Domek","klient":"Wiśniew Domek","adres":"","status":"W planie","wartosc":12000,"postep":0,"start":"20.07.2026","koniec":"23.07.2026","terminWykonania":"23.07.2026","kolor":"#558b2f","kolorL":"#f1f8e9","pracownicy":["w4","w6"],"kosztyRobocizna":825,"kosztyMaterialy":0,"planLudzie":960,"planMaterial":5600,"planZysk":5440,"opis":"","zaplacono":false,"dataZaplaty":null,"zadania":[]}},"czasPracy":{"2026-04-10":[{"prac":"w2","godz":8,"proj":"p3","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-13":[{"prac":"w2","godz":8,"proj":"p3","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-07":[{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-08":[{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-09":[{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-14":[{"prac":"w2","godz":8,"proj":"p3","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p3","od":"08:00","do":"16:00"}],"2026-04-15":[{"prac":"w1","godz":9.5,"proj":"p2","od":"08:00","do":"17:30"},{"prac":"w2","godz":8,"proj":"p2","od":"08:00","do":"16:00"}],"2026-04-16":[{"prac":"w1","godz":9.02,"proj":"p2","od":"08:00","do":"17:01"},{"prac":"w2","godz":9,"proj":"p2","od":"08:00","do":"17:00"}],"2026-04-17":[{"prac":"w2","godz":8,"proj":"p2","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p2","od":"08:00","do":"16:00"}],"2026-04-20":[{"prac":"w1","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"}],"2026-04-21":[{"prac":"w2","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"},{"prac":"w1","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"}],"2026-04-22":[{"prac":"w2","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"},{"prac":"w1","godz":8.5,"proj":"p2","od":"08:00","do":"16:30"}],"2026-04-23":[{"prac":"w2","godz":8,"proj":"p2","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p2","od":"08:00","do":"16:00"}],"2026-04-24":[{"prac":"w2","godz":8.5,"proj":"p1","od":"08:00","do":"16:30"},{"prac":"w1","godz":8.5,"proj":"p1","od":"08:00","do":"16:30"}],"2026-04-27":[{"prac":"w2","godz":8,"proj":"p1","od":"08:00","do":"16:00"},{"prac":"w1","godz":8,"proj":"p1","od":"08:00","do":"16:00"}],"2026-04-28":[{"prac":"w2","godz":10,"proj":"p1","od":"08:00","do":"18:00"},{"prac":"w1","godz":10,"proj":"p1","od":"08:00","do":"18:00"}],"2026-04-29":[{"prac":"w2","godz":10,"proj":"p1","od":"08:00","do":"18:00"},{"prac":"w1","godz":10,"proj":"p1","od":"08:00","do":"18:00"}],"2026-05-04":[{"prac":"w2","godz":9,"proj":"p1","od":"08:00","do":"17:00"},{"prac":"w1","godz":9,"proj":"p1","od":"08:00","do":"17:00"}],"2026-05-05":[{"prac":"w2","godz":9.5,"proj":"p1","od":"08:00","do":"17:30"},{"prac":"w1","godz":9.5,"proj":"p1","od":"08:00","do":"17:30"}],"2026-05-06":[{"prac":"w1","godz":9,"proj":"p4","od":"08:00","do":"17:00"},{"prac":"w2","godz":9,"proj":"p4","od":"08:00","do":"17:00"}],"2026-05-07":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w1","godz":4,"proj":"p4","od":"12:00","do":"16:00"}],"2026-05-08":[{"prac":"w1","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-11":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-12":[{"prac":"w2","godz":10.5,"proj":"p5","od":"07:00","do":"17:30"}],"2026-05-13":[{"prac":"w2","godz":10.5,"proj":"p5","od":"07:00","do":"17:30"}],"2026-05-14":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-18":[{"prac":"w2","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"}],"2026-05-19":[{"prac":"w3","godz":9,"proj":"p5","od":"07:00","do":"16:00"},{"prac":"w2","godz":9,"proj":"p5","od":"07:00","do":"16:00"}],"2026-05-20":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w4","godz":12,"proj":"p6","od":"07:00","do":"19:00"}],"2026-05-21":[{"prac":"w5","godz":12,"proj":"p6","od":"07:00","do":"19:00"},{"prac":"w3","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w2","godz":11,"proj":"p5","od":"07:00","do":"18:00"}],"2026-05-22":[{"prac":"w5","godz":13.5,"proj":"p6","od":"07:00","do":"20:30"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-23":[{"prac":"w3","godz":9,"proj":"p6","od":"07:00","do":"16:00"},{"prac":"w4","godz":9,"proj":"p6","od":"07:00","do":"16:00"}],"2026-05-15":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-26":[{"prac":"w4","godz":12,"proj":"p6","od":"07:00","do":"19:00"},{"prac":"w2","godz":10.5,"proj":"p5","od":"07:00","do":"17:30"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-27":[{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p6","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-05-25":[{"prac":"w3","godz":9.5,"proj":"p6","od":"07:00","do":"16:30"},{"prac":"w2","godz":13,"proj":"p6","od":"07:00","do":"20:00"}],"2026-05-28":[{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-11":[{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w6","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-01":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-02":[{"prac":"w6","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-03":[{"prac":"w6","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w2","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w3","godz":11,"proj":"p5","od":"07:00","do":"18:00"},{"prac":"w4","godz":11,"proj":"p5","od":"07:00","do":"18:00"}],"2026-06-05":[{"prac":"w6","godz":5,"proj":"p8","od":"13:00","do":"18:00"}],"2026-06-08":[{"prac":"w2","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p5","od":"07:00","do":"17:00"},{"prac":"w4","godz":11,"proj":"p8","od":"07:00","do":"18:00"},{"prac":"w6","godz":10,"proj":"p5","od":"07:00","do":"17:00"}],"2026-06-09":[{"prac":"w2","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"},{"prac":"w3","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"},{"prac":"w4","godz":11.5,"proj":"p5","od":"07:00","do":"18:30"}],"2026-06-10":[{"prac":"w2","godz":10,"proj":"p7","od":"07:00","do":"17:00"},{"prac":"w6","godz":10,"proj":"p7","od":"07:00","do":"17:00"}],"2026-06-12":[{"prac":"w2","godz":10,"proj":"p7","od":"07:00","do":"17:00"},{"prac":"w6","godz":8,"proj":"p7","od":"08:00","do":"16:00"},{"prac":"w3","godz":8,"proj":"p7","od":"08:00","do":"16:00"}],"2026-06-15":[{"prac":"w6","godz":8,"proj":"p7","od":"08:30","do":"16:30"},{"prac":"w2","godz":8,"proj":"p7","od":"08:30","do":"16:30"},{"prac":"w4","godz":8,"proj":"p7","od":"08:30","do":"16:30"}],"2026-06-18":[{"prac":"w6","godz":5,"proj":"p7","od":"11:30","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-19":[{"prac":"w6","godz":9,"proj":"p7","od":"08:00","do":"17:00"},{"prac":"w2","godz":9,"proj":"p7","od":"08:00","do":"17:00"},{"prac":"w3","godz":7,"proj":"p7","od":"08:00","do":"15:00"}],"2026-06-22":[{"prac":"w3","godz":10.5,"proj":"p7","od":"07:00","do":"17:30"},{"prac":"w6","godz":13,"proj":"p7","od":"07:00","do":"20:00"},{"prac":"w2","godz":13,"proj":"p7","od":"07:00","do":"20:00"},{"prac":"w4","godz":13,"proj":"p7","od":"07:00","do":"20:00"}],"2026-06-23":[{"prac":"w6","godz":2,"proj":"p3","od":"10:00","do":"12:00"},{"prac":"w3","godz":2,"proj":"p3","od":"10:00","do":"12:00"},{"prac":"w6","godz":2,"proj":"p4","od":"08:00","do":"10:00"},{"prac":"w6","godz":4,"proj":"p7","od":"12:00","do":"16:00"},{"prac":"w3","godz":2,"proj":"p4","od":"08:00","do":"10:00"},{"prac":"w3","godz":5,"proj":"p7","od":"12:00","do":"17:00"},{"prac":"w2","godz":8,"proj":"p7","od":"08:00","do":"16:00"},{"prac":"w4","godz":8,"proj":"p4","od":"08:00","do":"16:00"}],"2026-06-26":[{"prac":"w6","godz":11,"proj":"p9","od":"08:00","do":"19:00"},{"prac":"w2","godz":11,"proj":"p9","od":"08:00","do":"19:00"},{"prac":"w3","godz":11,"proj":"p9","od":"08:00","do":"19:00"}],"2026-06-29":[{"prac":"w6","godz":8,"proj":"p10","od":"08:00","do":"16:00"},{"prac":"w2","godz":8,"proj":"p10","od":"08:00","do":"16:00"},{"prac":"w3","godz":8,"proj":"p10","od":"08:00","do":"16:00"},{"prac":"w4","godz":8,"proj":"p10","od":"08:00","do":"16:00"}],"2026-06-30":[{"prac":"w6","godz":4,"proj":"p10","od":"12:00","do":"16:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p10","od":"07:00","do":"17:00"}],"2026-07-03":[{"prac":"w6","godz":9,"proj":"p10","od":"07:00","do":"16:00"},{"prac":"w6","godz":1,"proj":"p3","od":"16:00","do":"17:00"},{"prac":"w2","godz":9,"proj":"p10","od":"07:00","do":"16:00"},{"prac":"w2","godz":1,"proj":"p3","od":"16:00","do":"17:00"},{"prac":"w3","godz":9,"proj":"p10","od":"07:00","do":"16:00"}],"2026-06-16":[{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w6","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w4","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-17":[{"prac":"w6","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p7","od":"08:00","do":"16:30"}],"2026-06-24":[{"prac":"w6","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w3","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w3","godz":5.5,"proj":"p5","od":"12:00","do":"17:30"},{"prac":"w2","godz":4,"proj":"p7","od":"08:00","do":"12:00"},{"prac":"w2","godz":6.5,"proj":"p7","od":"12:00","do":"18:30"}],"2026-06-25":[{"prac":"w6","godz":8.5,"proj":"p10","od":"08:00","do":"16:30"},{"prac":"w2","godz":8.5,"proj":"p10","od":"08:00","do":"16:30"},{"prac":"w3","godz":8.5,"proj":"p10","od":"08:00","do":"16:30"}],"2026-07-06":[{"prac":"w6","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p10","od":"07:00","do":"17:00"}],"2026-07-07":[{"prac":"w6","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p10","od":"07:00","do":"17:00"}],"2026-07-08":[{"prac":"w6","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p10","od":"07:00","do":"17:00"},{"prac":"w3","godz":9,"proj":"p10","od":"08:00","do":"17:00"}],"2026-07-09":[{"prac":"w6","godz":3,"proj":"p10","od":"13:00","do":"16:00"},{"prac":"w2","godz":8,"proj":"p10","od":"07:00","do":"15:00"},{"prac":"w3","godz":9,"proj":"p10","od":"07:00","do":"16:00"}],"2026-07-10":[{"prac":"w6","godz":8.5,"proj":"p10","od":"07:30","do":"16:00"},{"prac":"w3","godz":9,"proj":"p10","od":"07:00","do":"16:00"}],"2026-07-13":[{"prac":"w6","godz":12,"proj":"p10","od":"07:00","do":"19:00"},{"prac":"w4","godz":10.5,"proj":"p10","od":"08:30","do":"19:00"}],"2026-07-14":[{"prac":"w6","godz":8,"proj":"p11","od":"07:00","do":"15:00"},{"prac":"w3","godz":5.5,"proj":"p11","od":"09:30","do":"15:00"},{"prac":"w2","godz":11,"proj":"p11","od":"07:00","do":"18:00"}],"2026-07-20":[{"prac":"w4","godz":8.5,"proj":"p12","od":"08:00","do":"16:30"},{"prac":"w3","godz":9,"proj":"p11","od":"08:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p11","od":"07:00","do":"17:00"}],"2026-07-21":[{"prac":"w6","godz":10,"proj":"p12","od":"07:00","do":"17:00"},{"prac":"w4","godz":10,"proj":"p12","od":"07:00","do":"17:00"},{"prac":"w2","godz":10,"proj":"p11","od":"07:00","do":"17:00"},{"prac":"w3","godz":10,"proj":"p11","od":"07:00","do":"17:00"}]},"bloki":{"b1":{"id":"b1","nazwa":"Budynek 1","adres":"ul. Przykładowa 1, Miasto Przykładowe","lat":50,"lng":20,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":["a2","a4","a5","a6","a7","a8","a10","a11"],"ikona":"🏢"},"b2":{"id":"b2","nazwa":"Budynek 2","adres":"ul. Przykładowa 2, Miasto Przykładowe","lat":50.001,"lng":20.001,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b3":{"id":"b3","nazwa":"Budynek 3","adres":"ul. Przykładowa 3, Miasto Przykładowe","lat":50.002,"lng":20.002,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b4":{"id":"b4","nazwa":"Budynek 4","adres":"ul. Przykładowa 4, Miasto Przykładowe","lat":50.003,"lng":20.003,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b5":{"id":"b5","nazwa":"Budynek 5","adres":"ul. Przykładowa 5, Miasto Przykładowe","lat":50.004,"lng":20.004,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":["a13"],"ikona":"🏢"},"b6":{"id":"b6","nazwa":"Budynek 6","adres":"ul. Przykładowa 6, Miasto Przykładowe","lat":50.005,"lng":20.005,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b7":{"id":"b7","nazwa":"Budynek 7","adres":"ul. Przykładowa 7, Miasto Przykładowe","lat":50.006,"lng":20.006,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":["a12"],"ikona":"🏢"},"b8":{"id":"b8","nazwa":"Budynek 8","adres":"ul. Przykładowa 8, Miasto Przykładowe","lat":50.007,"lng":20.007,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b9":{"id":"b9","nazwa":"Budynek 9","adres":"ul. Przykładowa 9, Miasto Przykładowe","lat":50.008,"lng":20.008,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b10":{"id":"b10","nazwa":"Budynek 10","adres":"ul. Przykładowa 10, Miasto Przykładowe","lat":50.009,"lng":20.009,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b11":{"id":"b11","nazwa":"Budynek 11","adres":"ul. Przykładowa 11, Miasto Przykładowe","lat":50.01,"lng":20.01,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b12":{"id":"b12","nazwa":"Budynek 12","adres":"ul. Przykładowa 12, Miasto Przykładowe","lat":50.011,"lng":20.011,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b13":{"id":"b13","nazwa":"Budynek 13","adres":"ul. Przykładowa 13, Miasto Przykładowe","lat":50.012,"lng":20.012,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b14":{"id":"b14","nazwa":"Budynek 14","adres":"ul. Przykładowa 14, Miasto Przykładowe","lat":50.013,"lng":20.013,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b15":{"id":"b15","nazwa":"Budynek 15","adres":"ul. Przykładowa 15, Miasto Przykładowe","lat":50.014,"lng":20.014,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b16":{"id":"b16","nazwa":"Budynek 16","adres":"ul. Przykładowa 16, Miasto Przykładowe","lat":50.015,"lng":20.015,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b17":{"id":"b17","nazwa":"Budynek 17","adres":"ul. Przykładowa 17, Miasto Przykładowe","lat":50.016,"lng":20.016,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b18":{"id":"b18","nazwa":"Budynek 18","adres":"ul. Przykładowa 18, Miasto Przykładowe","lat":50.017,"lng":20.017,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"},"b19":{"id":"b19","nazwa":"Budynek 19","adres":"ul. Przykładowa 19, Miasto Przykładowe","lat":50.018,"lng":20.018,"kody":[{"typ":"Klatka / dostęp","kod":"0000"}],"awarie":[],"ikona":"🏢"}},"awarie":{"a1":{"id":"a1","opis":"Zgłoszenie usterki 1","blok":"Budynek 1","data":"08.03.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":150,"terminPlatnosci":"09.03.2026","notatka":"","ikona":"⚡"},"a2":{"id":"a2","opis":"Zgłoszenie usterki 2","blok":"Budynek 1","data":"08.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":150,"terminPlatnosci":"09.03.2026","notatka":"","ikona":"⚡"},"a3":{"id":"a3","opis":"Zgłoszenie usterki 3","blok":"Budynek 1","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a4":{"id":"a4","opis":"Zgłoszenie usterki 4","blok":"Budynek 1","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a5":{"id":"a5","opis":"Zgłoszenie usterki 5","blok":"Budynek 1","data":"11.03.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a6":{"id":"a6","opis":"Zgłoszenie usterki 6","blok":"Budynek 1","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a7":{"id":"a7","opis":"Zgłoszenie usterki 7","blok":"Budynek 1","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a8":{"id":"a8","opis":"Zgłoszenie usterki 8","blok":"Budynek 1","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a9":{"id":"a9","opis":"Zgłoszenie usterki 9","blok":"Budynek 1","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a10":{"id":"a10","opis":"Zgłoszenie usterki 10","blok":"Budynek 1","data":"11.03.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a11":{"id":"a11","opis":"Zgłoszenie usterki 11","blok":"Budynek 1","data":"25.04.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"},"a12":{"id":"a12","opis":"Zgłoszenie usterki 12","blok":"Budynek 7","data":"17.06.2026","status":"Zakończona","priorytet":"Średni","pracownik":null,"koszt":300,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"· Materiał: Materiał demo","ikona":"⚡"},"a13":{"id":"a13","opis":"Zgłoszenie usterki 13","blok":"Budynek 5","data":"27.06.2026","status":"Zgłoszona","priorytet":"Średni","pracownik":null,"koszt":0,"kwotaFaktura":0,"terminPlatnosci":"","notatka":"","ikona":"⚡"}},"wydatki":{"e1":{"id":"e1","opis":"Materiał — Mariusz","kwota":9667.55,"typ":"Materiały","data":"","proj":"p1"},"e2":{"id":"e2","opis":"Materiał — Mariusz","kwota":98.91,"typ":"Materiały","data":"","proj":"p1"},"e3":{"id":"e3","opis":"Materiał — Mariusz","kwota":1129.24,"typ":"Materiały","data":"","proj":"p1"},"e4":{"id":"e4","opis":"Materiał — Mariusz","kwota":98.31,"typ":"Materiały","data":"","proj":"p1"},"e5":{"id":"e5","opis":"Paliwo iveco — Skwara Warszawska","kwota":151.35,"typ":"Paliwo","data":"","proj":"p5"},"e6":{"id":"e6","opis":"Paliwo ford — Skwara Warszawska","kwota":202.12,"typ":"Paliwo","data":"","proj":"p5"},"e7":{"id":"e7","opis":"Paliwo ford — Skwara Warszawska","kwota":198.14,"typ":"Paliwo","data":"","proj":"p5"},"e8":{"id":"e8","opis":"Paliwo ford — Skwara Warszawska","kwota":203.18,"typ":"Paliwo","data":"","proj":"p5"},"e9":{"id":"e9","opis":"Uchwyty i peszel — Szkoła Dąbrowski","kwota":562.11,"typ":"Materiały","data":"","proj":"p6"},"e10":{"id":"e10","opis":"Opaski tulejki — Szkoła Dąbrowski","kwota":76.63,"typ":"Materiały","data":"","proj":"p6"},"e11":{"id":"e11","opis":"Kolki — Szkoła Dąbrowski","kwota":224.8,"typ":"Materiały","data":"","proj":"p6"},"e12":{"id":"e12","opis":"Paliwo ford — Skwara Warszawska","kwota":131.88,"typ":"Paliwo","data":"","proj":"p5"},"e13":{"id":"e13","opis":"Paliwo ford — Skwara Warszawska","kwota":200.04,"typ":"Paliwo","data":"","proj":"p5"},"e14":{"id":"e14","opis":"Paliwo ford — Skwara Warszawska","kwota":184.38,"typ":"Paliwo","data":"","proj":"p5"},"e15":{"id":"e15","opis":"Rozdzielnica I zawartość — Borki Kosy 29","kwota":583.6,"typ":"Materiały","data":"","proj":"p9"},"e16":{"id":"e16","opis":"Kable — Borki Kosy 29","kwota":896,"typ":"Materiały","data":"","proj":"p9"},"e17":{"id":"e17","opis":"Paliwo — Borki Kosy 29","kwota":72,"typ":"Paliwo","data":"","proj":"p9"}},"czasPracyWlasne":{"w3":{},"w1":{},"w2":{},"w4":{},"w5":{},"w6":{}},"paski":{"w3":[{"dataWyplaty":"27.05.2026","kwota":1000,"okresOd":"25.05.2026","okresDo":"27.05.2026"},{"dataWyplaty":"11.06.2026","kwota":1355,"okresOd":"01.05.2026","okresDo":"31.05.2026"},{"dataWyplaty":"17.06.2026","kwota":500,"okresOd":"01.06.2026","okresDo":"17.06.2026"},{"dataWyplaty":"18.06.2026","kwota":1500,"okresOd":"01.06.2026","okresDo":"18.06.2026"}],"w1":[{"dataWyplaty":"17.05.2026","kwota":4046,"okresOd":"07.04.2026","okresDo":"30.05.2026"}],"w2":[{"dataWyplaty":"08.05.2026","kwota":3856,"okresOd":"07.04.2026","okresDo":"30.05.2026"},{"dataWyplaty":"10.06.2026","kwota":5824,"okresOd":"01.05.2026","okresDo":"31.05.2026"}],"w4":[{"dataWyplaty":"09.06.2026","kwota":1290,"okresOd":"01.05.2026","okresDo":"31.05.2026"}],"w5":[{"dataWyplaty":"12.06.2026","kwota":765,"okresOd":"01.05.2026","okresDo":"31.05.2026"}],"w6":[{"dataWyplaty":"08.07.2026","kwota":24,"okresOd":"","okresDo":""}]},"zaliczki":{"w3":[],"w1":[],"w2":[],"w4":[],"w5":[],"w6":[]}};
 Object.assign(DATA, MIGRACJA_APPSHEET);
 
-// Współrzędne bloków (geokodowane z OpenStreetMap — Siedlce)
-const BLOK_GEO = {"b1":{"lat":52.1638371,"lng":22.280917},"b2":{"lat":52.1636748,"lng":22.2743569},"b3":{"lat":52.1634801,"lng":22.2766994},"b4":{"lat":52.1757857,"lng":22.297913},"b5":{"lat":52.1580771,"lng":22.2512554},"b6":{"lat":52.1583473,"lng":22.2497839},"b7":{"lat":52.1583862,"lng":22.2415429},"b8":{"lat":52.1579968,"lng":22.2421236},"b9":{"lat":52.1729673,"lng":22.2719438},"b10":{"lat":52.1730203,"lng":22.2715782},"b11":{"lat":52.1727717,"lng":22.2714189},"b12":{"lat":52.1735086,"lng":22.2715488},"b13":{"lat":52.1791065,"lng":22.2692321},"b14":{"lat":52.1792382,"lng":22.2684434},"b15":{"lat":52.1783276,"lng":22.2681508},"b16":{"lat":52.1670815,"lng":22.2842835},"b17":{"lat":52.1625893,"lng":22.2826852},"b18":{"lat":52.1635314,"lng":22.2889916},"b19":{"lat":52.1627378,"lng":22.2897734}};
+// Współrzędne bloków (dane demo — realne dane zastąpione syntetycznymi 2026-07-20)
+const BLOK_GEO = {"b1":{"lat":50,"lng":20},"b2":{"lat":50.001,"lng":20.001},"b3":{"lat":50.002,"lng":20.002},"b4":{"lat":50.003,"lng":20.003},"b5":{"lat":50.004,"lng":20.004},"b6":{"lat":50.005,"lng":20.005},"b7":{"lat":50.006,"lng":20.006},"b8":{"lat":50.007,"lng":20.007},"b9":{"lat":50.008,"lng":20.008},"b10":{"lat":50.009,"lng":20.009},"b11":{"lat":50.01,"lng":20.01},"b12":{"lat":50.011,"lng":20.011},"b13":{"lat":50.012,"lng":20.012},"b14":{"lat":50.013,"lng":20.013},"b15":{"lat":50.014,"lng":20.014},"b16":{"lat":50.015,"lng":20.015},"b17":{"lat":50.016,"lng":20.016},"b18":{"lat":50.017,"lng":20.017},"b19":{"lat":50.018,"lng":20.018}};
 Object.keys(BLOK_GEO).forEach(id => { if (DATA.bloki[id] && BLOK_GEO[id]) { DATA.bloki[id].lat = BLOK_GEO[id].lat; DATA.bloki[id].lng = BLOK_GEO[id].lng; } });
 
 // ═══════ PEŁNE DANE Z APPSHEET — wszystkie sekcje zachowane (bez czyszczenia) ═══════
@@ -997,6 +1129,10 @@ const MERGE_COLLS = ['projekty', 'pracownicy', 'uzytkownicy', 'bloki', 'awarie',
 let SYNC_DEL = {}, SYNC_FP = {};
 try { SYNC_DEL = JSON.parse(localStorage.getItem('elektroapp_sync_del') || '{}'); } catch (e) { SYNC_DEL = {}; }
 try { SYNC_FP = JSON.parse(localStorage.getItem('elektroapp_sync_fp') || '{}'); } catch (e) { SYNC_FP = {}; }
+// Rekordy zmienione lokalnie, ale jeszcze NIE potwierdzone przez serwer (przetrwa nieudany
+// POST — w odróżnieniu od SYNC_FP, czyszczone dopiero po udanej odpowiedzi w syncPush()).
+let SYNC_PENDING = {};
+try { SYNC_PENDING = JSON.parse(localStorage.getItem('elektroapp_sync_pending') || '{}'); } catch (e) { SYNC_PENDING = {}; }
 
 function stripUpd(o) { if (!o || typeof o !== 'object') return o; const c = {}; for (const k in o) if (k !== '_upd') c[k] = o[k]; return c; }
 function hashStr(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h.toString(36); }
@@ -1011,16 +1147,37 @@ function stampChanges() {
       const rec = cur[id];
       if (!rec || typeof rec !== 'object') continue;
       const key = coll + ':' + id, fp = recFP(rec);
-      if (SYNC_FP[key] !== fp) { rec._upd = now; SYNC_FP[key] = fp; }
+      if (SYNC_FP[key] !== fp) { rec._upd = now; SYNC_FP[key] = fp; SYNC_PENDING[key] = true; }
     }
     for (const key of Object.keys(SYNC_FP)) {
-      if (key.startsWith(coll + ':')) { const id = key.slice(coll.length + 1); if (!(id in cur)) { SYNC_DEL[key] = now; delete SYNC_FP[key]; } }
+      if (key.startsWith(coll + ':')) { const id = key.slice(coll.length + 1); if (!(id in cur)) { SYNC_DEL[key] = now; delete SYNC_FP[key]; delete SYNC_PENDING[key]; } }
     }
   }
   const limit = now - 45 * 86400000;
   for (const k in SYNC_DEL) if (SYNC_DEL[k] < limit) delete SYNC_DEL[k];
   localStorage.setItem('elektroapp_sync_del', JSON.stringify(SYNC_DEL));
   localStorage.setItem('elektroapp_sync_fp', JSON.stringify(SYNC_FP));
+  localStorage.setItem('elektroapp_sync_pending', JSON.stringify(SYNC_PENDING));
+}
+
+// Payload do wysłania: kolekcje scalane po rekordach (MERGE_COLLS) przycięte do tych,
+// które faktycznie czekają na potwierdzenie — reszta (czasPracy/paski/zaliczki/...) leci
+// w całości, bo ich scalanie na serwerze jest kluczowane inaczej (dzień/pracownik, nie
+// coll:id), więc bezpieczne przycinanie wymagałoby osobnego śledzenia zmian per klucz.
+function buildSyncPayload() {
+  const out = {};
+  for (const coll of MERGE_COLLS) {
+    const cur = DATA[coll] || {};
+    const trimmed = {};
+    for (const id of Object.keys(cur)) {
+      if (SYNC_PENDING[coll + ':' + id]) trimmed[id] = cur[id];
+    }
+    out[coll] = trimmed;
+  }
+  for (const coll of Object.keys(DATA)) {
+    if (!MERGE_COLLS.includes(coll)) out[coll] = DATA[coll];
+  }
+  return out;
 }
 
 // Wchłoń stan z serwera (już scalony); odśwież odciski, żeby nie wykryć fałszywych zmian
@@ -1049,18 +1206,24 @@ async function syncPush() {
   _syncBusy = true;
   try {
     stampChanges();
+    const pendingKeys = Object.keys(SYNC_PENDING);
     const r = await fetch(SYNC_API + '/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SYNC_TOKEN },
-      body: JSON.stringify({ data: DATA, del: SYNC_DEL }),
+      body: JSON.stringify({ data: buildSyncPayload(), del: SYNC_DEL }),
     });
     if (r.ok) {
       const j = await r.json();
       if (j.data) adoptServerData(j.data, j.del);
+      // Dopiero teraz, po potwierdzeniu przez serwer, zdejmij flagę "czeka na wysłanie" —
+      // jeśli fetch rzuci wyjątek albo serwer odpowie błędem, SYNC_PENDING zostaje i te same
+      // rekordy pojadą w następnej próbie, nawet gdy stampChanges() ich już ponownie nie wykryje.
+      for (const k of pendingKeys) delete SYNC_PENDING[k];
+      localStorage.setItem('elektroapp_sync_pending', JSON.stringify(SYNC_PENDING));
       SYNC_LAST_AT = j.updated_at;
       localStorage.setItem('elektroapp_sync_last_at', String(SYNC_LAST_AT));
     }
-  } catch (e) { /* offline — spróbujemy przy kolejnym zapisie */ }
+  } catch (e) { /* offline — SYNC_PENDING nietknięty, spróbujemy przy kolejnym zapisie */ }
   _syncBusy = false;
 }
 
@@ -1125,9 +1288,9 @@ function syncNow() {
   syncPull().then(() => { syncPush(); showToast('✅ Zsynchronizowano'); if (currentTab === 'ustawienia') buildUstawienia(); });
 }
 
-function disconnectSync() {
+async function disconnectSync() {
   const emp = syncRole() === 'employee';
-  if (!confirm(emp ? 'Odłączyć to urządzenie od danych firmy? Będzie trzeba ponownie wpisać kod od szefa.' : 'Odłączyć synchronizację na tym urządzeniu? Dane lokalne zostaną.')) return;
+  if (!(await confirmAction(emp ? 'Odłączyć to urządzenie od danych firmy? Będzie trzeba ponownie wpisać kod od szefa.' : 'Odłączyć synchronizację na tym urządzeniu? Dane lokalne zostaną.'))) return;
   SYNC_TOKEN = null; SYNC_USER = null;
   localStorage.removeItem('elektroapp_sync_token');
   localStorage.removeItem('elektroapp_sync_user');
@@ -1214,7 +1377,7 @@ async function refreshDevices() {
 }
 
 async function revokeDevice(token) {
-  if (!confirm('Odłączyć ten telefon? Natychmiast straci dostęp do danych firmy.')) return;
+  if (!(await confirmAction('Odłączyć ten telefon? Natychmiast straci dostęp do danych firmy.'))) return;
   try {
     await fetch(SYNC_API + '/api/devices/revoke', {
       method: 'POST',
@@ -1228,11 +1391,9 @@ async function revokeDevice(token) {
 
 // Pracownik: przycisk ☁️ na nagłówku „Moje godziny"
 function employeeSyncTap() {
-  if (syncRole() === 'employee') {
-    if (confirm('To urządzenie jest połączone z danymi firmy.\n\nOK = odłącz (wróci do logowania kodem)\nAnuluj = zamknij')) disconnectSync();
-  } else {
-    loginEmployeeCode();
-  }
+  // disconnectSync() ma już własne potwierdzenie (confirmAction) — nie dublujemy go tutaj.
+  if (syncRole() === 'employee') disconnectSync();
+  else loginEmployeeCode();
 }
 
 // Pracownik: użyj kodu (z QR albo wpisany) → autoryzuj urządzenie
@@ -1290,20 +1451,70 @@ function stopQrScan() {
 }
 
 // Wymuś ustawienie PIN przy pierwszym logowaniu pracownika (konto oznaczone mustSetPin lub bez PIN)
+// Ekran w stylu appki (login-pin-setup) zamiast natywnego window.prompt().
+let pinSetupTarget = null, pinSetupBuffer = '', pinSetupFirstEntry = null;
+
 async function forcePinSetupIfNeeded() {
   const accs = Object.values(DATA.uzytkownicy);
   const acc = accs.find(u => !u.admin) || accs[0];
   if (!acc) return;
   if (!acc.mustSetPin && acc.pinHash) return;
-  let pin = '';
-  while (!/^\d{4}$/.test(pin)) {
-    pin = prompt(`Cześć ${acc.nazwa.split(' ')[0]}! Ustaw swój 4-cyfrowy PIN do logowania:`);
-    if (pin === null) return;  // anuluje — poprosimy ponownie przy próbie logowania
+  pinSetupStart(acc);
+}
+
+function pinSetupStart(acc) {
+  pinSetupTarget = acc;
+  pinSetupFirstEntry = null;
+  pinSetupBuffer = '';
+  document.getElementById('login-tiles').style.display = 'none';
+  document.getElementById('login-fresh').style.display = 'none';
+  document.getElementById('login-pin').style.display = 'none';
+  document.getElementById('login-pin-setup').style.display = 'flex';
+  document.getElementById('pin-setup-title').textContent = `Cześć ${acc.nazwa.split(' ')[0]}!`;
+  document.getElementById('pin-setup-sub').textContent = 'Ustaw swój 4-cyfrowy PIN do logowania';
+  document.getElementById('pin-setup-pad').innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k =>
+    k === '' ? '<div></div>' : `<button class="pin-key" onclick="pinSetupKey('${k}')">${k}</button>`).join('');
+  renderPinSetupDots();
+}
+
+function renderPinSetupDots() {
+  document.getElementById('pin-setup-dots').innerHTML = [0,1,2,3].map(i =>
+    `<div class="pin-dot${i < pinSetupBuffer.length ? ' filled' : ''}"></div>`).join('');
+}
+
+async function pinSetupKey(k) {
+  if (k === '⌫') { pinSetupBuffer = pinSetupBuffer.slice(0, -1); renderPinSetupDots(); return; }
+  if (pinSetupBuffer.length >= 4) return;
+  pinSetupBuffer += k;
+  renderPinSetupDots();
+  if (pinSetupBuffer.length !== 4) return;
+
+  if (pinSetupFirstEntry === null) {
+    // Pierwsze wpisanie — poproś o powtórzenie zamiast ufać jednorazowemu wpisowi
+    pinSetupFirstEntry = pinSetupBuffer;
+    pinSetupBuffer = '';
+    document.getElementById('pin-setup-sub').textContent = 'Powtórz PIN, żeby potwierdzić';
+    renderPinSetupDots();
+    return;
   }
-  await setPin(acc, pin);
+
+  if (pinSetupBuffer !== pinSetupFirstEntry) {
+    showToast('❌ PIN-y się różnią — spróbuj ponownie');
+    pinSetupFirstEntry = null;
+    pinSetupBuffer = '';
+    document.getElementById('pin-setup-sub').textContent = 'Ustaw swój 4-cyfrowy PIN do logowania';
+    renderPinSetupDots();
+    return;
+  }
+
+  const acc = pinSetupTarget;
+  await setPin(acc, pinSetupBuffer);
   delete acc.mustSetPin;
   saveState();
+  document.getElementById('login-pin-setup').style.display = 'none';
+  pinSetupTarget = null; pinSetupBuffer = ''; pinSetupFirstEntry = null;
   showToast('✅ PIN ustawiony — teraz zaloguj się nim');
+  renderLoginTiles();
 }
 
 // ═══════ PIN — hashowanie (SHA-256 + sól) zamiast jawnego tekstu ═══════
@@ -1452,6 +1663,23 @@ function closeModal(id) {
   if (currentOpenModalId === id) currentOpenModalId = null;
 }
 
+// ═══════ POTWIERDZENIE AKCJI NISZCZĄCEJ (styl appki zamiast natywnego confirm()) ═══════
+function confirmAction(message) {
+  return new Promise(resolve => {
+    document.getElementById('modal-confirm-msg').textContent = message;
+    const yes = document.getElementById('modal-confirm-yes');
+    const no = document.getElementById('modal-confirm-no');
+    const finish = (result) => {
+      closeModal('modal-confirm-ov');
+      yes.onclick = null; no.onclick = null;
+      resolve(result);
+    };
+    yes.onclick = () => finish(true);
+    no.onclick = () => finish(false);
+    openModal('modal-confirm-ov');
+  });
+}
+
 // ═══════ FIZYCZNY/GESTOWY PRZYCISK "WSTECZ" W TELEFONIE ═══════
 // Bez tego pierwsze cofnięcie na telefonie wychodzi z całej strony (to zwykła
 // przeglądarka, nie natywna appka). Podpinamy się pod historię przeglądarki:
@@ -1521,13 +1749,102 @@ function escapeHtml(str) {
   return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
-// ═══════ TOAST ═══════
+// ═══════ TOAST (centered confirmation "cloud" dla WSZYSTKICH komunikatów) ═══════
+const _EMOJI_RE = /^\p{Extended_Pictographic}️?/u;
+let _successPopTimer = null;
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  t.style.opacity = '1';
-  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 400); }, 2500);
+  const el = document.getElementById('success-pop');
+  const cloud = document.getElementById('success-pop-cloud');
+  const iconEl = document.getElementById('success-pop-icon');
+
+  const m = msg.match(_EMOJI_RE);
+  const emoji = m ? m[0] : '';
+  const text = m ? msg.slice(m[0].length).trim() : msg;
+
+  let kind = 'info';
+  if (emoji === '✅') kind = 'success';
+  else if (emoji === '⚠️' || emoji === '❌') kind = 'warn';
+
+  cloud.className = 'success-pop-cloud ' + kind;
+  if (kind === 'success') {
+    iconEl.innerHTML = '<svg width="52" height="52" viewBox="0 0 52 52"><circle class="success-pop-circle" cx="26" cy="26" r="24"/><path class="success-pop-check" d="M14 27l7 7 16-16"/></svg>';
+  } else if (kind === 'warn') {
+    iconEl.innerHTML = '<svg width="52" height="52" viewBox="0 0 52 52"><circle class="success-pop-circle warn" cx="26" cy="26" r="24"/><line class="success-pop-excl-bar" x1="26" y1="16" x2="26" y2="30"/><circle class="success-pop-excl-dot" cx="26" cy="37" r="2"/></svg>';
+  } else {
+    iconEl.innerHTML = `<div class="success-pop-emoji">${emoji || '💬'}</div>`;
+  }
+
+  el.querySelector('.success-pop-text').textContent = text || msg;
+  el.classList.remove('show');
+  void el.offsetWidth; // wymuś reflow, żeby animacja odtworzyła się przy powtórnym wywołaniu
+  el.classList.add('show');
+  clearTimeout(_successPopTimer);
+  _successPopTimer = setTimeout(() => el.classList.remove('show'), 1500);
+  if (kind === 'warn') shakeOpenModal();
+}
+
+// Potrząśnięcie otwartym formularzem (modalem) przy błędzie walidacji — wywoływane
+// automatycznie z showToast() dla każdego komunikatu ⚠️/❌, bez potrzeby ręcznego
+// wpinania w dziesiątki miejsc walidacji w całej appce.
+function shakeOpenModal() {
+  const sheet = Array.from(document.querySelectorAll('.modal-ov'))
+    .find(m => m.style.display !== 'none')
+    ?.querySelector('.modal-sh');
+  if (!sheet) return;
+  sheet.classList.remove('shake-x');
+  void sheet.offsetWidth;
+  sheet.classList.add('shake-x');
+}
+
+// Konfetti — krótki, lekki wybuch cząsteczek na canvasie dla dużych "wygranych"
+// (projekt zakończony na czas i w budżecie, ostatnia otwarta awaria zamknięta).
+function fireConfetti() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;z-index:10002;pointer-events:none';
+  const dpr = window.devicePixelRatio || 1;
+  const w = innerWidth, h = innerHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const colors = ['#f0a730', '#5db47c', '#4fb8a8', '#a98ee0', '#e2685c'];
+  const particles = Array.from({ length: 90 }, () => ({
+    x: w / 2, y: h / 3,
+    vx: (Math.random() - 0.5) * 10, vy: Math.random() * -9 - 3,
+    size: 5 + Math.random() * 5, color: colors[Math.floor(Math.random() * colors.length)],
+    rot: Math.random() * Math.PI * 2, vr: (Math.random() - 0.5) * 0.3,
+    rect: Math.random() < 0.5,
+  }));
+  const gravity = 0.28, maxFrames = 110;
+  let frame = 0;
+  (function tick() {
+    frame++;
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+      p.vy += gravity; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, 1 - frame / maxFrames);
+      if (p.rect) ctx.fillRect(-p.size / 2, -p.size / 3, p.size, p.size * 0.6);
+      else { ctx.beginPath(); ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+    });
+    if (frame < maxFrames) requestAnimationFrame(tick);
+    else canvas.remove();
+  })();
+}
+
+// Nowy element na liście (projekt, pracownik) — slide-in zamiast nagłego pojawienia się.
+function animateNewItem(containerId, id) {
+  requestAnimationFrame(() => {
+    const el = document.querySelector(`#${containerId} [data-id="${id}"]`);
+    if (!el) return;
+    el.classList.add('li-slide-in');
+    el.addEventListener('animationend', () => el.classList.remove('li-slide-in'), { once: true });
+  });
 }
 
 // ═══════ PROJEKTY ═══════
@@ -1666,7 +1983,7 @@ function buildProjDetail(id, tab) {
         </div>
       </div>
       <div style="padding:0 14px">
-        <div style="background:#232a31;border-radius:8px;overflow:hidden;margin-bottom:12px">
+        <div style="background:var(--surface2);border-radius:8px;overflow:hidden;margin-bottom:12px">
           <div style="background:${p.kolor};height:6px;width:${p.postep}%;transition:.6s ease"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:14px">
@@ -1675,20 +1992,20 @@ function buildProjDetail(id, tab) {
         </div>
         <div style="font-size:13px;color:var(--sec);line-height:1.5;margin-bottom:14px">${escapeHtml(p.opis)}</div>
 
-        <div class="fin" style="background:${p.zaplacono ? 'var(--green-l)' : '#232a31'};border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div class="fin" style="background:${p.zaplacono ? 'var(--green-l)' : 'var(--surface2)'};border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
           <div style="font-size:12px;font-weight:700;color:${p.zaplacono ? "var(--green)" : "var(--muted)"}">${p.zaplacono ? `✅ Zapłacono${p.dataZaplaty ? ' — ' + escapeHtml(p.dataZaplaty) : ''}` : '⏳ Nie zapłacono'}</div>
           <button onclick="toggleZaplacono('${id}')" class="btn-s admin-only" style="flex-shrink:0">${p.zaplacono ? 'Cofnij' : 'Oznacz jako zapłacone'}</button>
         </div>
 
         <div class="sec-hdr" style="margin-bottom:8px"><h3 style="font-size:12px">✅ Zadania</h3><span style="font-size:11px;color:var(--muted);font-weight:700">${leafStats.done}/${leafStats.total}</span></div>
         ${zadania.map((z, i) => buildZadanieHtml(p, i)).join('') || `<div style="color:var(--muted);font-size:12px;padding:8px 0">Brak zadań — dodaj poniżej.</div>`}
-        ${(fullAccess() || isKierownik()) ? `<div style="display:flex;gap:6px;margin-top:10px">
+        ${(canManage()) ? `<div style="display:flex;gap:6px;margin-top:10px">
           <input class="fi" id="nz-${id}" placeholder="＋ Dodaj zadanie..." style="flex:1;padding:9px 10px;font-size:12px" onkeydown="if(event.key==='Enter')addZadanie('${id}')">
           <button onclick="addZadanie('${id}')" class="btn-s">Dodaj</button>
         </div>
         <div style="margin-top:8px">
           <span onclick="toggleImportZadan('${id}')" style="font-size:11px;color:var(--blue);font-weight:700;cursor:pointer">📥 Importuj zadania (wklej tekst)</span>
-          <div id="imp-zad-box-${id}" style="display:none;background:#232a31;border-radius:8px;padding:10px;margin-top:8px">
+          <div id="imp-zad-box-${id}" style="display:none;background:var(--surface2);border-radius:8px;padding:10px;margin-top:8px">
             <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Jedna linia = jedno zadanie główne. Linia zaczynająca się od "- " = podzadanie poprzedniego zadania głównego.</div>
             <textarea class="fi" id="imp-zad-text-${id}" rows="6" style="resize:vertical;font-family:monospace;font-size:11px" placeholder="Parter — Montaż szaf${'\\n'}- wg rysunku 4.1: Montaż szafy LPD02"></textarea>
             <button class="btn-s" style="width:100%;margin-top:8px" onclick="importZadania('${id}')">Importuj</button>
@@ -1702,7 +2019,7 @@ function buildProjDetail(id, tab) {
       const w = DATA.pracownicy[wid];
       if (!w) return;
       const canSeeCost = fullAccess() || (currentUser && currentUser.pracownik === w.id);
-      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #2b333a" onclick="openPrac('${wid}')">
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)" onclick="openPrac('${wid}')">
         <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor}22;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:${w.kolor}">${escapeHtml(w.inicjaly)}</div>
         <div style="flex:1"><div style="font-weight:700;font-size:13px">${escapeHtml(w.imie)} ${escapeHtml(w.nazwisko)}</div><div style="font-size:11px;color:var(--muted)">${escapeHtml(w.rola)}${canSeeCost ? ` · ${w.stawka} zł/h` : ''}</div></div>
         <div style="font-size:12px;color:var(--blue)">›</div>
@@ -1712,12 +2029,12 @@ function buildProjDetail(id, tab) {
   } else if (tab === 'wydatki') {
     const projWydatki = Object.values(DATA.wydatki).filter(e => e.proj === id).sort((a, b) => (b.data || '').split('.').reverse().join('').localeCompare((a.data || '').split('.').reverse().join('')));
     html += `<div style="padding:0 14px">
-      ${(fullAccess() || isKierownik()) ? `<button onclick="openNewWydatek('${id}')" class="btn-s" style="width:100%;margin-bottom:12px">＋ Dodaj wydatek dla tego projektu</button>` : ''}
+      ${(canManage()) ? `<button onclick="openNewWydatek('${id}')" class="btn-s" style="width:100%;margin-bottom:12px">＋ Dodaj wydatek dla tego projektu</button>` : ''}
       <div class="sec-hdr" style="margin-bottom:8px"><h3 style="font-size:12px">📋 Wydatki tego projektu</h3><span style="font-size:11px;color:var(--muted);font-weight:700">${projWydatki.length}</span></div>
       ${projWydatki.length === 0 ? `<div style="color:var(--muted);font-size:12px;padding:8px 0;margin-bottom:8px">Brak zarejestrowanych wydatków.</div>` : projWydatki.map(e => {
         const meta = WYD_TYP_META[e.typ] || WYD_TYP_META['Inne'];
         const isIncome = e.typ === 'Przychód';
-        return `<div onclick="${fullAccess() ? `openEditWydatek('${e.id}')` : ''}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;${fullAccess() ? 'cursor:pointer' : ''}">
+        return `<div onclick="${fullAccess() ? `openEditWydatek('${e.id}')` : ''}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);${fullAccess() ? 'cursor:pointer' : ''}">
           <div style="width:28px;height:28px;border-radius:8px;background:${meta.bg};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${meta.ikona}</div>
           <div style="flex:1"><div style="font-size:12px;font-weight:700">${escapeHtml(e.opis)}</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(e.typ)} · ${escapeHtml(e.data)}</div></div>
           <div class="fin" style="font-size:12px;font-weight:800;color:${isIncome ? 'var(--green)' : 'var(--red)'}">${isIncome ? '+' : '-'}${e.kwota.toLocaleString('pl-PL')} zł</div>
@@ -1732,7 +2049,7 @@ function buildProjDetail(id, tab) {
         <div style="font-size:32px;font-weight:900;color:${marginColor}">${margin}%</div>
         <div style="font-size:12px;color:${marginColor};font-weight:700">Marża projektu</div>
       </div>
-      <div style="background:#232a31;border-radius:8px;padding:12px">
+      <div style="background:var(--surface2);border-radius:8px;padding:12px">
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Wartość projektu</span><span style="font-weight:700;color:var(--green)">+${p.wartosc.toLocaleString('pl-PL')} zł</span></div>
         <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span>Koszty łącznie</span><span style="font-weight:700;color:var(--red)">-${koszty.toLocaleString('pl-PL')} zł</span></div>
         <div style="height:1px;background:var(--border);margin:8px 0"></div>
@@ -1788,7 +2105,7 @@ function buildZadanieHtml(p, i) {
   // Zadania synchronizują się z backendem tylko dla fullAccess i kierownika — zwykły
   // pracownik z (rzadko nadawanym) uprawnieniem "projekty" widzi checklistę, ale nie edytuje,
   // żeby nie tworzyć zmian, które i tak zgubią się przy najbliższej synchronizacji.
-  const canEdit = fullAccess() || isKierownik();
+  const canEdit = canManage();
   return `
   <div style="background:var(--white);border:1px solid ${zDone ? p.kolor + '55' : 'var(--border)'};border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)">
     <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer" onclick="toggleZadanieOpen('${p.id}',${i})">
@@ -1796,14 +2113,14 @@ function buildZadanieHtml(p, i) {
       <span style="flex:1;font-size:13px;font-weight:700;${zDone ? 'color:var(--muted);text-decoration:line-through' : 'color:var(--text)'}">${escapeHtml(z.nazwa)}</span>
       ${hasSubs ? `<span style="font-size:10px;font-weight:800;background:${p.kolorL};color:${p.kolor};padding:2px 8px;border-radius:12px">${subDone}/${z.sub.length}</span>` : ''}
       <span style="font-size:11px;color:var(--muted);transform:rotate(${z.open ? 90 : 0}deg);transition:.2s">›</span>
-      ${canEdit ? `<button onclick="event.stopPropagation();removeZadanie('${p.id}',${i})" style="background:none;border:none;color:#4a545c;font-size:13px;cursor:pointer;flex-shrink:0;padding:2px">✕</button>` : ''}
+      ${canEdit ? `<button onclick="event.stopPropagation();removeZadanie('${p.id}',${i})" style="background:none;border:none;color:var(--dim);font-size:13px;cursor:pointer;flex-shrink:0;padding:2px">✕</button>` : ''}
     </div>
     ${z.open ? `
-    <div style="border-top:1px solid var(--border);padding:4px 12px 8px 22px;background:#232a31">
+    <div style="border-top:1px solid var(--border);padding:4px 12px 8px 22px;background:var(--surface2)">
       ${z.sub.map((s, j) => `
         <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
           <input type="checkbox" ${s.done ? 'checked' : ''} ${canEdit ? '' : 'disabled'} onchange="toggleSub('${p.id}',${i},${j})" style="accent-color:${p.kolor};width:15px;height:15px;flex-shrink:0">
-          <span style="flex:1;font-size:12px;${s.done ? 'color:#4a545c;text-decoration:line-through' : 'color:var(--sec)'}">${escapeHtml(s.nazwa)}</span>
+          <span style="flex:1;font-size:12px;${s.done ? 'color:var(--dim);text-decoration:line-through' : 'color:var(--sec)'}">${escapeHtml(s.nazwa)}</span>
           ${canEdit ? `<button onclick="event.preventDefault();removeSub('${p.id}',${i},${j})" style="background:none;border:none;color:var(--border);font-size:12px;cursor:pointer;padding:2px">✕</button>` : ''}
         </label>`).join('')}
       ${canEdit ? `<div style="display:flex;gap:6px;margin-top:4px">
@@ -1821,7 +2138,7 @@ function toggleZadanieOpen(projId, i) {
 }
 
 function toggleZadanie(projId, i) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   const z = p.zadania[i];
   if (z.sub && z.sub.length > 0) {
@@ -1836,7 +2153,7 @@ function toggleZadanie(projId, i) {
 }
 
 function toggleSub(projId, i, j) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   p.zadania[i].sub[j].done = !p.zadania[i].sub[j].done;
   recalcPostep(p);
@@ -1844,7 +2161,7 @@ function toggleSub(projId, i, j) {
 }
 
 function addZadanie(projId) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   const input = document.getElementById('nz-' + projId);
   const nazwa = input.value.trim();
@@ -1863,7 +2180,7 @@ function toggleImportZadan(projId) {
 // Parsuje wklejony tekst: linia bez prefiksu "- " = nowe zadanie główne,
 // linia zaczynająca się od "- " = podzadanie ostatniego zadania głównego.
 function importZadania(projId) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   const raw = document.getElementById('imp-zad-text-' + projId).value;
   const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
@@ -1891,7 +2208,7 @@ function importZadania(projId) {
 }
 
 function addSub(projId, i) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   const input = document.getElementById(`ns-${projId}-${i}`);
   const nazwa = input.value.trim();
@@ -1903,7 +2220,7 @@ function addSub(projId, i) {
 }
 
 function removeZadanie(projId, i) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   p.zadania.splice(i, 1);
   recalcPostep(p);
@@ -1911,7 +2228,7 @@ function removeZadanie(projId, i) {
 }
 
 function removeSub(projId, i, j) {
-  if (!fullAccess() && !isKierownik()) return;
+  if (!canManage()) return;
   const p = DATA.projekty[projId];
   p.zadania[i].sub.splice(j, 1);
   recalcPostep(p);
@@ -1949,6 +2266,7 @@ function updateProjektStatus(projId, newStatus) {
     }
   }
   showToast(`✅ Status zmieniony na: ${newStatus}`);
+  if (newStatus === 'Zakończony' && projektZakonczonyDobrze(p)) fireConfetti();
   saveState();
   buildProjDetail(projId, currentProjTab);
   renderProjektyList();
@@ -1972,9 +2290,27 @@ function assignProjectColor(excludeId) {
 const PROJ_STATUS_BADGE = {
   'W realizacji': { bg:'var(--green-l)', fg:'var(--green)' },
   'Planowany':    { bg:'var(--blue-l)',  fg:'var(--blue)' },
-  'Zakończony':   { bg:'#232a31',        fg:'var(--muted)' },
+  'Zakończony':   { bg:'var(--surface2)',        fg:'var(--muted)' },
   'Wstrzymany':   { bg:'var(--orange-l)',fg:'var(--orange)' },
 };
+
+// Aktywny projekt nad budżetem robocizny/materiałów LUB po terminie realizacji —
+// ta sama logika co insighty na pulpicie (zbierzPrzypomnienia), tylko tu decyduje
+// czy karta projektu na liście ma pulsować na czerwono.
+function projektJestProblemowy(p) {
+  if (p.status !== 'W realizacji') return false;
+  const nadBudzetem = (p.planLudzie > 0 && (p.kosztyRobocizna || 0) > p.planLudzie) ||
+                      (p.planMaterial > 0 && (p.kosztyMaterialy || 0) > p.planMaterial);
+  const poTerminie = p.terminWykonania && p.postep < 100 && dniDo(p.terminWykonania) !== null && dniDo(p.terminWykonania) < 0;
+  return nadBudzetem || poTerminie;
+}
+// Projekt zakończony NA CZAS i W BUDŻECIE — spełnia oba warunki, więc zasługuje na konfetti.
+function projektZakonczonyDobrze(p) {
+  const terminOk = !p.terminWykonania || dniDo(p.terminWykonania) === null || dniDo(p.terminWykonania) >= 0;
+  const budzetOk = (!p.planLudzie || (p.kosztyRobocizna || 0) <= p.planLudzie) &&
+                   (!p.planMaterial || (p.kosztyMaterialy || 0) <= p.planMaterial);
+  return terminOk && budzetOk;
+}
 
 function renderProjektyList() {
   const all = Object.values(DATA.projekty);
@@ -1983,9 +2319,10 @@ function renderProjektyList() {
   if (listEl) {
     listEl.querySelectorAll(':scope > .li').forEach(li => li.remove());
     all.forEach(p => {
-      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#232a31', fg:'var(--muted)' };
+      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'var(--surface2)', fg:'var(--muted)' };
       const li = document.createElement('div');
-      li.className = 'li';
+      li.className = 'li' + (projektJestProblemowy(p) ? ' li-pulse-warn' : '');
+      li.dataset.id = p.id;
       li.dataset.status = p.status;
       li.dataset.text = `${p.nazwa} ${p.klient} ${p.adres || ''}`.toLowerCase();
       li.onclick = () => openProjekt(p.id);
@@ -1999,7 +2336,7 @@ function renderProjektyList() {
   if (dashEl) {
     const aktywne = all.filter(p => p.status === 'W realizacji').slice(0, 3);
     dashEl.innerHTML = aktywne.map(p => {
-      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'#232a31', fg:'var(--muted)' };
+      const badge = PROJ_STATUS_BADGE[p.status] || { bg:'var(--surface2)', fg:'var(--muted)' };
       return `<div class="li" onclick="openProjekt('${p.id}')"><div style="width:10px;height:10px;border-radius:5px;background:${p.kolor};flex-shrink:0"></div><div class="li-body"><div class="li-title">${escapeHtml(p.nazwa)}</div><div class="li-sub">${escapeHtml(p.klient)}</div></div><div class="li-right"><div class="fin" style="font-size:12px;font-weight:700;color:${p.kolor}">${p.wartosc.toLocaleString('pl-PL')} zł</div><span class="badge" style="background:${badge.bg};color:${badge.fg}">${escapeHtml(p.status)}</span></div></div>`;
     }).join('') || `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak aktywnych projektów</div>`;
   }
@@ -2008,6 +2345,107 @@ function renderProjektyList() {
   if (kpiEl) kpiEl.textContent = all.filter(p => p.status === 'W realizacji').length;
   const zakEl = document.getElementById('dash-kpi-zakonczone');
   if (zakEl) zakEl.textContent = all.filter(p => p.status === 'Zakończony').length;
+
+  renderTopKlienci(all);
+  renderPrzychodPrognoza(all);
+  renderRentownoscZespolu();
+}
+
+// Insight: wartość generowana na godzinę pracy per pracownik — zestawia stawkę (koszt/h)
+// z udziałem w wartości projektów, do których wpisał godziny. Udział w projekcie liczony
+// proporcjonalnie do godzin: jeśli pracownik przepracował 30% godzin danego projektu,
+// przypisujemy mu 30% jego wartości. To orientacyjny wskaźnik (projekty mają różną
+// marżowość niezależnie od godzin), nie dokładny rachunek kosztów.
+function renderRentownoscZespolu() {
+  const el = document.getElementById('dash-rentownosc-zespolu');
+  if (!el) return;
+  const godzPracownikProjekt = {}, godzProjekt = {}, godzPracownik = {};
+  Object.values(DATA.czasPracy || {}).forEach(dzien => {
+    (dzien || []).forEach(w => {
+      if (!w.proj || !w.godz) return;
+      const key = w.prac + '|' + w.proj;
+      godzPracownikProjekt[key] = (godzPracownikProjekt[key] || 0) + w.godz;
+      godzProjekt[w.proj] = (godzProjekt[w.proj] || 0) + w.godz;
+      godzPracownik[w.prac] = (godzPracownik[w.prac] || 0) + w.godz;
+    });
+  });
+  const wynik = [];
+  Object.values(DATA.pracownicy || {}).forEach(w => {
+    const totalGodz = godzPracownik[w.id];
+    if (!totalGodz) return;
+    let wartoscUdzial = 0;
+    Object.keys(godzPracownikProjekt).forEach(key => {
+      if (!key.startsWith(w.id + '|')) return;
+      const proj = key.slice(w.id.length + 1);
+      const p = DATA.projekty[proj];
+      if (!p || !p.wartosc || !godzProjekt[proj]) return;
+      wartoscUdzial += p.wartosc * (godzPracownikProjekt[key] / godzProjekt[proj]);
+    });
+    if (wartoscUdzial <= 0) return;
+    wynik.push({ w, wartoscNaGodz: wartoscUdzial / totalGodz, totalGodz });
+  });
+  wynik.sort((a, b) => b.wartoscNaGodz - a.wartoscNaGodz);
+  const top = wynik.slice(0, 5);
+  el.innerHTML = top.length ? top.map(({ w, wartoscNaGodz, totalGodz }) => `
+    <div class="li" style="cursor:default">
+      <div class="li-icon" style="background:${w.kolor}22;color:${w.kolor};font-weight:800;font-size:12px">${escapeHtml(w.inicjaly || '')}</div>
+      <div class="li-body"><div class="li-title">${escapeHtml(w.imie)} ${escapeHtml(w.nazwisko || '')}</div><div class="li-sub">stawka ${w.stawka || 0} zł/h · ${Math.round(totalGodz)}h wpisanych</div></div>
+      <div class="li-right"><div style="font-size:12px;font-weight:700;color:var(--blue)">~${Math.round(wartoscNaGodz).toLocaleString('pl-PL')} zł/h</div></div>
+    </div>`).join('') : `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak wystarczających danych (godziny + wartość projektów)</div>`;
+}
+
+// Insight: prognoza przychodu na bieżący miesiąc — szacowana metodą liniową w czasie
+// (standardowa technika rozpoznawania przychodu wg % realizacji): wartość aktywnego
+// projektu rozkładamy proporcjonalnie na dni między start a terminWykonania/koniec,
+// sumujemy część przypadającą na dni z bieżącego miesiąca. To szacunek, nie fakturowana
+// kwota — stąd zawsze z zastrzeżeniem "szacunkowo" w opisie.
+function renderPrzychodPrognoza(all) {
+  const el = document.getElementById('dash-przychod-prognoza');
+  if (!el) return;
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  let prognoza = 0, liczbaProjektow = 0;
+  all.forEach(p => {
+    if (p.status !== 'W realizacji' || !p.wartosc) return;
+    const start = parseDataPL(p.start);
+    const end = parseDataPL(p.terminWykonania || p.koniec);
+    if (!start || !end || end <= start) return;
+    const overlapStart = new Date(Math.max(start, monthStart));
+    const overlapEnd = new Date(Math.min(end, monthEnd));
+    if (overlapEnd <= overlapStart) return;
+    const overlapDays = (overlapEnd - overlapStart) / 86400000;
+    const totalDays = (end - start) / 86400000;
+    prognoza += p.wartosc * (overlapDays / totalDays);
+    liczbaProjektow++;
+  });
+  if (liczbaProjektow === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  const miesiacNazwa = now.toLocaleDateString('pl-PL', { month: 'long' });
+  el.innerHTML = `<div style="font-size:11px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.3px">📈 Szacowany przychód — ${escapeHtml(miesiacNazwa)}</div>
+    <div style="font-size:22px;font-weight:900;color:var(--green);margin-top:2px">${Math.round(prognoza).toLocaleString('pl-PL')} zł</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">Szacunek na podstawie ${liczbaProjektow} ${liczbaProjektow === 1 ? 'aktywnego projektu' : 'aktywnych projektów'} i ich harmonogramu — nie zastępuje faktur</div>`;
+}
+
+// Insight: ranking klientów wg łącznej wartości zleconych projektów — pokazuje,
+// kto realnie generuje przychód firmy, zamiast trzeba było to liczyć w głowie
+// przeglądając listę projektów.
+function renderTopKlienci(all) {
+  const el = document.getElementById('dash-top-klienci');
+  if (!el) return;
+  const suma = {};
+  all.forEach(p => {
+    const klient = (p.klient || '').trim();
+    if (!klient || !p.wartosc) return;
+    suma[klient] = (suma[klient] || 0) + p.wartosc;
+  });
+  const top = Object.entries(suma).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  el.innerHTML = top.length ? top.map(([klient, wartosc], i) => `
+    <div class="li" style="cursor:default">
+      <div style="width:22px;height:22px;border-radius:11px;background:var(--blue-l);color:var(--blue);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i + 1}</div>
+      <div class="li-body"><div class="li-title">${escapeHtml(klient)}</div></div>
+      <div class="li-right"><div style="font-size:12px;font-weight:700;color:var(--blue)">${wartosc.toLocaleString('pl-PL')} zł</div></div>
+    </div>`).join('') : `<div style="padding:10px 0;text-align:center;color:var(--muted);font-size:12px">Brak danych — dodaj wartość do projektów</div>`;
 }
 
 // Konwersje dat: DD.MM.RRRR (przechowywane) ↔ YYYY-MM-DD (input type=date)
@@ -2119,6 +2557,7 @@ function saveProjekt() {
     DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, kmTrasa, postep:0, start, koniec:terminWykonania, terminWykonania, kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, planLudzie, planMaterial, planZysk, opis:'', zaplacono:false, dataZaplaty:null, zadania:[] };
     showToast('✅ Projekt dodany!');
     renderProjektyList();
+    animateNewItem('list-projekty', id);
   }
   saveState();
   closeModal('modal-projekt');
@@ -2131,7 +2570,7 @@ const WYD_TYP_META = {
   'Narzędzia': { ikona:'🔧', bg:'var(--purple-l)' },
   'Przychód':  { ikona:'💵', bg:'var(--green-l)' },
   'Wynagrodzenia': { ikona:'💸', bg:'var(--teal-l)' },
-  'Inne':      { ikona:'📄', bg:'#232a31' },
+  'Inne':      { ikona:'📄', bg:'var(--surface2)' },
 };
 
 function renderWydatkiList() {
@@ -2365,6 +2804,7 @@ async function savePracownik() {
   const status = document.getElementById('np-status').value;
   const aktywny = status === 'Aktywny';
   const inicjaly = ((imie[0] || '') + (nazwisko[0] || imie[1] || '')).toUpperCase();
+  let noweWid = null;
 
   if (editId && DATA.pracownicy[editId]) {
     Object.assign(DATA.pracownicy[editId], { imie, nazwisko, tel, rola, stawka, status, aktywny, inicjaly });
@@ -2376,6 +2816,7 @@ async function savePracownik() {
   } else {
     const nums = Object.keys(DATA.pracownicy).map(k => parseInt(k.replace(/\D/g, '')) || 0);
     const wid = 'w' + (Math.max(0, ...nums) + 1);
+    noweWid = wid;
     const kolory = ['#1565c0','#2e7d32','#e65100','#6a1b9a','#00838f','#c62828','#37474f','#ad1457','#4527a0','#9e9d24'];
     DATA.pracownicy[wid] = { id: wid, imie, nazwisko, rola, stawka, tel, status, aktywny, inicjaly, kolor: kolory[Object.keys(DATA.pracownicy).length % kolory.length], projekty: [] };
     // utwórz konto logowania z losowym PIN-em
@@ -2391,15 +2832,16 @@ async function savePracownik() {
   }
   saveState();
   renderPracList();
+  if (noweWid) animateNewItem('prac-list', noweWid);
   renderLoginTiles();
   closeModal('modal-pracownik');
 }
 
-function deletePracownik() {
+async function deletePracownik() {
   const id = document.getElementById('np-edit-id').value;
   const w = DATA.pracownicy[id];
   if (!w) return;
-  if (!confirm(`Usunąć pracownika ${w.imie} ${w.nazwisko}? Jego historia godzin i pasków pozostanie w danych, ale zniknie z listy. Do ukrycia bez utraty danych lepiej ustawić status „Nieaktywny”.`)) return;
+  if (!(await confirmAction(`Usunąć pracownika ${w.imie} ${w.nazwisko}? Jego historia godzin i pasków pozostanie w danych, ale zniknie z listy. Do ukrycia bez utraty danych lepiej ustawić status „Nieaktywny”.`))) return;
   delete DATA.pracownicy[id];
   const uid = Object.keys(DATA.uzytkownicy).find(k => DATA.uzytkownicy[k].pracownik === id);
   if (uid) delete DATA.uzytkownicy[uid];
@@ -2461,9 +2903,9 @@ function buildZaliczkiSekcja(pracId) {
     <div style="padding:0 14px 14px">
       <div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">💵 Zaliczki${sumaNieroz ? ` · nierozliczone: <span style="color:var(--orange)">${sumaNieroz.toLocaleString('pl-PL')} zł</span>` : ''}</div>
       ${list.slice().reverse().map(z => `
-        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #2b333a">
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
           <div style="flex:1"><div style="font-size:13px;font-weight:700">${z.kwota.toLocaleString('pl-PL')} zł ${z.rozliczona ? '<span style="font-size:10px;color:var(--green)">✅ rozliczona</span>' : '<span style="font-size:10px;color:var(--orange)">⏳ do rozliczenia</span>'}</div><div style="font-size:11px;color:var(--muted)">${escapeHtml(z.data)}${z.notatka ? ' · ' + escapeHtml(z.notatka) : ''}</div></div>
-          ${z.rozliczona ? '' : `<button onclick="deleteZaliczka('${pracId}','${z.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>`}
+          ${z.rozliczona ? '' : `<button onclick="deleteZaliczka('${pracId}','${z.id}')" style="background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer">✕</button>`}
         </div>`).join('')}
     </div>`;
 }
@@ -2494,7 +2936,7 @@ function buildKierownikWpisySekcja(pracId) {
           ? { nieobecny: true, powod: mine[0].powod }
           : { godz: Math.round(mine.reduce((s, x) => s + (x.godz || 0), 0) * 100) / 100, od: mine[0].od, do: mine[mine.length - 1].do };
         const label = agg.nieobecny ? '🚫 Nieobecny' : `${agg.godz}h${agg.od && agg.do ? ' · ' + agg.od + '–' + agg.do : ''}`;
-        return `<div onclick="openPracDayModal('${pracId}','${key}','kierownik')" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #2b333a;cursor:pointer">
+        return `<div onclick="openPracDayModal('${pracId}','${key}','kierownik')" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer">
           <div style="flex:1"><div style="font-size:13px;font-weight:700">${key.slice(8)}.${key.slice(5,7)}.${key.slice(0,4)}</div><div style="font-size:11px;color:var(--muted)">${label}</div></div>
           <span style="color:var(--blue)">›</span>
         </div>`;
@@ -2516,7 +2958,7 @@ function renderPracList() {
     const [bg, fg] = statMeta[w.status] || statMeta['Aktywny'];
     const np = (w.projekty || []).length;
     const stawkaTxt = pelny ? ` · ${w.stawka} zł/h` : '';
-    return `<div class="li" onclick="openPrac('${w.id}')"><div class="li-icon" style="background:${w.kolor}22;font-size:15px;font-weight:800;color:${w.kolor}">${w.inicjaly}</div><div class="li-body"><div class="li-title">${w.imie} ${w.nazwisko}</div><div class="li-sub">${w.rola}${stawkaTxt}${w.tel ? ' · 📞 ' + w.tel : ''}</div></div><div class="li-right"><span class="badge" style="background:${bg};color:${fg}">${w.status}</span>${np ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">${np} ${np === 1 ? 'projekt' : 'proj.'}</div>` : ''}</div></div>`;
+    return `<div class="li" data-id="${w.id}" onclick="openPrac('${w.id}')"><div class="li-icon" style="background:${w.kolor}22;font-size:15px;font-weight:800;color:${w.kolor}">${w.inicjaly}</div><div class="li-body"><div class="li-title">${w.imie} ${w.nazwisko}</div><div class="li-sub">${w.rola}${stawkaTxt}${w.tel ? ' · 📞 ' + w.tel : ''}</div></div><div class="li-right"><span class="badge" style="background:${bg};color:${fg}">${w.status}</span>${np ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">${np} ${np === 1 ? 'projekt' : 'proj.'}</div>` : ''}</div></div>`;
   }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px">Brak pracowników</div>`;
 
   if (kpiEl) {
@@ -2558,7 +3000,7 @@ const PASEK_MIESIAC = _MIES_PL[PASEK_MIDX] + ' ' + PASEK_ROK;
 
 function pasekBadge(status) {
   const map = { 'roboczy':['#fff3e0','var(--orange)','📝 Roboczy'], 'zatwierdzony':['#e3f2fd','var(--blue)','👁️ Zatwierdzony'], 'wypłacony':['#e8f5e9','var(--green)','✅ Wypłacony'] };
-  const [bg, fg, label] = map[status] || ["#232a31","var(--muted)",status];
+  const [bg, fg, label] = map[status] || ["var(--surface2)","var(--muted)",status];
   return `<span style="background:${bg};color:${fg};padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700">${label}</span>`;
 }
 
@@ -2629,12 +3071,12 @@ function buildPasekDniHtml(pasek, pracId, idx, editable) {
     let tresc, kolor;
     if (x.nieobecny) { tresc = `🚫 Nieobecny${x.powod ? ' (' + x.powod + ')' : ''}`; kolor = 'var(--red)'; }
     else if (x.godz) { tresc = `${x.od && x.do ? x.od + '–' + x.do : ''} · ${x.godz}h`; kolor = 'var(--text)'; }
-    else { tresc = '—'; kolor = '#4a545c'; }
+    else { tresc = '—'; kolor = 'var(--dim)'; }
     const editAttr = editable ? `onclick="openPasekDzienEdit('${pracId}',${idx},${di})" style="cursor:pointer"` : '';
-    return `<div ${editAttr} style="display:grid;grid-template-columns:64px 1fr ${editable ? '20px' : ''};gap:8px;padding:4px 8px;font-size:11px;${isWeekend ? 'background:#232a31;' : ''}border-bottom:1px solid #f3f3f3;align-items:center">
-      <span style="color:${isWeekend ? '#4a545c' : 'var(--muted)'};font-weight:700">${dataTxt}</span>
+    return `<div ${editAttr} style="display:grid;grid-template-columns:64px 1fr ${editable ? '20px' : ''};gap:8px;padding:4px 8px;font-size:11px;${isWeekend ? 'background:var(--surface2);' : ''}border-bottom:1px solid #f3f3f3;align-items:center">
+      <span style="color:${isWeekend ? 'var(--dim)' : 'var(--muted)'};font-weight:700">${dataTxt}</span>
       <span style="color:${kolor};font-weight:${x.godz ? 700 : 400}">${tresc}</span>
-      ${editable ? '<span style="color:#4a545c;font-size:10px">✏️</span>' : ''}
+      ${editable ? '<span style="color:var(--dim);font-size:10px">✏️</span>' : ''}
     </div>`;
   }).join('');
   return `<details style="margin-top:8px">
@@ -2824,12 +3266,12 @@ function przeliczPasekRoboczy(pracId, idx) {
   buildPaskiAdmin();
 }
 
-function usunPasekRoboczy(pracId, idx) {
+async function usunPasekRoboczy(pracId, idx) {
   if (!fullAccess()) return;
   const pasek = DATA.paski[pracId][idx];
   if (!pasek || pasek.status !== 'roboczy') return;
   const w = DATA.pracownicy[pracId];
-  if (!confirm(`Usunąć roboczy pasek ${w.imie} ${w.nazwisko}? Będzie można wygenerować nowy.`)) return;
+  if (!(await confirmAction(`Usunąć roboczy pasek ${w.imie} ${w.nazwisko}? Będzie można wygenerować nowy.`))) return;
   DATA.paski[pracId].splice(idx, 1);
   showToast('🗑️ Usunięto pasek roboczy');
   saveState();
@@ -2880,7 +3322,7 @@ function buildPasekZaliczkiHtml(pracId, pasek) {
     <div style="margin-top:8px;border-top:1px dashed var(--border);padding-top:8px">
       <div style="font-size:11px;font-weight:800;color:var(--orange);margin-bottom:4px">➖ Zaliczki pobrane w tym okresie</div>
       ${zal.map(z => `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:var(--sec)">${escapeHtml(z.data)}${z.notatka ? ' · ' + escapeHtml(z.notatka) : ''}</span><span style="font-weight:700;color:var(--orange)">-${z.kwota.toLocaleString('pl-PL')} zł</span></div>`).join('')}
-      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;border-top:1px solid #2b333a;margin-top:3px;padding-top:3px"><span>Razem zaliczki</span><span style="color:var(--orange)">-${suma.toLocaleString('pl-PL')} zł</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;border-top:1px solid var(--border);margin-top:3px;padding-top:3px"><span>Razem zaliczki</span><span style="color:var(--orange)">-${suma.toLocaleString('pl-PL')} zł</span></div>
     </div>`;
 }
 function zaliczkiSumaPaska(pracId, pasek) {
@@ -2969,7 +3411,7 @@ function pracCalNextMonth(id) { if (pracCalMonth < 11) pracCalMonth++; else { pr
 function buildPracDetail(id) {
   const w = DATA.pracownicy[id];
   const statusColor = w.status === 'Aktywny' ? 'var(--green)' : w.status === 'L4' ? 'var(--red)' : w.status === 'Nieaktywny' ? 'var(--muted)' : 'var(--orange)';
-  const statusBg = w.status === 'Aktywny' ? 'var(--green-l)' : w.status === 'L4' ? 'var(--red-l)' : w.status === 'Nieaktywny' ? '#2b333a' : 'var(--orange-l)';
+  const statusBg = w.status === 'Aktywny' ? 'var(--green-l)' : w.status === 'L4' ? 'var(--red-l)' : w.status === 'Nieaktywny' ? 'var(--border)' : 'var(--orange-l)';
 
   // Kalendarz budowany z prawdziwych wpisów DATA.czasPracy (klucze = pełne daty)
   const daysInMonth = new Date(pracCalYear, pracCalMonth + 1, 0).getDate();
@@ -2992,12 +3434,12 @@ function buildPracDetail(id) {
   for (let i = 0; i < startOffset; i++) calHtml += `<div></div>`;
   days.forEach(d => {
     if (d.nieobecny) {
-      calHtml += `<div onclick="openPracDayModal('${id}','${d.key}')" title="Nieobecny" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed #4a545c;color:#c62828">🚫</div>`;
+      calHtml += `<div onclick="openPracDayModal('${id}','${d.key}')" title="Nieobecny" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed var(--dim);color:#c62828">🚫</div>`;
       return;
     }
-    let bg = d.isWeekend ? '#232a31' : (d.proj ? d.proj.kolor + '33' : 'var(--border)');
+    let bg = d.isWeekend ? 'var(--surface2)' : (d.proj ? d.proj.kolor + '33' : 'var(--border)');
     let border = d.proj ? `2px solid ${d.proj.kolor}` : (d.isWeekend ? '1px solid var(--border)' : '1px solid #dde3ea');
-    let color = d.proj ? d.proj.kolor : (d.isWeekend ? '#4a545c' : '#aaa');
+    let color = d.proj ? d.proj.kolor : (d.isWeekend ? 'var(--dim)' : '#aaa');
     let clickAttr = d.proj ? `onclick="openPracDayModal('${id}','${d.key}')" title="${d.proj.nazwa}" style="cursor:pointer"` : '';
     calHtml += `<div ${clickAttr} style="border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:${bg};border:${border};color:${color}">${d.day}</div>`;
   });
@@ -3006,7 +3448,7 @@ function buildPracDetail(id) {
   // Legenda projektów (tylko te faktycznie przepracowane w tym miesiącu przez tego pracownika)
   const activeProjIds = [...new Set(days.filter(d => d.proj).map(d => d.proj.id))];
   let legendHtml = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
-    <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;border:2px dashed #4a545c;background:var(--border)"></div><span style="color:var(--sec)">🚫 Nieobecny</span></div>`;
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;border:2px dashed var(--dim);background:var(--border)"></div><span style="color:var(--sec)">🚫 Nieobecny</span></div>`;
   activeProjIds.forEach(pid => {
     const p = DATA.projekty[pid];
     if (p) legendHtml += `<div style="display:flex;align-items:center;gap:4px;font-size:10px"><div style="width:10px;height:10px;border-radius:3px;background:${p.kolor}"></div><span style="color:var(--sec)">${escapeHtml(p.nazwa.split(' — ')[0].substring(0,15))}</span></div>`;
@@ -3024,7 +3466,7 @@ function buildPracDetail(id) {
   const sumaHtml = Object.entries(godzPerProj).sort((a,b) => b[1]-a[1]).map(([pid, godz]) => {
     const p = DATA.projekty[pid];
     if (!p) return '';
-    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #2b333a;cursor:pointer">
+    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer">
       <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
       <div style="flex:1;font-size:12px;color:var(--text)">${escapeHtml(p.nazwa.split(' — ')[0])}</div>
       <div style="font-size:12px;font-weight:800;color:${p.kolor}">${godz}h</div>
@@ -3034,7 +3476,7 @@ function buildPracDetail(id) {
   // Projekty lista
   let projListHtml = w.projekty.map(pid => {
     const p = DATA.projekty[pid];
-    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2b333a;cursor:pointer">
+    return `<div onclick="openProjekt('${pid}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">
       <div style="width:8px;height:8px;border-radius:4px;flex-shrink:0;background:${p.kolor}"></div>
       <div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--text)">${escapeHtml(p.nazwa.split(' — ')[0])}</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(p.klient)}</div></div>
       <span style="font-size:9px;font-weight:700;background:${p.kolorL};color:${p.kolor};padding:2px 8px;border-radius:20px">${p.postep}%</span>
@@ -3131,13 +3573,13 @@ function buildPorownanieHtml(pracId) {
 }
 
 // ═══════ USUWANIE WPISÓW GODZIN (z trzech magazynów, z uprawnieniami) ═══════
-function deleteCzasPracyEntry(dayKey, idx) {
+async function deleteCzasPracyEntry(dayKey, idx) {
   if (!fullAccess()) return;
   const arr = DATA.czasPracy[dayKey];
   if (!arr || !arr[idx]) return;
   const e = arr[idx];
   const etykieta = e.nieobecny ? '🚫 Nieobecny' : `${e.godz}h`;
-  if (!confirm(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`)) return;
+  if (!(await confirmAction(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`))) return;
   arr.splice(idx, 1);
   if (arr.length === 0) delete DATA.czasPracy[dayKey];
   saveState();
@@ -3148,14 +3590,14 @@ function deleteCzasPracyEntry(dayKey, idx) {
   if (detPrac && detPrac.classList.contains('open') && lastReopen['det-prac']) lastReopen['det-prac']();
 }
 
-function deleteCzasPracyWlasneEntry(pracId, dayKey, idx) {
+async function deleteCzasPracyWlasneEntry(pracId, dayKey, idx) {
   const isOwn = currentUser && currentUser.pracownik === pracId;
   if (!fullAccess() && !isOwn) return;
   const arr = wlasneWpisy(pracId, dayKey);
   if (!arr[idx]) return;
   const e = arr[idx];
   const etykieta = e.nieobecny ? '🚫 Nieobecny' : `${e.godz}h`;
-  if (!confirm(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`)) return;
+  if (!(await confirmAction(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`))) return;
   arr.splice(idx, 1);
   if (!DATA.czasPracyWlasne[pracId]) DATA.czasPracyWlasne[pracId] = {};
   if (arr.length === 0) delete DATA.czasPracyWlasne[pracId][dayKey];
@@ -3168,14 +3610,14 @@ function deleteCzasPracyWlasneEntry(pracId, dayKey, idx) {
   if (detPrac && detPrac.classList.contains('open') && lastReopen['det-prac']) lastReopen['det-prac']();
 }
 
-function deleteCzasPracyKierownikEntry(pracId, dayKey, idx) {
+async function deleteCzasPracyKierownikEntry(pracId, dayKey, idx) {
   const raw = dniKierRaw(pracId, dayKey);
   const target = raw.find(x => x.idx === idx);
   if (!target) return;
   const canDelete = fullAccess() || target.entry.wpisanyPrzez === (currentUser && currentUser.pracownik);
   if (!canDelete) return;
   const etykieta = target.entry.nieobecny ? '🚫 Nieobecny' : `${target.entry.godz}h`;
-  if (!confirm(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`)) return;
+  if (!(await confirmAction(`Usunąć ten wpis godzin (${etykieta})? Tej operacji nie można cofnąć.`))) return;
   DATA.czasPracyKierownik[dayKey].splice(target.idx, 1);
   if (DATA.czasPracyKierownik[dayKey].length === 0) delete DATA.czasPracyKierownik[dayKey];
   saveState();
@@ -3222,14 +3664,14 @@ function openPracDayModal(pracId, dayKey, src) {
   const nieobecny = raw.find(x => x.entry.nieobecny);
   let html;
   if (nieobecny) {
-    html = `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:#232a31;border-radius:8px;color:var(--red);font-weight:700">
+    html = `<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface2);border-radius:8px;color:var(--red);font-weight:700">
       <div style="flex:1">🚫 Nieobecny${nieobecny.entry.powod ? ' — ' + nieobecny.entry.powod : ''}</div>
       ${delBtn(nieobecny.entry, nieobecny.idx)}
     </div>`;
   } else {
     const hs = raw.filter(x => !x.entry.nieobecny);
     html = `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#232a31;border-radius:8px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:10px">
         <div style="width:36px;height:36px;border-radius:18px;background:${w.kolor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff">${w.inicjaly}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700">${w.imie} ${w.nazwisko}</div>
@@ -3238,7 +3680,7 @@ function openPracDayModal(pracId, dayKey, src) {
       </div>` + hs.map(({ entry, idx }) => {
         const proj = DATA.projekty[entry.proj];
         const koszt = Math.round((w.stawka || 0) * (entry.godz || 0));
-        return `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:#232a31;border-radius:8px;margin-bottom:8px">
+        return `<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:8px">
           <div style="flex:1">
             <div style="font-size:12px;font-weight:700;color:var(--text)">${proj ? proj.nazwa : '(bez projektu)'}</div>
             <div style="font-size:11px;color:var(--muted)">${entry.od && entry.do ? `${entry.od}–${entry.do} · ` : ''}${entry.godz}h${entry.wpisanyPrzez ? ` · wpisał: ${(DATA.pracownicy[entry.wpisanyPrzez] || {}).imie || entry.wpisanyPrzez}` : ''}</div>
@@ -3288,7 +3730,7 @@ function renderAwarieList() {
       li.dataset.status = a.status;
       li.dataset.text = `${a.opis} ${a.blok}`.toLowerCase();
       li.onclick = () => openAwaria(a.id);
-      li.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:${m.dot}"></div><div class="li-icon" style="background:${zak ? '#232a31' : m.bg}">${a.ikona || '⚡'}</div></div><div class="li-body"><div class="li-title">${escapeHtml(a.opis)}</div><div class="li-sub">${escapeHtml(a.blok.split(' ').slice(1).join(' ') || a.blok)} · ${escapeHtml(a.data)}</div></div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${escapeHtml(a.status)}</span>${zak && a.koszt ? `<div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">${a.koszt} zł</div>` : `<div style="font-size:10px;color:${m.fg};font-weight:700;margin-top:2px">${PRIORYTET_META[a.priorytet] || ''} ${escapeHtml(zak ? '' : a.priorytet)}</div>`}</div>`;
+      li.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:4px;background:${m.dot}"></div><div class="li-icon" style="background:${zak ? 'var(--surface2)' : m.bg}">${a.ikona || '⚡'}</div></div><div class="li-body"><div class="li-title">${escapeHtml(a.opis)}</div><div class="li-sub">${escapeHtml(a.blok.split(' ').slice(1).join(' ') || a.blok)} · ${escapeHtml(a.data)}</div></div><div class="li-right"><span class="badge" style="background:${m.bg};color:${m.fg}">${escapeHtml(a.status)}</span>${zak && a.koszt ? `<div class="fin" style="font-size:10px;color:var(--muted);margin-top:2px">${a.koszt} zł</div>` : `<div style="font-size:10px;color:${m.fg};font-weight:700;margin-top:2px">${PRIORYTET_META[a.priorytet] || ''} ${escapeHtml(zak ? '' : a.priorytet)}</div>`}</div>`;
       listEl.insertBefore(li, emptyEl);
     });
     applyFilter('awarie');
@@ -3363,7 +3805,7 @@ function buildAwariaDetail(id) {
   const priColors = { 'Wysoki':'var(--red)', 'Średni':'var(--orange)', 'Niski':'var(--green)', 'Krytyczny':'var(--purple)' };
 
   document.getElementById('dawaria-content').innerHTML = `
-    <div style="background:${statusBg[a.status]||"#232a31"};padding:14px;border-left:4px solid ${statusColors[a.status]||"var(--muted)"}">
+    <div style="background:${statusBg[a.status]||"var(--surface2)"};padding:14px;border-left:4px solid ${statusColors[a.status]||"var(--muted)"}">
       <div style="font-size:20px;margin-bottom:4px">${a.ikona}</div>
       <div style="font-size:14px;font-weight:800;color:var(--text)">${escapeHtml(a.opis)}</div>
       <div style="font-size:12px;color:var(--sec);margin-top:2px">📍 ${escapeHtml(a.blok)} · 📅 ${a.data}</div>
@@ -3410,6 +3852,8 @@ function updateAwariaStatus(id, newStatus, btn) {
   saveState();
   showToast('Status zmieniony: ' + newStatus);
   if (NOTIF_PREFS.awarie) addNotif('🚨', `Awaria „${DATA.awarie[id].opis}" — status: ${newStatus}`);
+  // Ostatnia otwarta awaria właśnie zamknięta — zero awarii w toku, warto to uczcić.
+  if (newStatus === 'Zakończona' && Object.values(DATA.awarie).every(a => a.status === 'Zakończona')) fireConfetti();
 }
 
 // Zapis pól z detalu awarii (przycisk "Zapisz" w nagłówku)
@@ -3430,10 +3874,10 @@ function saveAwariaDetail() {
   showToast('✅ Zapisano zmiany');
 }
 
-function deleteAwaria(id) {
+async function deleteAwaria(id) {
   const a = DATA.awarie[id];
   if (!a) return;
-  if (!confirm(`Usunąć awarię „${a.opis}”? Tej operacji nie można cofnąć.`)) return;
+  if (!(await confirmAction(`Usunąć awarię „${a.opis}”? Tej operacji nie można cofnąć.`))) return;
   // usuń referencję z bloku
   Object.values(DATA.bloki).forEach(b => { b.awarie = (b.awarie || []).filter(x => x !== id); });
   delete DATA.awarie[id];
@@ -3534,10 +3978,10 @@ function openEditNarzedzie(id) {
   openModal('modal-narzedzie');
 }
 
-function deleteNarzedzie(id) {
+async function deleteNarzedzie(id) {
   if (!fullAccess()) return;
   const n = DATA.narzedzia[id]; if (!n) return;
-  if (!confirm(`Usunąć narzędzie ${n.marka} ${n.model}?`)) return;
+  if (!(await confirmAction(`Usunąć narzędzie ${n.marka} ${n.model}?`))) return;
   delete DATA.narzedzia[id];
   saveState(); renderNarzList();
   goBack(); showToast('🗑️ Narzędzie usunięte');
@@ -3624,7 +4068,7 @@ function openNarz(id, opts = {}) {
   const qrIsExisting = !!n.nr_ser;
 
   document.getElementById('dnarz-content').innerHTML = `
-    <div style="background:#232a31;padding:14px;display:flex;justify-content:space-between;align-items:flex-start">
+    <div style="background:var(--surface2);padding:14px;display:flex;justify-content:space-between;align-items:flex-start">
       <div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase">${escapeHtml(n.marka)}</div>
       <div style="font-size:18px;font-weight:800;color:var(--text)">${escapeHtml(n.model)}</div>
       ${n.nr_ser ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:monospace">S/N: ${escapeHtml(n.nr_ser)}</div>` : ''}
@@ -3656,7 +4100,7 @@ function openNarz(id, opts = {}) {
           📱 Kod QR
           <span style="font-size:10px;background:${qrIsExisting?'var(--green-l)':'var(--blue-l)'};color:${qrIsExisting?'var(--green)':'var(--blue)'};padding:2px 8px;border-radius:20px;font-weight:700">${qrIsExisting?'✅ Z nr ser.':'🆕 Wygenerowany'}</span>
         </div>
-        <div style="text-align:center;padding:10px;background:#232a31;border-radius:8px">
+        <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:8px">
           <div id="qr-${id}" style="display:inline-block;margin-bottom:6px"></div>
           <div style="font-size:9px;color:var(--muted);font-family:monospace;word-break:break-all">${qrValue}</div>
           <div style="font-size:10px;color:var(--muted);margin-top:4px">${qrIsExisting ? 'Skanuj naklejkę producenta' : 'Wydrukuj i nakleij na narzędziu'}</div>
@@ -3675,7 +4119,7 @@ function openNarz(id, opts = {}) {
         <span style="color:var(--muted);font-weight:500">${naprawy.length} serwis${naprawy.length===1?'':'ów'} · ${naprawyCost} zł</span>
       </div>
       ${naprawy.length === 0 ? '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">Brak historii napraw ✅</div>' :
-        naprawy.map(r => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;align-items:flex-start">
+        naprawy.map(r => `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start">
           <div style="background:var(--blue-l);border-radius:6px;padding:4px 8px;min-width:70px;text-align:center">
             <div style="font-size:10px;font-weight:700;color:var(--blue)">${r.data}</div>
           </div>
@@ -3756,7 +4200,7 @@ function renderKodyList() {
       ? `<span class="badge" style="background:var(--orange-l);color:var(--orange)">${otwarte} ${otwarte === 1 ? 'awaria' : 'awarie'}</span>`
       : `<span class="badge" style="background:var(--green-l);color:var(--green)">OK</span>`;
     return `<div class="li" onclick="openBlok('${b.id}')"><div class="li-icon" style="background:${BLOK_KOLORY[i % BLOK_KOLORY.length]};font-size:18px">${BLOK_IKONY[i % BLOK_IKONY.length]}</div><div class="li-body"><div class="li-title">${b.nazwa}</div><div class="li-sub">${b.adres} · ${(b.kody || []).length} ${(b.kody || []).length === 1 ? 'kod' : 'kody'}</div></div><div class="li-right">${badge}</div></div>`;
-  }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>`;
+  }).join('') || `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wyników</div>`;
 
   const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   setTxt('kody-kpi-obiekty', all.length);
@@ -3775,7 +4219,7 @@ function pokazMapeKodow() {
   // lista pod mapą
   document.getElementById('mapa-body').innerHTML = bloki.map(b => {
     const otwarte = (b.awarie || []).filter(aid => DATA.awarie[aid] && DATA.awarie[aid].status !== 'Zakończona').length;
-    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2b333a">
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:16px">${otwarte ? '🔴' : '📍'}</div>
       <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700">${b.nazwa}</div><div style="font-size:10px;color:var(--muted)">${b.adres}${otwarte ? ` · <span style="color:var(--orange)">${otwarte} awarie</span>` : ''}</div></div>
       <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank" rel="noopener" class="btn-s" style="flex-shrink:0;text-decoration:none;padding:5px 10px;font-size:11px">🧭</a>
@@ -3791,12 +4235,18 @@ function pokazMapeKodow() {
     _mapaLeaflet = L.map('mapa-leaflet', { zoomControl: true });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(_mapaLeaflet);
     const grupa = [];
+    // Heatmapa: rozmiar pinezki rośnie z LICZBĄ WSZYSTKICH awarii w historii tego bloku
+    // (nie tylko otwartych) — pokazuje, gdzie problemy się kumulują w czasie, nie tylko
+    // co jest otwarte teraz. Kolor jak dotąd: czerwony = są otwarte, niebieski = brak.
+    const maxAwarii = Math.max(1, ...zPunktami.map(b => (b.awarie || []).length));
     zPunktami.forEach(b => {
+      const wszystkie = (b.awarie || []).length;
       const otwarte = (b.awarie || []).filter(aid => DATA.awarie[aid] && DATA.awarie[aid].status !== 'Zakończona').length;
       const kolor = otwarte ? '#c62828' : '#1565c0';
-      const icon = L.divIcon({ className: '', html: `<div style="background:${kolor};width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`, iconSize: [20, 20], iconAnchor: [10, 20] });
+      const size = Math.round(18 + 22 * Math.sqrt(wszystkie / maxAwarii));
+      const icon = L.divIcon({ className: '', html: `<div style="background:${kolor};width:${size}px;height:${size}px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);color:#fff;font-size:${Math.max(9,Math.round(size*0.4))}px;font-weight:800">${wszystkie || ''}</span></div>`, iconSize: [size, size], iconAnchor: [size / 2, size] });
       const m = L.marker([b.lat, b.lng], { icon }).addTo(_mapaLeaflet);
-      m.bindPopup(`<div onclick="mapaOtworzBlok('${b.id}')" style="cursor:pointer"><strong>${b.nazwa}</strong><br>${b.adres}${otwarte ? `<br><span style="color:#c62828">${otwarte} otwarte awarie</span>` : ''}</div><br><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank">🧭 Nawiguj</a>`);
+      m.bindPopup(`<div onclick="mapaOtworzBlok('${b.id}')" style="cursor:pointer"><strong>${b.nazwa}</strong><br>${b.adres}<br>${wszystkie} awarii łącznie${otwarte ? ` · <span style="color:#c62828">${otwarte} otwarte</span>` : ''}</div><br><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(b.adres)}" target="_blank">🧭 Nawiguj</a>`);
       grupa.push([b.lat, b.lng]);
     });
     // KLUCZOWE: najpierw wymuś przeliczenie rozmiaru kontenera, DOPIERO potem dopasuj widok —
@@ -3804,7 +4254,7 @@ function pokazMapeKodow() {
     _mapaLeaflet.invalidateSize();
     if (grupa.length > 1) _mapaLeaflet.fitBounds(grupa, { padding: [30, 30], maxZoom: 15 });
     else if (grupa.length === 1) _mapaLeaflet.setView(grupa[0], 15);
-    else _mapaLeaflet.setView([52.168, 22.276], 13);
+    else _mapaLeaflet.setView([52.0, 19.0], 6); // domyślny widok: środek Polski (brak bloków z lokalizacją)
     // druga korekta po pełnym wyrenderowaniu (animacja modala)
     setTimeout(() => { if (_mapaLeaflet) { _mapaLeaflet.invalidateSize(); if (grupa.length > 1) _mapaLeaflet.fitBounds(grupa, { padding: [30, 30], maxZoom: 15 }); } }, 300);
   }, 350);
@@ -3820,7 +4270,7 @@ function openBlok(id, opts = {}) {
   const awarieHtml = b.awarie.map(aid => {
     const a = DATA.awarie[aid];
     const scol = { 'Zgłoszona':'var(--red)', 'W realizacji':'var(--orange)', 'Zakończona':'var(--green)' };
-    return `<div onclick="openAwaria('${aid}')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a;cursor:pointer">
+    return `<div onclick="openAwaria('${aid}')" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">
       <span>${a.ikona}</span>
       <div style="flex:1"><div style="font-size:12px;font-weight:600">${escapeHtml(a.opis)}</div><div style="font-size:10px;color:var(--muted)">${a.data}</div></div>
       <span style="font-size:10px;font-weight:700;color:${scol[a.status]}">${a.status}</span>
@@ -3828,7 +4278,7 @@ function openBlok(id, opts = {}) {
   }).join('');
 
   const kodyHtml = b.kody.map(k => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px">
+    <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
       <span style="font-size:16px">🔑</span>
       <div style="flex:1"><div style="font-size:11px;color:var(--muted)">${k.typ}</div><div style="font-size:15px;font-weight:800;letter-spacing:3px;color:var(--text)">${k.kod}</div></div>
       <button onclick="showToast('📋 Skopiowano: ${k.kod}')" style="background:var(--blue-l);color:var(--blue);border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer">Kopiuj</button>
@@ -3875,7 +4325,7 @@ function openBlok(id, opts = {}) {
       <div style="font-size:12px;font-weight:800;margin-bottom:8px;color:var(--text)">🔑 Kody dostępu (${b.kody.length})</div>
       ${kodyHtml}
       <div style="font-size:12px;font-weight:800;margin:14px 0 8px;color:var(--text)">🚨 Awarie (${b.awarie.length})</div>
-      ${awarieHtml || '<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center"><img src="empty-ok.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak awarii — wszystko OK</div>'}
+      ${awarieHtml || '<div style="color:var(--muted);font-size:12px;padding:10px 0;text-align:center"><img src="empty-ok.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak awarii — wszystko OK</div>'}
     </div>`;
 
   openDet('det-blok');
@@ -3923,7 +4373,7 @@ function buildCzasCalendar() {
       // tylko nieobecności tego dnia, brak realnej pracy nad projektem
       bg = 'repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px)'; col = '#c62828'; top = `<div style="font-size:8px">🚫</div>`;
     } else {
-      bg = isWeekend ? '#2b333a' : '#232a31'; col = isWeekend ? '#4a545c' : '#aaa'; top = '';
+      bg = isWeekend ? 'var(--border)' : 'var(--surface2)'; col = isWeekend ? 'var(--dim)' : '#aaa'; top = '';
     }
     const cursor = wpisy.length > 0 ? 'cursor:pointer' : '';
 
@@ -3984,7 +4434,7 @@ function renderCzasList() {
     .sort((a, b) => b.localeCompare(a));
 
   if (keys.length === 0) {
-    listEl.innerHTML = `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów w tym miesiącu</div>`;
+    listEl.innerHTML = `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów w tym miesiącu</div>`;
     return;
   }
 
@@ -4030,8 +4480,8 @@ function openCzasDayModal(dayKey) {
     const prac = DATA.pracownicy[w.prac];
     const delBtn = fullAccess() ? `<button onclick="deleteCzasPracyEntry('${dayKey}',${idx})" style="background:none;border:none;color:var(--red);font-size:15px;cursor:pointer;padding:4px 6px;flex-shrink:0" title="Usuń wpis">🗑️</button>` : '';
     if (w.nieobecny) {
-      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px;opacity:.75">
-        <div style="width:32px;height:32px;border-radius:16px;background:#4a545c;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:6px;opacity:.75">
+        <div style="width:32px;height:32px;border-radius:16px;background:var(--dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
         <div style="flex:1">
           <div style="font-size:12px;font-weight:700">${prac?prac.imie+' '+prac.nazwisko.charAt(0)+'.':'?'}</div>
           <div style="font-size:10px;color:var(--red)">🚫 Nieobecny${w.powod ? ' — ' + w.powod : ''}</div>
@@ -4042,8 +4492,8 @@ function openCzasDayModal(dayKey) {
     }
     const proj = DATA.projekty[w.proj];
     const koszt = prac ? prac.stawka * w.godz : 0;
-    html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:#232a31;border-radius:8px;margin-bottom:6px">
-      <div style="width:32px;height:32px;border-radius:16px;background:${prac?prac.kolor:'#4a545c'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
+      <div style="width:32px;height:32px;border-radius:16px;background:${prac?prac.kolor:'var(--dim)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff">${prac?prac.inicjaly:'?'}</div>
       <div style="flex:1">
         <div style="font-size:12px;font-weight:700">${prac?prac.imie+' '+prac.nazwisko.charAt(0)+'.':'?'}</div>
         <div style="font-size:10px;color:var(--muted)">${proj?proj.nazwa.split(' — ')[0]:''}</div>
@@ -4064,7 +4514,7 @@ function openCzasDayModal(dayKey) {
 function buildPracownikRow(w, prefix) {
   const canSeeCost = fullAccess() || (currentUser && currentUser.pracownik === w.id);
   return `
-    <div style="background:#232a31;border-radius:8px;padding:10px;margin-bottom:8px">
+    <div style="background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700;flex:1">${w.imie} ${w.nazwisko}</span>
         ${canSeeCost ? `<span style="font-size:11px;color:var(--muted)">${w.stawka} zł/h</span>` : ''}
@@ -4390,7 +4840,7 @@ function buildAutoDetail(id) {
     <div class="card" style="padding:0 14px">`;
 
   if (a.historia.length === 0) {
-    html += `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.png" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów</div>`;
+    html += `<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:12px"><img src="empty-generic.webp" style="width:56px;height:56px;display:block;margin:0 auto 8px;mix-blend-mode:screen;opacity:.85" alt="">Brak wpisów</div>`;
   } else {
     a.historia.forEach((h, hi) => {
       const meta = AUTO_TYP_META[h.typ] || { ikona:'📄', label:h.typ };
@@ -4456,10 +4906,10 @@ function saveAutoWpis() {
   showToast('✅ Wpis zapisany');
 }
 
-function deleteAuto(id) {
+async function deleteAuto(id) {
   const a = DATA.samochody[id];
   if (!a) return;
-  if (!confirm(`Usunąć pojazd ${a.marka} ${a.model} (${a.rej})? Historia użytkowania zostanie utracona.`)) return;
+  if (!(await confirmAction(`Usunąć pojazd ${a.marka} ${a.model} (${a.rej})? Historia użytkowania zostanie utracona.`))) return;
   delete DATA.samochody[id];
   saveState();
   renderSamochodyList();
@@ -4539,6 +4989,9 @@ let pinTarget = null, pinBuffer = '';
 // Pełny dostęp = właściciel (admin) lub pracownik biurowy (pelnyDostep)
 function fullAccess() { return !!(currentUser && (currentUser.admin || currentUser.pelnyDostep)); }
 function isKierownik() { return !!(currentUser && currentUser.kierownik && !fullAccess()); }
+// Wspólna bramka dla akcji zarządczych (edycja projektu/zadań, dodawanie wydatków...) —
+// właściciel/biuro ORAZ kierownik, w odróżnieniu od zwykłego pracownika terenowego.
+function canManage() { return fullAccess() || isKierownik(); }
 
 function can(perm) {
   if (!currentUser) return false;
@@ -4596,6 +5049,46 @@ function initGoogleSignInLogin(tries) {
   google.accounts.id.renderButton(el, { theme: 'filled_blue', size: 'large', shape: 'pill', text: 'signin_with', width: 260 });
 }
 
+// ═══════ LOCKOUT PIN — limit nieudanych prób, trzymany per-konto w localStorage ═══════
+// Nie chroni to przed atakiem z wielu urządzeń/przeglądarek (localStorage jest per-urządzenie) —
+// prawdziwa granica to i tak backend, ale spowalnia najprostszy atak siłowy z jednego telefonu.
+const PIN_LOCK_PREFIX = 'elektroapp_pin_fails_';
+const PIN_LOCK_MAX_FAILS = 5;
+const PIN_LOCK_DURATIONS = [60, 120, 300, 600, 900]; // sekundy; ostatnia wartość powtarza się przy kolejnych seriach
+
+function pinLockState(uid) {
+  try {
+    const raw = localStorage.getItem(PIN_LOCK_PREFIX + uid);
+    if (!raw) return { fails: 0, lockUntil: 0, lockTier: 0 };
+    const st = JSON.parse(raw);
+    return { fails: st.fails || 0, lockUntil: st.lockUntil || 0, lockTier: st.lockTier || 0 };
+  } catch (e) { return { fails: 0, lockUntil: 0, lockTier: 0 }; }
+}
+function pinLockSave(uid, st) {
+  try { localStorage.setItem(PIN_LOCK_PREFIX + uid, JSON.stringify(st)); } catch (e) {}
+}
+function pinLockReset(uid) {
+  try { localStorage.removeItem(PIN_LOCK_PREFIX + uid); } catch (e) {}
+}
+function pinLockRemainingSec(uid) {
+  const rem = Math.ceil((pinLockState(uid).lockUntil - Date.now()) / 1000);
+  return rem > 0 ? rem : 0;
+}
+// Rejestruje nieudaną próbę; po osiągnięciu progu nakłada blokadę o rosnącym czasie
+// (kolejna "seria" 5 błędów = dłuższa blokada niż poprzednia).
+function pinLockRegisterFail(uid) {
+  const st = pinLockState(uid);
+  st.fails += 1;
+  if (st.fails >= PIN_LOCK_MAX_FAILS) {
+    const dur = PIN_LOCK_DURATIONS[Math.min(st.lockTier, PIN_LOCK_DURATIONS.length - 1)];
+    st.lockUntil = Date.now() + dur * 1000;
+    st.lockTier += 1;
+    st.fails = 0;
+  }
+  pinLockSave(uid, st);
+  return st;
+}
+
 function pinStart(uid) {
   pinTarget = DATA.uzytkownicy[uid];
   pinBuffer = '';
@@ -4608,6 +5101,8 @@ function pinStart(uid) {
   if (bioRegistered(uid)) { bioBtn.style.display = 'block'; bioBtn.onclick = () => bioLogin(uid); }
   else bioBtn.style.display = 'none';
   renderPinDots();
+  const remLock = pinLockRemainingSec(uid);
+  if (remLock > 0) showToast(`🔒 Konto zablokowane po zbyt wielu błędnych próbach — spróbuj za ${remLock}s`);
 }
 
 function renderPinDots() {
@@ -4616,14 +5111,30 @@ function renderPinDots() {
 }
 
 async function pinKey(k) {
+  if (!pinTarget) return;
+  const remLock = pinLockRemainingSec(pinTarget.id);
+  if (remLock > 0) {
+    showToast(`🔒 Zbyt wiele błędnych prób — spróbuj ponownie za ${remLock}s`);
+    return;
+  }
   if (k === '⌫') { pinBuffer = pinBuffer.slice(0, -1); renderPinDots(); return; }
   if (pinBuffer.length >= 4) return;
   pinBuffer += k;
   renderPinDots();
   if (pinBuffer.length === 4) {
     const ok = await verifyPin(pinTarget, pinBuffer);
-    if (ok) { setUser(pinTarget); }
-    else { pinBuffer = ''; renderPinDots(); showToast('❌ Błędny PIN'); }
+    const uid = pinTarget.id;
+    pinBuffer = '';
+    renderPinDots();
+    if (ok) {
+      pinLockReset(uid);
+      setUser(pinTarget);
+    } else {
+      const st = pinLockRegisterFail(uid);
+      const remAfter = pinLockRemainingSec(uid);
+      if (remAfter > 0) showToast(`🔒 Zbyt wiele błędnych prób. Zablokowano na ${remAfter}s`);
+      else showToast(`❌ Błędny PIN (pozostało ${PIN_LOCK_MAX_FAILS - st.fails} prób przed blokadą)`);
+    }
   }
 }
 
@@ -4704,6 +5215,7 @@ function pinCancel() {
 
 function setUser(u) {
   currentUser = u;
+  initTheme();  // każde konto na tym urządzeniu ma własną zapamiętaną preferencję motywu
   document.querySelectorAll('.avatar').forEach(el => { el.textContent = u.inicjaly || ''; });
   const greetEl = document.getElementById('dash-greeting');
   if (greetEl) greetEl.textContent = `Dzień dobry, ${u.nazwa.split(' ')[0]} 👋`;
@@ -4728,6 +5240,7 @@ function setUser(u) {
 
 function logout() {
   currentUser = null;
+  initTheme();  // wraca do preferencji "tego urządzenia" (bez konta) na ekranie logowania
   pinCancel();
   document.getElementById('login-ov').style.display = 'flex';
   document.getElementById('notif-panel').classList.remove('open');
@@ -4863,14 +5376,14 @@ function buildMojeGodziny() {
     const isWeekend = dow === 0 || dow === 6;
     const wpis = wlasneDayAgg(id, key);
     if (wpis && wpis.nieobecny) {
-      calHtml += `<div onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed #4a545c;color:#c62828">🚫</div>`;
+      calHtml += `<div onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer;border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:repeating-linear-gradient(45deg,var(--border),var(--border) 3px,var(--border) 3px,var(--border) 6px);border:2px dashed var(--dim);color:#c62828">🚫</div>`;
       continue;
     }
     const proj = wpis ? DATA.projekty[wpis.proj] : null;
     if (wpis) { sumaH += wpis.godz; sumaZl += wpis.godz * w.stawka; }
-    const bg = proj ? proj.kolor + '33' : (isWeekend ? '#232a31' : 'var(--border)');
+    const bg = proj ? proj.kolor + '33' : (isWeekend ? 'var(--surface2)' : 'var(--border)');
     const border = proj ? `2px solid ${proj.kolor}` : '1px solid #dde3ea';
-    const color = proj ? proj.kolor : (isWeekend ? '#4a545c' : '#aaa');
+    const color = proj ? proj.kolor : (isWeekend ? 'var(--dim)' : '#aaa');
     const click = wpis ? `onclick="openPracDayModal('${id}','${key}','wlasne')" style="cursor:pointer"` : '';
     calHtml += `<div ${click} style="border-radius:4px;padding:3px 2px;text-align:center;font-size:10px;font-weight:700;background:${bg};border:${border};color:${color}">${i}</div>`;
   }
@@ -4979,7 +5492,7 @@ function buildUstawienia() {
         </div>
         ${(u.pelnyDostep || u.kierownik) ? `<div style="font-size:10px;color:var(--muted);padding:2px 0 4px">${u.pelnyDostep ? '🔓 Widzi wszystko, łącznie z finansami.' : '👷 Widzi zespół i projekty (bez kwot), dopisuje godziny/km/materiały.'}</div>` : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           ${Object.keys(PERM_LABELS).map(perm => `
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;background:#232a31;border-radius:8px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer;padding:5px 8px;background:var(--surface2);border-radius:8px">
               <input type="checkbox" ${u.uprawnienia[perm] ? 'checked' : ''} onchange="togglePerm('${u.id}','${perm}')" style="accent-color:var(--blue)">
               ${PERM_LABELS[perm]}
             </label>`).join('')}
@@ -4990,7 +5503,7 @@ function buildUstawienia() {
       <button class="btn-s" style="width:100%" onclick="enablePush()">${pushEnabled ? '✅ Push włączone na tym urządzeniu' : 'Włącz powiadomienia push na tym urządzeniu'}</button>
       <div style="font-size:11px;font-weight:800;color:var(--text);margin:12px 0 6px">Czego mają dotyczyć:</div>
       ${Object.keys(NOTIF_PREF_LABELS).map(k => `
-        <label style="display:flex;align-items:flex-start;gap:8px;font-size:11px;cursor:pointer;padding:7px 8px;background:#232a31;border-radius:8px;margin-bottom:6px">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:11px;cursor:pointer;padding:7px 8px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
           <input type="checkbox" ${NOTIF_PREFS[k] ? 'checked' : ''} onchange="toggleNotifPref('${k}')" style="accent-color:var(--blue);margin-top:1px">
           <span><strong>${NOTIF_PREF_LABELS[k].t}</strong><br><span style="color:var(--muted)">${NOTIF_PREF_LABELS[k].d}</span></span>
         </label>`).join('')}
@@ -5121,7 +5634,7 @@ function buildTerminarz() {
     const ikony = [...new Set(evsD.map(i => ev[i].ikona))];
     const ikonyHtml = ikony.slice(0, 3).map(ic => `<span style="font-size:10px;line-height:1">${ic}</span>`).join('') + (ikony.length > 3 ? `<span style="font-size:8px;color:var(--muted)">+${ikony.length - 3}</span>` : '');
     const today = d === dzisD;
-    cal += `<div ${evsD.length ? `onclick="termPokazDzien(${d})" style="cursor:pointer;` : 'style="'}border-radius:6px;padding:3px 1px 2px;text-align:center;min-height:40px;background:${today ? 'var(--blue-l)' : (evsD.length ? '#232a31' : 'transparent')};border:1px solid ${today ? 'var(--blue)' : 'var(--border)'}">
+    cal += `<div ${evsD.length ? `onclick="termPokazDzien(${d})" style="cursor:pointer;` : 'style="'}border-radius:6px;padding:3px 1px 2px;text-align:center;min-height:40px;background:${today ? 'var(--blue-l)' : (evsD.length ? 'var(--surface2)' : 'transparent')};border:1px solid ${today ? 'var(--blue)' : 'var(--border)'}">
       <div style="font-size:11px;font-weight:${today ? 800 : 600};color:${today ? 'var(--blue)' : 'var(--text)'}">${d}</div>
       <div style="display:flex;gap:1px;justify-content:center;flex-wrap:wrap;margin-top:1px;min-height:12px">${ikonyHtml}</div>
     </div>`;
@@ -5161,7 +5674,7 @@ function termPokazDzien(d) {
   const dataLabel = `${String(d).padStart(2,'0')}.${String(termMonth+1).padStart(2,'0')}.${termYear}`;
   document.getElementById('modal-dzien-title').textContent = '📅 ' + dataLabel;
   document.getElementById('modal-dzien-body').innerHTML = evsD.map(({ e, i }) => `
-    <div onclick="closeModal('modal-dzien-detail');termWykonaj(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 8px;background:#232a31;border-radius:8px;margin-bottom:6px;cursor:pointer">
+    <div onclick="closeModal('modal-dzien-detail');termWykonaj(${i})" style="display:flex;align-items:center;gap:10px;padding:10px 8px;background:var(--surface2);border-radius:8px;margin-bottom:6px;cursor:pointer">
       <div style="width:32px;height:32px;border-radius:8px;background:${e.kolor}22;display:flex;align-items:center;justify-content:center;font-size:16px">${e.ikona}</div>
       <div style="flex:1;font-size:13px;color:var(--text)">${escapeHtml(e.tytul)}</div>
       <div style="color:var(--blue)">›</div>
@@ -5204,7 +5717,7 @@ function renderZakupy() {
     <div class="card" style="padding:0 14px">
       ${dostawcy.map(d => {
         const s = dostawcaSaldo(d.id);
-        return `<div class="li" onclick="openDostawca('${d.id}')"><div class="li-icon" style="background:#232a31;font-size:18px">🚚</div><div class="li-body"><div class="li-title">${escapeHtml(d.nazwa)}</div><div class="li-sub">${escapeHtml(d.kontakt || 'brak kontaktu')}</div></div><div class="li-right"><div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'}">${s.razem > 0 ? s.razem.toLocaleString('pl-PL') + ' zł' : 'OK'}</div><div style="font-size:9px;color:var(--muted)">do rozliczenia</div></div></div>`;
+        return `<div class="li" onclick="openDostawca('${d.id}')"><div class="li-icon" style="background:var(--surface2);font-size:18px">🚚</div><div class="li-body"><div class="li-title">${escapeHtml(d.nazwa)}</div><div class="li-sub">${escapeHtml(d.kontakt || 'brak kontaktu')}</div></div><div class="li-right"><div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'}">${s.razem > 0 ? s.razem.toLocaleString('pl-PL') + ' zł' : 'OK'}</div><div style="font-size:9px;color:var(--muted)">do rozliczenia</div></div></div>`;
       }).join('') || '<div style="padding:20px 0;text-align:center;color:var(--muted);font-size:12px">Brak dostawców — dodaj przyciskiem ＋</div>'}
     </div>`;
 }
@@ -5235,12 +5748,12 @@ function saveDostawca() {
   else { const nid = uid('d_'); DATA.dostawcy[nid] = { id: nid, nazwa, kontakt }; }
   saveState(); renderZakupy(); closeModal('modal-dostawca'); showToast('✅ Zapisano dostawcę');
 }
-function deleteDostawca() {
+async function deleteDostawca() {
   const id = document.getElementById('nd-dost-id').value;
   const d = DATA.dostawcy[id]; if (!d) return;
   const maWZ = Object.values(DATA.wz).some(w => w.dostawca === id);
   if (maWZ) { showToast('⚠️ Dostawca ma powiązane WZ — najpierw je usuń'); return; }
-  if (!confirm(`Usunąć dostawcę ${d.nazwa}?`)) return;
+  if (!(await confirmAction(`Usunąć dostawcę ${d.nazwa}?`))) return;
   delete DATA.dostawcy[id];
   saveState(); renderZakupy(); closeModal('modal-dostawca');
   if (document.getElementById('det-dostawca').classList.contains('open')) goBack();
@@ -5322,6 +5835,10 @@ function wzPrzeliczBrutto() {
   }
 }
 // ═══════ IMPORT WZ Z PLIKU PDF (pdf.js — dokładny tekst, bez błędów OCR) ═══════
+// pdf.js/tesseract.js (poniżej) nadal ładowane z cdnjs, bez SRI — w odróżnieniu od
+// Leaflet/qrcodejs (już self-hosted w vendor/) te dwa są duże, ładowane leniwie
+// tylko przy realnym imporcie/OCR, i już dziś mają swój własny fallback na brak
+// sieci — niższy priorytet, ale wart tego samego traktowania później.
 let _pdfjsLoading = null;
 function loadPdfjs() {
   if (window.pdfjsLib) return Promise.resolve();
@@ -5660,10 +6177,10 @@ function saveWZ() {
   if (document.getElementById('det-dostawca').classList.contains('open')) openDostawca(dostawca);
   closeModal('modal-wz'); showToast(editId ? '✅ Zmiany zapisane' : '✅ WZ zapisane');
 }
-function deleteWZ(id) {
+async function deleteWZ(id) {
   const wz = DATA.wz[id]; if (!wz) return;
   if (wz.fakturaId) { showToast('⚠️ WZ jest już na fakturze — odepnij ją najpierw'); return; }
-  if (!confirm(`Usunąć WZ ${wz.nr || ''} (${wz.kwota} zł)?`)) return;
+  if (!(await confirmAction(`Usunąć WZ ${wz.nr || ''} (${wz.kwota} zł)?`))) return;
   if (wz.celTyp === 'projekt' && DATA.projekty[wz.cel]) DATA.projekty[wz.cel].kosztyMaterialy = Math.max(0, (DATA.projekty[wz.cel].kosztyMaterialy || 0) - Math.round(wz.kwota));
   if (wz.celTyp === 'awaria' && DATA.awarie[wz.cel]) DATA.awarie[wz.cel].koszt = Math.max(0, (DATA.awarie[wz.cel].koszt || 0) - Math.round(wz.kwota));
   const dostawca = wz.dostawca;
@@ -5686,7 +6203,7 @@ function buildDostawcaDetail(id) {
   const faktury = Object.values(DATA.fakturyZakupowe).filter(f => f.dostawca === id);
   const s = dostawcaSaldo(id);
   document.getElementById('ddost-content').innerHTML = `
-    <div style="background:#232a31;padding:14px">
+    <div style="background:var(--surface2);padding:14px">
       <div style="font-size:16px;font-weight:800">${escapeHtml(d.nazwa)}</div>
       <div style="font-size:12px;color:var(--sec)">${escapeHtml(d.kontakt || 'brak kontaktu')}</div>
       <div style="font-size:13px;font-weight:800;color:${s.razem > 0 ? 'var(--red)' : 'var(--green)'};margin-top:6px">Do rozliczenia: ${s.razem.toLocaleString('pl-PL')} zł</div>
@@ -5698,10 +6215,10 @@ function buildDostawcaDetail(id) {
         <button class="btn-p" style="flex:1;margin-top:0" onclick="openNowaFakturaZak('${id}')">🧾 Nowa faktura</button>
       </div>
       <div class="sec-hdr"><h3 style="font-size:12px">📄 WZ niezafakturowane (${wzOtwarte.length})</h3></div>
-      ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2b333a">
+      ${wzOtwarte.map(w => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
         <div style="flex:1;cursor:pointer" onclick="openEditWZ('${w.id}')"><div style="font-size:12px;font-weight:700">${escapeHtml(w.nr || '(bez nr)')} · ${w.kwota.toLocaleString('pl-PL')} zł${w.vat != null ? ` <span style="font-weight:400;color:var(--muted)">(netto ${w.netto.toLocaleString('pl-PL')} + VAT ${w.vat}%)</span>` : ''}</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(w.data)} · ${escapeHtml(celLabel(w))} · ✏️ edytuj</div>${w.opis ? `<div style="font-size:10px;color:var(--sec);margin-top:2px">📦 ${escapeHtml(w.opis.replace(/\n/g, ', '))}</div>` : ''}</div>
         ${w.foto ? `<button onclick="podejrzyjFoto('${w.id}')" title="Zobacz zdjęcie" style="background:none;border:none;font-size:15px;cursor:pointer">🖼️</button>` : ''}
-        <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:#4a545c;font-size:14px;cursor:pointer">✕</button>
+        <button onclick="deleteWZ('${w.id}')" style="background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer">✕</button>
       </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:6px 0">Brak — wszystko zafakturowane ✅</div>'}
       <div class="sec-hdr" style="margin-top:14px"><h3 style="font-size:12px">🧾 Faktury zakupowe (${faktury.length})</h3></div>
       ${faktury.map(f => {
@@ -5728,7 +6245,7 @@ function openNowaFakturaZak(dostId) {
   _fzWZwybrane = new Set();
   const el = document.getElementById('nfz-wz-lista');
   el.innerHTML = wzOtwarte.map(w => `
-    <label style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:#232a31;border-radius:8px;margin-bottom:6px;cursor:pointer">
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 8px;background:var(--surface2);border-radius:8px;margin-bottom:6px;cursor:pointer">
       <input type="checkbox" onchange="toggleFZwz('${w.id}',this.checked)" style="accent-color:var(--blue)">
       <div style="flex:1"><div style="font-size:12px;font-weight:700">${escapeHtml(w.nr || '(bez nr)')} · ${w.kwota.toLocaleString('pl-PL')} zł</div><div style="font-size:10px;color:var(--muted)">${escapeHtml(w.data)} · ${escapeHtml(celLabel(w))}</div></div>
     </label>`).join('');
@@ -5777,6 +6294,34 @@ function zbierzPrzypomnienia() {
   Object.values(DATA.projekty).forEach(p => {
     if (p.status === 'Zakończony' && !p.zaplacono && p.wartosc > 0) {
       push(3, '💰', `Niezapłacony projekt: „${p.nazwa}” (${p.wartosc.toLocaleString('pl-PL')} zł)`, () => openProjekt(p.id));
+    }
+  });
+
+  // Insight: aktywne projekty przekraczające zaplanowany budżet robocizny/materiałów —
+  // dane (kosztyRobocizna/kosztyMaterialy vs planLudzie/planMaterial) już istnieją per
+  // projekt (wykres "Realizacja planu" w szczegółach), ale wcześniej trzeba było otworzyć
+  // każdy projekt osobno, żeby to zobaczyć. Tylko "W realizacji" — po zakończeniu to już
+  // historia, nie coś do decyzji teraz.
+  Object.values(DATA.projekty).forEach(p => {
+    if (p.status !== 'W realizacji') return;
+    const przekroczenia = [
+      ['robocizny', p.kosztyRobocizna || 0, p.planLudzie || 0],
+      ['materiałów', p.kosztyMaterialy || 0, p.planMaterial || 0],
+    ].filter(([, wydano, plan]) => plan > 0 && wydano > plan);
+    przekroczenia.forEach(([co, wydano, plan]) => {
+      const proc = Math.round((wydano / plan - 1) * 100);
+      push(3, '📊', `„${p.nazwa}” przekracza plan ${co} o ${(wydano - plan).toLocaleString('pl-PL')} zł (+${proc}%)`, () => openProjekt(p.id));
+    });
+  });
+
+  // Insight: aktywne projekty po terminie realizacji (terminWykonania minął, a postęp<100%).
+  // Dane (terminWykonania, postep) już istnieją, ale nikt wcześniej nie zestawiał ich razem —
+  // trzeba było pamiętać terminy albo przeglądać każdy projekt z osobna.
+  Object.values(DATA.projekty).forEach(p => {
+    if (p.status !== 'W realizacji' || !p.terminWykonania || p.postep >= 100) return;
+    const dni = dniDo(p.terminWykonania);
+    if (dni !== null && dni < 0) {
+      push(4, '⏰', `„${p.nazwa}” jest ${-dni} dni po terminie realizacji (${p.terminWykonania}, postęp ${p.postep || 0}%)`, () => openProjekt(p.id));
     }
   });
 
@@ -5854,7 +6399,7 @@ function renderPrzypomnienia() {
   _przypCache = lista;
   if (lista.length === 0) { el.innerHTML = ''; return; }
   const wagaKolor = w => w >= 4 ? 'var(--red)' : w === 3 ? 'var(--orange)' : w === 2 ? 'var(--blue)' : 'var(--muted)';
-  const wagaBg = w => w >= 4 ? 'var(--red-l)' : w === 3 ? 'var(--orange-l)' : w === 2 ? 'var(--blue-l)' : '#232a31';
+  const wagaBg = w => w >= 4 ? 'var(--red-l)' : w === 3 ? 'var(--orange-l)' : w === 2 ? 'var(--blue-l)' : 'var(--surface2)';
   el.innerHTML = `
     <div class="sec-hdr" style="margin-top:4px"><h3>🔔 Do pilnowania (${lista.length})</h3></div>
     <div class="card" style="padding:8px 10px">
@@ -5871,6 +6416,7 @@ function wykonajPrzyp(i) { if (_przypCache[i] && _przypCache[i].akcja) _przypCac
 
 // ═══════ INIT ═══════
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   loadState();
   migratePins();
   if (SYNC_TOKEN) syncPull().then(ok => { if (ok) { migratePins(); renderLoginTiles(); } if (currentTab === 'ustawienia') buildUstawienia(); });
@@ -5896,8 +6442,24 @@ document.addEventListener('DOMContentLoaded', () => {
   pushHistoryGuard();
 });
 </script>
-<!-- Toast -->
-<div id="toast" style="display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;transition:opacity .4s;max-width:80%;text-align:center"></div>
+<!-- Success pop (centered confirmation "cloud") — jedyna forma komunikatów showToast() -->
+<div id="success-pop" class="success-pop">
+  <div class="success-pop-cloud" id="success-pop-cloud">
+    <div id="success-pop-icon"></div>
+    <div class="success-pop-text"></div>
+  </div>
+</div>
+<!-- Modal potwierdzenia akcji niszczącej -->
+<div class="modal-ov" id="modal-confirm-ov" style="display:none;z-index:9998" onclick="if(event.target===this)document.getElementById('modal-confirm-no').click()">
+  <div class="modal-sh">
+    <h3>⚠️ Potwierdź</h3>
+    <div id="modal-confirm-msg" style="font-size:13px;color:var(--text);line-height:1.5;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-s" id="modal-confirm-no" style="flex:1">Anuluj</button>
+      <button class="btn-r" id="modal-confirm-yes" style="flex:1">Usuń</button>
+    </div>
+  </div>
+</div>
 </div><!-- .phone -->
 </body>
 </html>
