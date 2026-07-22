@@ -957,10 +957,9 @@ Object.keys(BLOK_GEO).forEach(id => { if (DATA.bloki[id] && BLOK_GEO[id]) { DATA
 // narzedzia: sprzęt, rozdzielnie, kable
 // samochody: pojazdy firmowe
 // dostawcy: dostawcy materiałów
-DATA.wz = {};
-DATA.fakturyZakupowe = {};
-Object.values(DATA.bloki).forEach(b => { b.awarie = []; });
-Object.keys(DATA.pracownicy).forEach(w => { DATA.czasPracyWlasne[w] = {}; DATA.paski[w] = []; DATA.zaliczki[w] = []; });
+// wz: wydatki wewnętrzne
+// fakturyZakupowe: faktury
+// (BRAK czyszczenia danych — wszystko zachowane z AppSheet import)
 if (!DATA.czasPracyKierownik) DATA.czasPracyKierownik = {};
 
 // Unikatowe ID (Date.now potrafi się powtórzyć przy szybkim dodawaniu — stąd licznik)
