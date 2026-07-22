@@ -291,6 +291,8 @@ body.kier .kier-only{display:flex!important}
 .sc-tr{top:0;right:0;border-top-width:4px;border-right-width:4px}
 .sc-bl{bottom:0;left:0;border-bottom-width:4px;border-left-width:4px}
 .sc-br{bottom:0;right:0;border-bottom-width:4px;border-right-width:4px}
+/* DEV VERSION WATERMARK */
+body::before{content:'TEST';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg);font-size:200px;font-weight:900;color:rgba(255,0,0,.08);pointer-events:none;z-index:1;white-space:nowrap;font-family:Arial,sans-serif;letter-spacing:8px}
 </style>
 <script>
 // Wybór motywu PRZED pierwszym malowaniem strony — bez tego byłby widoczny błysk
