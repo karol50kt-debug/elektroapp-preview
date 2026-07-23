@@ -421,7 +421,7 @@ body.kier .kier-only{display:flex!important}
       <div class="fg" style="flex:1"><label>Termin wykonania</label><input class="fi" id="npr-termin" type="date"></div>
     </div>
     <div class="fg"><label>Wartość (zł)</label><input class="fi" id="npr-wartosc" type="number" placeholder="0"></div>
-    <div class="fg"><label>Stała trasa (km/dzień, opcjonalnie)</label><input class="fi" id="npr-km-trasa" type="number" placeholder="np. 22"></div>
+    <div class="fg"><label>Stała trasa (km, opcjonalnie)</label><div style="display:flex;gap:6px"><input class="fi" id="npr-km-trasa" type="number" placeholder="np. 22" style="flex:1"><select class="fs" id="npr-km-trasa-typ" style="flex:1"><option value="obie">w obie strony (na dzień)</option><option value="jedna">w jedną stronę (×2)</option></select></div></div>
     <div style="font-size:11px;font-weight:800;color:var(--text);margin:4px 0 8px">📊 Plan budżetu (do wykresu "Realizacja planu")</div>
     <div style="display:flex;gap:8px">
       <div class="fg" style="flex:1"><label>Plan robocizna (zł)</label><input class="fi" id="npr-plan-ludzie" type="number" placeholder="0"></div>
@@ -2533,6 +2533,7 @@ function openNewProjekt() {
   document.getElementById('npr-termin').value = '';
   document.getElementById('npr-wartosc').value = '';
   document.getElementById('npr-km-trasa').value = '';
+  document.getElementById('npr-km-trasa-typ').value = 'obie';
   document.getElementById('npr-plan-ludzie').value = '';
   document.getElementById('npr-plan-material').value = '';
   document.getElementById('npr-plan-zysk').value = '';
@@ -2553,7 +2554,8 @@ function openEditProjekt(id) {
   document.getElementById('npr-start').value = plToIso(p.start);
   document.getElementById('npr-termin').value = plToIso(p.terminWykonania || p.koniec);
   document.getElementById('npr-wartosc').value = p.wartosc;
-  document.getElementById('npr-km-trasa').value = p.kmTrasa || '';
+  document.getElementById('npr-km-trasa').value = (p.kmTrasaWpis != null ? p.kmTrasaWpis : (p.kmTrasa || ''));
+  document.getElementById('npr-km-trasa-typ').value = (p.kmTrasaObie === false) ? 'jedna' : 'obie';
   document.getElementById('npr-plan-ludzie').value = p.planLudzie || '';
   document.getElementById('npr-plan-material').value = p.planMaterial || '';
   document.getElementById('npr-plan-zysk').value = p.planZysk || '';
@@ -2598,7 +2600,9 @@ function saveProjekt() {
   const status = document.getElementById('npr-status').value;
   const wartosc = Number(document.getElementById('npr-wartosc').value) || 0;
   const kmTrasaVal = document.getElementById('npr-km-trasa').value;
-  const kmTrasa = kmTrasaVal ? Number(kmTrasaVal) : null;
+  const kmTrasaWpis = kmTrasaVal ? Number(kmTrasaVal) : null;
+  const kmTrasaObie = document.getElementById('npr-km-trasa-typ').value !== 'jedna';
+  const kmTrasa = kmTrasaWpis != null ? (kmTrasaObie ? kmTrasaWpis : kmTrasaWpis * 2) : null;
   const start = isoToPl(document.getElementById('npr-start').value);
   const terminWykonania = isoToPl(document.getElementById('npr-termin').value);
   const planLudzie = Number(document.getElementById('npr-plan-ludzie').value) || 0;
@@ -2607,7 +2611,7 @@ function saveProjekt() {
 
   if (editId && DATA.projekty[editId]) {
     const p = DATA.projekty[editId];
-    Object.assign(p, { nazwa, klient, adres, status, wartosc, kmTrasa, start, terminWykonania, koniec: terminWykonania || p.koniec, planLudzie, planMaterial, planZysk });
+    Object.assign(p, { nazwa, klient, adres, status, wartosc, kmTrasa, kmTrasaWpis, kmTrasaObie, start, terminWykonania, koniec: terminWykonania || p.koniec, planLudzie, planMaterial, planZysk });
     if (status !== 'Zakończony') {
       const used = new Set(Object.values(DATA.projekty).filter(x => x.id !== p.id && x.status !== 'Zakończony').map(x => x.kolor));
       if (used.has(p.kolor)) {
@@ -2624,7 +2628,7 @@ function saveProjekt() {
   } else {
     const id = uid('p_');
     const c = assignProjectColor();
-    DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, kmTrasa, postep:0, start, koniec:terminWykonania, terminWykonania, kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, planLudzie, planMaterial, planZysk, opis:'', zaplacono:false, dataZaplaty:null, zadania:[] };
+    DATA.projekty[id] = { id, nazwa, klient, adres, status, wartosc, kmTrasa, kmTrasaWpis, kmTrasaObie, postep:0, start, koniec:terminWykonania, terminWykonania, kolor:c.kolor, kolorL:c.kolorL, pracownicy:[], kosztyRobocizna:0, kosztyMaterialy:0, planLudzie, planMaterial, planZysk, opis:'', zaplacono:false, dataZaplaty:null, zadania:[] };
     showToast('✅ Projekt dodany!');
     renderProjektyList();
     animateNewItem('list-projekty', id);
