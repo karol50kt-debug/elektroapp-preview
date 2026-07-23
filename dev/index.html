@@ -350,6 +350,17 @@ body::before{content:'TEST';position:fixed;top:50%;left:50%;transform:translate(
     <div class="fg"><label>Projekt</label><select class="fs" id="nd-projekt" onchange="projektKmRefresh('nd')"></select></div>
     <div style="margin-bottom:6px;font-weight:700;font-size:13px">Pracownicy</div>
     <div id="nd-pracownicy" style="margin-bottom:10px"></div>
+    <div class="admin-only" id="nd-wl-wrap" style="background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px">🚗 Jakim autem jechałeś (Ty)</div>
+      <select class="fs" id="nd-wl-auto" onchange="wlAutoChange()" style="width:100%;padding:6px 8px;font-size:12px;margin-bottom:6px"><option value="">— nie jechałem / bez auta —</option></select>
+      <div id="nd-wl-km" style="display:none;gap:6px;align-items:center">
+        <input type="number" class="fi" id="nd-wl-licznik-od" placeholder="licznik rano" min="0" oninput="wlRecalcKm()" style="flex:1;padding:6px 8px;font-size:12px">
+        <span style="font-size:11px;color:var(--muted)">→</span>
+        <input type="number" class="fi" id="nd-wl-licznik-do" placeholder="po południu" min="0" oninput="wlRecalcKm()" style="flex:1;padding:6px 8px;font-size:12px">
+        <div id="nd-wl-km-out" style="width:64px;text-align:center;font-size:12px;font-weight:800;color:var(--blue);background:var(--blue-l);border-radius:8px;padding:6px 4px">0 km</div>
+      </div>
+      <input type="hidden" id="nd-wl-km-val" value="0">
+    </div>
     <div class="fg"><label>Opis (opcja)</label><input class="fi" id="nd-opis" placeholder="np. Układanie kabli"></div>
     <div style="display:flex;gap:8px;margin-bottom:4px">
       <div class="fg" style="flex:1"><label>Razem godzin</label><div class="fi" id="nd-total-h" style="background:var(--blue-l);font-weight:700;padding:8px 12px;border-radius:8px;border:none;color:var(--blue)">0h</div></div>
@@ -4719,6 +4730,22 @@ function recalcDzien(prefix) {
 }
 
 // Zbiera wpisy (obecny/nieobecny) ze wszystkich wierszy danego formularza
+// Auto właściciela w modalu dnia: pokaż liczniki km po wyborze auta
+function wlAutoChange() {
+  const auto = document.getElementById('nd-wl-auto').value;
+  const kmWrap = document.getElementById('nd-wl-km');
+  if (kmWrap) kmWrap.style.display = auto ? 'flex' : 'none';
+  if (!auto) document.getElementById('nd-wl-km-val').value = 0;
+}
+function wlRecalcKm() {
+  const od = Number(document.getElementById('nd-wl-licznik-od').value);
+  const doo = Number(document.getElementById('nd-wl-licznik-do').value);
+  let km = 0;
+  if (od > 0 && doo > 0 && doo >= od) km = Math.round(doo - od);
+  document.getElementById('nd-wl-km-val').value = km;
+  document.getElementById('nd-wl-km-out').textContent = km + ' km';
+}
+
 function collectDzienWpisy(prefix, dayKey, dateLabel, projId) {
   const wpisy = [];
   Object.values(DATA.pracownicy).forEach(w => {
@@ -4759,6 +4786,19 @@ function openDzienModal() {
   const rowsEl = document.getElementById('nd-pracownicy');
   rowsEl.innerHTML = Object.values(DATA.pracownicy).map(w => buildPracownikRow(w, 'nd')).join('');
 
+  // Auto właściciela — lista pojazdów + reset pól
+  const wlAuto = document.getElementById('nd-wl-auto');
+  if (wlAuto) {
+    wlAuto.innerHTML = '<option value="">— nie jechałem / bez auta —</option>' +
+      Object.values(DATA.samochody || {}).map(a => `<option value="${a.id}">${escapeHtml(a.marka + ' ' + a.model + ' (' + a.rej + ')')}</option>`).join('');
+    wlAuto.value = '';
+    document.getElementById('nd-wl-licznik-od').value = '';
+    document.getElementById('nd-wl-licznik-do').value = '';
+    document.getElementById('nd-wl-km-val').value = 0;
+    document.getElementById('nd-wl-km-out').textContent = '0 km';
+    wlAutoChange();
+  }
+
   recalcDzien('nd');
   openModal('modal-dzien');
 }
@@ -4778,24 +4818,44 @@ function saveDzien() {
   const projId = document.getElementById('nd-projekt').value;
 
   const wpisy = collectDzienWpisy('nd', dayKey, dateLabel, projId);
-  if (wpisy.length === 0) { showToast('⚠️ Zaznacz co najmniej jednego pracownika'); return; }
 
-  if (!DATA.czasPracy[dayKey]) DATA.czasPracy[dayKey] = [];
-  // Nieobecność kasuje wszystkie wpisy tej osoby tego dnia; nowe godziny dopisują się
-  // do istniejących (inny projekt), kasując jedynie ewentualny stary marker nieobecności.
-  const nieobecniIds = new Set(wpisy.filter(w => w.nieobecny).map(w => w.prac));
-  const obecniIds = new Set(wpisy.filter(w => !w.nieobecny).map(w => w.prac));
-  DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x =>
-    !nieobecniIds.has(x.prac) && !(obecniIds.has(x.prac) && x.nieobecny)
-  );
-  DATA.czasPracy[dayKey].push(...wpisy);
+  // Auto właściciela (opcjonalne) — zapis przejazdu do historii auta, bez wpisu godzin
+  let wlLogged = false;
+  const wlAutoEl = document.getElementById('nd-wl-auto');
+  const wlAutoId = wlAutoEl ? wlAutoEl.value : '';
+  if (wlAutoId && DATA.samochody[wlAutoId]) {
+    const wlKm = Number((document.getElementById('nd-wl-km-val') || {}).value) || 0;
+    DATA.samochody[wlAutoId].historia.unshift({
+      typ: 'jazda', data: dateLabel,
+      prac: (currentUser && currentUser.nazwa) || 'Właściciel',
+      od: null, do: null, km: wlKm || null,
+      proj: DATA.projekty[projId] ? DATA.projekty[projId].nazwa : '',
+    });
+    if (wlKm > 0) DATA.samochody[wlAutoId].przebieg += wlKm;
+    wlLogged = true;
+  }
+
+  if (wpisy.length === 0 && !wlLogged) { showToast('⚠️ Zaznacz pracownika lub wybierz swoje auto'); return; }
+
+  if (wpisy.length) {
+    if (!DATA.czasPracy[dayKey]) DATA.czasPracy[dayKey] = [];
+    // Nieobecność kasuje wszystkie wpisy tej osoby tego dnia; nowe godziny dopisują się
+    // do istniejących (inny projekt), kasując jedynie ewentualny stary marker nieobecności.
+    const nieobecniIds = new Set(wpisy.filter(w => w.nieobecny).map(w => w.prac));
+    const obecniIds = new Set(wpisy.filter(w => !w.nieobecny).map(w => w.prac));
+    DATA.czasPracy[dayKey] = DATA.czasPracy[dayKey].filter(x =>
+      !nieobecniIds.has(x.prac) && !(obecniIds.has(x.prac) && x.nieobecny)
+    );
+    DATA.czasPracy[dayKey].push(...wpisy);
+  }
 
   const obecni = wpisy.filter(w => !w.nieobecny).length;
   const nieobecni = wpisy.filter(w => w.nieobecny).length;
   const parts = [];
   if (obecni) parts.push(`${obecni} obecnych`);
   if (nieobecni) parts.push(`${nieobecni} nieobecnych`);
-  showToast(`✅ Zapisano dzień pracy (${parts.join(', ')})`);
+  if (wlLogged) parts.push('Twoje auto');
+  showToast(`✅ Zapisano dzień pracy${parts.length ? ' (' + parts.join(', ') + ')' : ''}`);
   saveState();
   closeModal('modal-dzien');
   buildCzasCalendar();
