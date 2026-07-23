@@ -353,11 +353,19 @@ body::before{content:'TEST';position:fixed;top:50%;left:50%;transform:translate(
     <div class="admin-only" id="nd-wl-wrap" style="background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px">
       <div style="font-weight:700;font-size:13px;margin-bottom:8px">🚗 Jakim autem jechałeś (Ty)</div>
       <select class="fs" id="nd-wl-auto" onchange="wlAutoChange()" style="width:100%;padding:6px 8px;font-size:12px;margin-bottom:6px"><option value="">— nie jechałem / bez auta —</option></select>
+      <select class="fs" id="nd-wl-kmtryb" onchange="wlAutoChange()" style="display:none;width:100%;padding:6px 8px;font-size:12px;margin-bottom:6px">
+        <option value="reczny">Liczniki (rano → po południu)</option>
+        <option value="wpis">Wpisz ile km (ręcznie)</option>
+      </select>
       <div id="nd-wl-km" style="display:none;gap:6px;align-items:center">
         <input type="number" class="fi" id="nd-wl-licznik-od" placeholder="licznik rano" min="0" oninput="wlRecalcKm()" style="flex:1;padding:6px 8px;font-size:12px">
         <span style="font-size:11px;color:var(--muted)">→</span>
         <input type="number" class="fi" id="nd-wl-licznik-do" placeholder="po południu" min="0" oninput="wlRecalcKm()" style="flex:1;padding:6px 8px;font-size:12px">
         <div id="nd-wl-km-out" style="width:64px;text-align:center;font-size:12px;font-weight:800;color:var(--blue);background:var(--blue-l);border-radius:8px;padding:6px 4px">0 km</div>
+      </div>
+      <div id="nd-wl-kmwpis" style="display:none;gap:6px;align-items:center">
+        <input type="number" class="fi" id="nd-wl-kmwpis-in" placeholder="ile km dziś" min="0" oninput="wlRecalcKmWpis()" style="flex:1;padding:6px 8px;font-size:12px">
+        <span style="font-size:11px;color:var(--muted)">km</span>
       </div>
       <input type="hidden" id="nd-wl-km-val" value="0">
     </div>
@@ -4599,7 +4607,8 @@ function buildPracownikRow(w, prefix) {
           ${Object.values(DATA.samochody).map(a => `<option value="${a.id}">${a.marka} ${a.model} (${a.rej})</option>`).join('')}
         </select>
         <select class="fs" id="${prefix}-kmtryb-${w.id}" onchange="rowKmTrybChange('${prefix}','${w.id}')" style="display:none;width:100%;padding:6px 8px;font-size:12px;margin-bottom:6px">
-          <option value="reczny">Liczniki (ręcznie)</option>
+          <option value="reczny">Liczniki (rano → po południu)</option>
+          <option value="wpis">Wpisz ile km (ręcznie)</option>
           <option value="stala">Stała trasa (z projektu)</option>
         </select>
         <div id="${prefix}-kmstala-info-${w.id}" style="display:none;font-size:11px;color:var(--muted);margin-bottom:6px"></div>
@@ -4608,6 +4617,10 @@ function buildPracownikRow(w, prefix) {
           <span style="font-size:11px;color:var(--muted)">→</span>
           <input type="number" class="fi" id="${prefix}-licznik-do-${w.id}" placeholder="po południu" min="0" oninput="recalcKm('${prefix}','${w.id}')" style="flex:1;padding:6px 8px;font-size:12px">
           <div id="${prefix}-km-out-${w.id}" style="width:64px;text-align:center;font-size:12px;font-weight:800;color:var(--blue);background:var(--blue-l);border-radius:8px;padding:6px 4px">0 km</div>
+        </div>
+        <div id="${prefix}-kmwpis-${w.id}" style="display:none;gap:6px;align-items:center">
+          <input type="number" class="fi" id="${prefix}-kmwpis-in-${w.id}" placeholder="ile km dziś" min="0" oninput="recalcKmWpis('${prefix}','${w.id}')" style="flex:1;padding:6px 8px;font-size:12px">
+          <span style="font-size:11px;color:var(--muted)">km</span>
         </div>
         <input type="hidden" id="${prefix}-km-${w.id}" value="0">
       </div>
@@ -4634,15 +4647,22 @@ function recalcKm(prefix, wid) {
 }
 
 // Przełącza tryb liczenia km dla danego pracownika: stała trasa (z projektu) vs liczniki (ręcznie)
+function recalcKmWpis(prefix, wid) {
+  const v = Number(document.getElementById(`${prefix}-kmwpis-in-${wid}`).value) || 0;
+  document.getElementById(`${prefix}-km-${wid}`).value = v > 0 ? Math.round(v) : 0;
+}
+
 function rowKmTrybChange(prefix, wid) {
   const autoId = document.getElementById(`${prefix}-auto-${wid}`).value;
   const trybSel = document.getElementById(`${prefix}-kmtryb-${wid}`);
   const stalaInfo = document.getElementById(`${prefix}-kmstala-info-${wid}`);
   const liczWrap = document.getElementById(`${prefix}-kmliczniki-${wid}`);
+  const wpisWrap = document.getElementById(`${prefix}-kmwpis-${wid}`);
   const kmHidden = document.getElementById(`${prefix}-km-${wid}`);
   if (!autoId) {
     trybSel.style.display = 'none';
     stalaInfo.style.display = 'none';
+    if (wpisWrap) wpisWrap.style.display = 'none';
     liczWrap.style.display = 'flex';
     kmHidden.value = 0;
     return;
@@ -4659,14 +4679,22 @@ function rowKmTrybChange(prefix, wid) {
     stalaOpt.textContent = 'Stała trasa (ustaw w edycji projektu)';
     if (trybSel.value === 'stala') trybSel.value = 'reczny';
   }
-  if (trybSel.value === 'stala' && proj && proj.kmTrasa) {
+  const tryb = trybSel.value;
+  if (tryb === 'stala' && proj && proj.kmTrasa) {
     liczWrap.style.display = 'none';
+    if (wpisWrap) wpisWrap.style.display = 'none';
     stalaInfo.style.display = 'block';
     stalaInfo.textContent = `📍 ${proj.kmTrasa} km/dzień (stała trasa projektu)`;
     kmHidden.value = proj.kmTrasa;
+  } else if (tryb === 'wpis') {
+    liczWrap.style.display = 'none';
+    stalaInfo.style.display = 'none';
+    if (wpisWrap) wpisWrap.style.display = 'flex';
+    recalcKmWpis(prefix, wid);
   } else {
     liczWrap.style.display = 'flex';
     stalaInfo.style.display = 'none';
+    if (wpisWrap) wpisWrap.style.display = 'none';
     recalcKm(prefix, wid);
   }
 }
@@ -4733,9 +4761,31 @@ function recalcDzien(prefix) {
 // Auto właściciela w modalu dnia: pokaż liczniki km po wyborze auta
 function wlAutoChange() {
   const auto = document.getElementById('nd-wl-auto').value;
+  const tryb = document.getElementById('nd-wl-kmtryb');
   const kmWrap = document.getElementById('nd-wl-km');
-  if (kmWrap) kmWrap.style.display = auto ? 'flex' : 'none';
-  if (!auto) document.getElementById('nd-wl-km-val').value = 0;
+  const wpisWrap = document.getElementById('nd-wl-kmwpis');
+  if (!auto) {
+    if (tryb) tryb.style.display = 'none';
+    if (kmWrap) kmWrap.style.display = 'none';
+    if (wpisWrap) wpisWrap.style.display = 'none';
+    document.getElementById('nd-wl-km-val').value = 0;
+    return;
+  }
+  if (tryb) tryb.style.display = 'block';
+  const mode = tryb ? tryb.value : 'reczny';
+  if (mode === 'wpis') {
+    if (kmWrap) kmWrap.style.display = 'none';
+    if (wpisWrap) wpisWrap.style.display = 'flex';
+    wlRecalcKmWpis();
+  } else {
+    if (kmWrap) kmWrap.style.display = 'flex';
+    if (wpisWrap) wpisWrap.style.display = 'none';
+    wlRecalcKm();
+  }
+}
+function wlRecalcKmWpis() {
+  const v = Number(document.getElementById('nd-wl-kmwpis-in').value) || 0;
+  document.getElementById('nd-wl-km-val').value = v > 0 ? Math.round(v) : 0;
 }
 function wlRecalcKm() {
   const od = Number(document.getElementById('nd-wl-licznik-od').value);
@@ -4792,8 +4842,10 @@ function openDzienModal() {
     wlAuto.innerHTML = '<option value="">— nie jechałem / bez auta —</option>' +
       Object.values(DATA.samochody || {}).map(a => `<option value="${a.id}">${escapeHtml(a.marka + ' ' + a.model + ' (' + a.rej + ')')}</option>`).join('');
     wlAuto.value = '';
+    const wlTryb = document.getElementById('nd-wl-kmtryb'); if (wlTryb) wlTryb.value = 'reczny';
     document.getElementById('nd-wl-licznik-od').value = '';
     document.getElementById('nd-wl-licznik-do').value = '';
+    const wlWpisIn = document.getElementById('nd-wl-kmwpis-in'); if (wlWpisIn) wlWpisIn.value = '';
     document.getElementById('nd-wl-km-val').value = 0;
     document.getElementById('nd-wl-km-out').textContent = '0 km';
     wlAutoChange();
